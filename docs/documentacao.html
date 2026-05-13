@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crediclass Dashboard — Documentação Técnica</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #3b82f6;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .layout { display: flex; min-height: 100vh; }
+
+  /* Sidebar nav */
+  nav {
+    width: 260px;
+    min-width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav .logo { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 24px; }
+  nav ul { list-style: none; }
+  nav ul li { margin-bottom: 4px; }
+  nav ul li a { display: block; padding: 6px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 13px; transition: background .15s, color .15s; }
+  nav ul li a:hover, nav ul li a.active { background: rgba(59,130,246,.15); color: var(--accent); }
+  nav .section-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--border); margin: 16px 0 6px 10px; }
+
+  /* Main content */
+  main { flex: 1; padding: 40px 48px; max-width: 960px; }
+
+  h1 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 600; color: #fff; margin: 48px 0 16px; padding-top: 8px; border-top: 1px solid var(--border); }
+  h3 { font-size: 16px; font-weight: 600; color: var(--accent); margin: 28px 0 10px; }
+  h4 { font-size: 14px; font-weight: 600; color: var(--text); margin: 16px 0 6px; }
+  p { color: var(--muted); margin-bottom: 12px; }
+  strong { color: var(--text); }
+  a { color: var(--accent); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(59,130,246,.2);
+    color: var(--accent);
+    margin-left: 6px;
+  }
+  .badge.green { background: rgba(16,185,129,.2); color: var(--green); }
+  .badge.yellow { background: rgba(245,158,11,.2); color: var(--yellow); }
+  .badge.red { background: rgba(239,68,68,.2); color: var(--red); }
+
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+
+  /* Callout boxes */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(59,130,246,.07);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .callout.warn { border-color: var(--yellow); background: rgba(245,158,11,.07); }
+  .callout.ok { border-color: var(--green); background: rgba(16,185,129,.07); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th { background: var(--surface); color: var(--text); font-weight: 600; text-align: left; padding: 10px 12px; border: 1px solid var(--border); }
+  td { padding: 8px 12px; border: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+  /* Code blocks */
+  pre {
+    background: #0a0f1a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12.5px;
+    color: #a5f3fc;
+    margin: 12px 0;
+    line-height: 1.5;
+  }
+  code {
+    background: rgba(59,130,246,.12);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: 'Cascadia Code', monospace;
+    font-size: 12px;
+    color: #93c5fd;
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+
+  /* File tree */
+  .tree {
+    background: #0a0f1a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .tree .dir { color: var(--accent); }
+  .tree .file { color: var(--green); }
+  .tree .comment { color: #475569; font-style: italic; }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .flow-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--text);
+    text-align: center;
+  }
+  .flow-arrow { color: var(--accent); font-size: 18px; }
+
+  /* Formula boxes */
+  .formula {
+    background: #0a0f1a;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 10px 0;
+    font-family: monospace;
+    font-size: 13px;
+    color: #a5f3fc;
+  }
+  .formula .label { color: var(--yellow); font-weight: 600; display: block; margin-bottom: 4px; font-family: inherit; }
+
+  /* Profile cards */
+  .profiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 16px 0; }
+  .profile-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+  }
+  .profile-card .pname { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .profile-card .pdetail { color: var(--muted); line-height: 1.5; }
+
+  /* Section anchor offset */
+  section { scroll-margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav>
+  <div class="logo">Crediclass Docs</div>
+  <ul>
+    <li class="section-label">Visão Geral</li>
+    <li><a href="#intro">Introdução</a></li>
+    <li><a href="#fluxo">Fluxo do Sistema</a></li>
+    <li><a href="#estrutura">Estrutura de Arquivos</a></li>
+
+    <li class="section-label">Backend</li>
+    <li><a href="#api">API — main.py</a></li>
+    <li><a href="#sheets">Google Sheets — sheets.py</a></li>
+    <li><a href="#piperun">Piperun — piperun.py</a></li>
+
+    <li class="section-label">Frontend</li>
+    <li><a href="#frontend">index.html</a></li>
+    <li><a href="#appjs">app.js (Alpine)</a></li>
+
+    <li class="section-label">Regras de Negócio</li>
+    <li><a href="#perfis-lance">Perfis de Lance</a></li>
+    <li><a href="#compatibilidade">Compatibilidade</a></li>
+    <li><a href="#formulas">Fórmulas (f)(g)(h)</a></li>
+    <li><a href="#parcela">Regra da Parcela</a></li>
+    <li><a href="#lance-embutido">Lance Embutido</a></li>
+    <li><a href="#dados-grupos">Dados dos Grupos</a></li>
+
+    <li class="section-label">Operação</li>
+    <li><a href="#instalacao">Instalação</a></li>
+    <li><a href="#dados">Atualizar Dados</a></li>
+    <li><a href="#roadmap">Próximas Funcionalidades</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ── INTRO ──────────────────────────────────────────── -->
+<section id="intro">
+  <h1>Crediclass Dashboard — Documentação Técnica</h1>
+  <p class="subtitle">Sistema de análise de grupos de consórcio e geração de Estudo Financeiro &mdash; versão 1.0 &mdash; 2025/2026</p>
+
+  <p>Este painel é uma ferramenta interna da <strong>Crediclass</strong> para consultores de crédito. O objetivo é cruzar o perfil financeiro do cliente (extraído automaticamente do CRM Piperun) com os dados dos grupos de consórcio disponíveis (extraídos de planilha Google Sheets) e identificar os grupos mais compatíveis para compor o <strong>Estudo Financeiro</strong>.</p>
+
+  <div class="callout ok">
+    <strong>Stack:</strong> Python 3.12 + FastAPI &mdash; Alpine.js 3.x &mdash; Tailwind CSS (CDN) &mdash; Chart.js 4.4.3 &mdash; Google Sheets API v4 &mdash; Piperun REST API v1
+  </div>
+</section>
+
+<!-- ── FLUXO ──────────────────────────────────────────── -->
+<section id="fluxo">
+  <h2>Fluxo do Sistema</h2>
+
+  <h3>Fluxo completo end-to-end</h3>
+  <div class="flow">
+    <div class="flow-box">Cliente preenche<br>formulário<br>crediclass.com.br</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Piperun cria<br>oportunidade +<br>nota HTML</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Consultor informa<br>Deal ID no<br>painel</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Backend busca<br>nota via API<br>Piperun</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Parser extrai<br>dados do<br>formulário</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Painel filtra e<br>pontua grupos<br>compatíveis</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Consultor seleciona<br>grupos → Estudo<br>Financeiro</div>
+  </div>
+
+  <h3>Fluxo dos dados dos grupos</h3>
+  <div class="flow">
+    <div class="flow-box">Planilha Google Sheets<br>"Mapa de Grupos 2.0"</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">sheets.py<br>Google Sheets API v4<br>(ou XLSX via MCP)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">data/grupos.json<br>(cache)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">GET /api/grupos<br>GET /api/stats</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Dashboard<br>Alpine.js</div>
+  </div>
+</section>
+
+<!-- ── ESTRUTURA ──────────────────────────────────────── -->
+<section id="estrutura">
+  <h2>Estrutura de Arquivos</h2>
+  <div class="tree">
+<span class="dir">crediclass-dashboard-grupos/</span><br>
+├── <span class="dir">backend/</span><br>
+│   ├── <span class="file">main.py</span>          <span class="comment"># FastAPI app, todos os endpoints REST</span><br>
+│   ├── <span class="file">sheets.py</span>        <span class="comment"># Integração Google Sheets + cache JSON</span><br>
+│   ├── <span class="file">piperun.py</span>       <span class="comment"># Client Piperun CRM + parser de nota</span><br>
+│   ├── <span class="file">requirements.txt</span>  <span class="comment"># Dependências Python</span><br>
+│   ├── <span class="file">credentials.json</span>  <span class="comment"># OAuth Google (não commitar)</span><br>
+│   └── <span class="file">token.json</span>        <span class="comment"># Token OAuth renovável (não commitar)</span><br>
+├── <span class="dir">data/</span><br>
+│   └── <span class="file">grupos.json</span>       <span class="comment"># Cache dos grupos (342 grupos)</span><br>
+├── <span class="dir">frontend/</span><br>
+│   ├── <span class="file">index.html</span>        <span class="comment"># SPA única — todo o dashboard</span><br>
+│   └── <span class="dir">js/</span><br>
+│       └── <span class="file">app.js</span>         <span class="comment"># Componente Alpine.js (dashboard())</span><br>
+└── <span class="dir">docs/</span><br>
+    ├── <span class="file">documentacao.html</span> <span class="comment"># Esta página</span><br>
+    ├── <span class="file">ARQUITETURA_TECNICA.md</span><br>
+    └── <span class="file">REGRAS_DE_NEGOCIO.md</span>
+  </div>
+</section>
+
+<!-- ── API ────────────────────────────────────────────── -->
+<section id="api">
+  <h2>API — <code>backend/main.py</code></h2>
+
+  <p>Servidor FastAPI. Serve tanto os endpoints REST quanto os arquivos estáticos do frontend (montados em <code>/static</code>). A rota <code>/</code> retorna o <code>index.html</code>.</p>
+
+  <table>
+    <tr><th>Método</th><th>Rota</th><th>Descrição</th><th>Parâmetros</th></tr>
+    <tr><td><code>GET</code></td><td><code>/</code></td><td>Retorna o index.html do frontend</td><td>—</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/grupos</code></td><td>Lista grupos com filtros opcionais</td><td>adm, tipo_bem, categoria, prazo_restante_min/max, vida_min/max, credito_min, busca</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/grupos/{id}</code></td><td>Detalhe de um grupo específico</td><td>grupo_id (string)</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/stats</code></td><td>Totais, agrupamentos, média de lance</td><td>—</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/piperun/{deal_id}</code></td><td>Busca oportunidade no CRM</td><td>deal_id (string numérico)</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/refresh</code></td><td>Força recarga dos dados da planilha</td><td>—</td></tr>
+  </table>
+
+  <div class="callout">
+    Todos os endpoints de grupos têm fallback gracioso: se as credenciais Google não estiverem configuradas, retornam <code>aviso</code> em vez de erro 500.
+  </div>
+
+  <h3>Resposta de <code>/api/grupos</code></h3>
+  <pre><code>{
+  "total": 342,
+  "grupos": [
+    {
+      "adm": "ITAÚ",
+      "grupo": "4573",
+      "tipo_bem": "Imóvel",
+      "prazo_restante": 180,
+      "vida_grupo_pct": 42.5,
+      "maior_credito": 229396.69,
+      "parcela_inicial": 1890.00,
+      "investidor": 18.2,
+      "conservador_24m": 22.5,
+      "moderado_12m": 30.1,
+      "agressivo_3m": 55.0,
+      "media_lance": 32.4,
+      "historico": [
+        { "mes": "JAN-24", "maior": 45.2, "menor": 28.0, "qtd": 3 }
+      ]
+    }
+  ]
+}</code></pre>
+</section>
+
+<!-- ── SHEETS ─────────────────────────────────────────── -->
+<section id="sheets">
+  <h2>Google Sheets — <code>backend/sheets.py</code></h2>
+
+  <p>Integração com a planilha <strong>"Mapa de Grupos 2.0"</strong> via Google Sheets API v4. Usa OAuth 2.0 com <code>credentials.json</code> e cache automático em <code>data/grupos.json</code>.</p>
+
+  <table>
+    <tr><th>Constante</th><th>Valor</th></tr>
+    <tr><td>SPREADSHEET_ID</td><td><code>1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM</code></td></tr>
+    <tr><td>SHEET_TAB</td><td>Tabela de Grupos 3.0</td></tr>
+    <tr><td>CACHE_FILE</td><td>data/grupos.json</td></tr>
+    <tr><td>CACHE_TTL</td><td>3600 segundos (1 hora)</td></tr>
+  </table>
+
+  <h3>Lógica de cache</h3>
+  <p>A função <code>fetch_grupos(force_refresh=False)</code> verifica se o cache existe e tem menos de 1 hora. Se sim, retorna o JSON do disco. Caso contrário (ou se <code>force_refresh=True</code>), busca a planilha, processa e grava o novo cache.</p>
+
+  <h3>Campos extraídos por grupo (principais)</h3>
+  <table>
+    <tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr>
+    <tr><td>adm</td><td>string</td><td>Administradora (ITAÚ, PORTO, RODOBENS…)</td></tr>
+    <tr><td>grupo</td><td>string</td><td>Número do grupo</td></tr>
+    <tr><td>tipo_bem</td><td>string</td><td>Imóvel / Automóvel</td></tr>
+    <tr><td>prazo_restante</td><td>int</td><td>Meses restantes do grupo</td></tr>
+    <tr><td>vida_grupo_pct</td><td>float</td><td>% de vida consumida do grupo</td></tr>
+    <tr><td>maior_credito</td><td>float</td><td>Maior crédito disponível no grupo (R$)</td></tr>
+    <tr><td>parcela_inicial</td><td>float</td><td>Primeira parcela (R$)</td></tr>
+    <tr><td>investidor</td><td>float</td><td>Lance mínimo perfil Investidor (%)</td></tr>
+    <tr><td>conservador_24m</td><td>float</td><td>Lance mínimo perfil Conservador (%)</td></tr>
+    <tr><td>moderado_12m</td><td>float</td><td>Lance mínimo perfil Moderado (%)</td></tr>
+    <tr><td>agressivo_3m</td><td>float</td><td>Lance mínimo perfil Agressivo (%)</td></tr>
+    <tr><td>media_lance</td><td>float</td><td>Média histórica dos lances (%)</td></tr>
+    <tr><td>historico</td><td>array</td><td>Até 36 meses de lances (maior, menor, qtd)</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <strong>Atenção:</strong> O Excel armazena percentuais como decimais (0.68 = 68%). O parser usa a regra <code>abs(f) &lt;= 2 → f × 100</code> para detectar e converter automaticamente. Créditos e parcelas são armazenados como floats diretos — não manipular como string.
+  </div>
+</section>
+
+<!-- ── PIPERUN ─────────────────────────────────────────── -->
+<section id="piperun">
+  <h2>Piperun CRM — <code>backend/piperun.py</code></h2>
+
+  <p>Responsável por buscar os dados do cliente diretamente no CRM Piperun, a partir do ID da oportunidade.</p>
+
+  <table>
+    <tr><th>Constante</th><th>Valor</th></tr>
+    <tr><td>PIPERUN_BASE</td><td><code>https://api.pipe.run/v1</code></td></tr>
+    <tr><td>PIPERUN_TOKEN</td><td><code>db120d1ef2e5c7dec30e8bacbfd307ae</code></td></tr>
+  </table>
+
+  <h3>Endpoint usado</h3>
+  <pre><code>GET /notes?cursor=""&deal_id={deal_id}
+Headers: { "token": "...", "accept": "application/json" }</code></pre>
+
+  <h3>Lógica de extração</h3>
+  <p>Entre todas as notas da oportunidade, o sistema localiza a que contém <code>"DADOS DO FORMULÁRIO"</code> no texto. A função <code>parse_note_text(html_text)</code> processa essa nota:</p>
+  <ol style="color: var(--muted); padding-left: 20px; line-height: 2;">
+    <li>Remove tags HTML (<code>&lt;br&gt;</code> → newline, remove demais tags)</li>
+    <li>Divide por linha e busca o padrão <code>Label: Valor</code></li>
+    <li>Mapeia labels via <code>FIELD_MAP</code> (≥25 campos)</li>
+    <li>Converte campos numéricos (formato brasileiro: <code>600.000,00</code> → <code>600000.0</code>)</li>
+    <li>Calcula <code>pct_lance_disponivel = lance_maximo / valor_imovel × 100</code></li>
+  </ol>
+
+  <h3>Campos extraídos do formulário</h3>
+  <table>
+    <tr><th>Campo (interno)</th><th>Label no formulário</th><th>Numérico?</th></tr>
+    <tr><td>nome</td><td>Nome Completo</td><td>—</td></tr>
+    <tr><td>email</td><td>Email</td><td>—</td></tr>
+    <tr><td>celular</td><td>Celular</td><td>—</td></tr>
+    <tr><td>cpf</td><td>CPF</td><td>—</td></tr>
+    <tr><td>nascimento</td><td>Data de Nascimento</td><td>—</td></tr>
+    <tr><td>renda_mensal</td><td>Renda Mensal</td><td>✓ → renda_mensal_num</td></tr>
+    <tr><td>valor_imovel</td><td>Qual é o valor do imóvel?</td><td>✓ → valor_imovel_num</td></tr>
+    <tr><td>lance_maximo</td><td>Informe o valor máximo para Entrada / Lance?</td><td>✓ → lance_maximo_num</td></tr>
+    <tr><td>mensalidade_maxima</td><td>Informe o valor máximo para Mensalidade?</td><td>✓ → mensalidade_maxima_num</td></tr>
+    <tr><td>pct_lance_disponivel</td><td><em>calculado</em></td><td>% do lance sobre o imóvel</td></tr>
+    <tr><td>operacao</td><td>Para qual tipo de operação você deseja atendimento?</td><td>—</td></tr>
+    <tr><td>tipo_imovel</td><td>Qual é o tipo de imóvel desejado?</td><td>—</td></tr>
+    <tr><td>prazo_aquisicao</td><td>Pretende adquirir em quanto tempo?</td><td>—</td></tr>
+    <tr><td>metodos_estudo</td><td>Quais métodos você deseja incluir em seu Estudo Financeiro?</td><td>—</td></tr>
+  </table>
+
+  <h3>Resposta de <code>/api/piperun/{deal_id}</code></h3>
+  <pre><code>{
+  "deal_id": "12345",
+  "nota_id": 987654,
+  "criado_em": "2026-05-01T10:30:00",
+  "formulario": {
+    "nome": "João Silva",
+    "valor_imovel": "R$ 350.000,00",
+    "valor_imovel_num": 350000.0,
+    "mensalidade_maxima_num": 2500.0,
+    "lance_maximo_num": 70000.0,
+    "pct_lance_disponivel": 20.0
+  },
+  "todas_notas": [
+    { "id": 987654, "resumo": "DADOS DO FORMULÁRIO...", "criado_em": "..." }
+  ],
+  "aviso": null
+}</code></pre>
+</section>
+
+<!-- ── FRONTEND ───────────────────────────────────────── -->
+<section id="frontend">
+  <h2>Frontend — <code>frontend/index.html</code></h2>
+
+  <p>SPA (Single Page Application) sem build step. Todo o HTML em um único arquivo servido pelo FastAPI.</p>
+
+  <h3>Dependências CDN</h3>
+  <table>
+    <tr><th>Biblioteca</th><th>Versão</th><th>Uso</th></tr>
+    <tr><td>Alpine.js</td><td>3.x</td><td>Reatividade, estado, eventos</td></tr>
+    <tr><td>Tailwind CSS</td><td>Play CDN</td><td>Utilitários de estilo (uso interno)</td></tr>
+    <tr><td>Chart.js</td><td>4.4.3</td><td>Gráfico histórico de lances no modal</td></tr>
+  </table>
+
+  <h3>Estrutura de layout</h3>
+  <table>
+    <tr><th>Área</th><th>Descrição</th></tr>
+    <tr><td>Header</td><td>Logo Crediclass, data atual, indicador de status (online/offline), botão Atualizar</td></tr>
+    <tr><td>Sidebar esquerda (w-72)</td><td>Campo ID Piperun, perfil do cliente, dados do pedido, seção de compatibilidade, grupos selecionados + botão Estudo Financeiro</td></tr>
+    <tr><td>Área principal</td><td>Barra de filtros (busca, adm, tipo_bem, prazo mín/máx, crédito mín), tabela de grupos com paginação</td></tr>
+    <tr><td>Modal de detalhe</td><td>Métricas do grupo, 5 cards de perfil de lance com ✓/✗, gráfico histórico Chart.js</td></tr>
+  </table>
+
+  <h3>Colunas da tabela de grupos</h3>
+  <p>Grupo · ADM · Tipo · Prazo · Vida % · Maior Crédito · Parcela Inicial · Investidor · Conservador · Moderado · Agressivo · Média Lance · <em>Compat.</em> (quando oportunidade ativa)</p>
+</section>
+
+<!-- ── APP.JS ──────────────────────────────────────────── -->
+<section id="appjs">
+  <h2>JavaScript — <code>frontend/js/app.js</code></h2>
+
+  <p>Componente Alpine.js exportado como <code>dashboard()</code>. Toda a lógica do painel está aqui.</p>
+
+  <h3>Estado principal</h3>
+  <table>
+    <tr><th>Propriedade</th><th>Tipo</th><th>Descrição</th></tr>
+    <tr><td>grupos</td><td>Array</td><td>Todos os grupos carregados da API</td></tr>
+    <tr><td>stats</td><td>Object</td><td>Estatísticas gerais (total, por ADM/tipo)</td></tr>
+    <tr><td>oportunidade</td><td>Object|null</td><td>Dados do cliente Piperun</td></tr>
+    <tr><td>filtros</td><td>Object</td><td>busca, adm, tipo_bem, prazo_min/max, credito_min</td></tr>
+    <tr><td>filtrarCompativeis</td><td>boolean</td><td>Toggle do filtro inteligente de compatibilidade</td></tr>
+    <tr><td>sortCol / sortDir</td><td>string</td><td>Coluna e direção de ordenação</td></tr>
+    <tr><td>pagina / porPagina</td><td>int</td><td>Paginação (50 por página)</td></tr>
+    <tr><td>selecionados</td><td>Array (max 5)</td><td>Grupos selecionados para o Estudo Financeiro</td></tr>
+    <tr><td>grupoDetalhe</td><td>Object|null</td><td>Grupo sendo exibido no modal</td></tr>
+  </table>
+
+  <h3>Computed properties</h3>
+  <table>
+    <tr><th>Getter</th><th>Descrição</th></tr>
+    <tr><td>formulario</td><td>Atalho para <code>oportunidade.formulario</code></td></tr>
+    <tr><td>gruposFiltrados</td><td>Aplica todos os filtros ativos + sort. Se <code>filtrarCompativeis</code>, aplica crédito ≥ 90% do valor e parcela ≤ 110% da mensalidade</td></tr>
+    <tr><td>gruposCompativeis</td><td>Lista completa (sem paginação) dos grupos compatíveis com o perfil</td></tr>
+    <tr><td>gruposPaginados</td><td>Fatia paginada de <code>gruposFiltrados</code></td></tr>
+    <tr><td>totalFiltrado / totalPaginas</td><td>Contadores para UI</td></tr>
+  </table>
+
+  <h3>Métodos principais</h3>
+  <table>
+    <tr><th>Método</th><th>Descrição</th></tr>
+    <tr><td>init()</td><td>Carrega stats + grupos em paralelo</td></tr>
+    <tr><td>loadGrupos()</td><td>GET /api/grupos, popula <code>this.grupos</code></td></tr>
+    <tr><td>refresh()</td><td>POST /api/refresh, depois recarrega tudo</td></tr>
+    <tr><td>buscarPiperun()</td><td>GET /api/piperun/{id}, popula <code>oportunidade</code>, auto-ativa filtro se valor preenchido</td></tr>
+    <tr><td>compatibilidade(g)</td><td>Retorna score 0-3 do grupo vs perfil do cliente</td></tr>
+    <tr><td>ordenar(col)</td><td>Toggle asc/desc, reseta página</td></tr>
+    <tr><td>toggleSelecao(g)</td><td>Adiciona/remove grupo da seleção (max 5)</td></tr>
+    <tr><td>abrirDetalhe(g)</td><td>Abre modal + renderiza gráfico histórico</td></tr>
+    <tr><td>renderChart(historico)</td><td>Chart.js: linha Maior Lance (azul) + Menor Lance (verde tracejado)</td></tr>
+    <tr><td>formatCurrency(v)</td><td>Formata como R$ 1.234,56</td></tr>
+    <tr><td>lanceClass(v) / vidaClass(v)</td><td>Retorna classe CSS de cor pelo valor</td></tr>
+  </table>
+</section>
+
+<!-- ── PERFIS ──────────────────────────────────────────── -->
+<section id="perfis-lance">
+  <h2>Regras de Negócio — Perfis de Lance</h2>
+
+  <p>Cada grupo tem 5 indicadores de lance mínimo, correspondendo ao perfil de urgência do cliente. Os nomes das colunas na planilha são mapeados para esses 5 perfis:</p>
+
+  <div class="profiles">
+    <div class="profile-card">
+      <div class="pname" style="color:#ef4444">🔴 Agressivo</div>
+      <div class="pdetail">Urgência: 1–3 meses<br>Lance médio: ≥ 50%<br>Campo: <code>agressivo_3m</code></div>
+    </div>
+    <div class="profile-card">
+      <div class="pname" style="color:#f97316">🟠 Moderado</div>
+      <div class="pdetail">Urgência: 4–6 meses<br>Lance médio: 40–50%<br>Campo: <code>moderado_12m</code></div>
+    </div>
+    <div class="profile-card">
+      <div class="pname" style="color:#f59e0b">🟡 Conservador</div>
+      <div class="pdetail">Urgência: 7–12 meses<br>Lance médio: 30–40%<br>Campo: <code>conservador_24m</code></div>
+    </div>
+    <div class="profile-card">
+      <div class="pname" style="color:#3b82f6">🔵 Super Conservador</div>
+      <div class="pdetail">Urgência: 13–24 meses<br>Lance médio: 20–30%<br>Campo: não exibido separadamente</div>
+    </div>
+    <div class="profile-card">
+      <div class="pname" style="color:#10b981">🟢 Investidor</div>
+      <div class="pdetail">Urgência: sem pressa<br>Lance médio: 0–20%<br>Campo: <code>investidor</code></div>
+    </div>
+  </div>
+
+  <div class="callout">
+    No modal de detalhe do grupo, cada perfil exibe ✓ (compatível) ou ✗ (incompatível) com base no <code>pct_lance_disponivel</code> do cliente.
+  </div>
+</section>
+
+<!-- ── COMPATIBILIDADE ────────────────────────────────── -->
+<section id="compatibilidade">
+  <h2>Regras de Negócio — Score de Compatibilidade</h2>
+
+  <p>A função <code>compatibilidade(g)</code> retorna um score de <strong>0 a 3</strong> pontos, avaliando três critérios independentes:</p>
+
+  <table>
+    <tr><th>Critério</th><th>Condição</th><th>Pontos</th></tr>
+    <tr>
+      <td><strong>Cobertura de crédito</strong></td>
+      <td><code>grupo.maior_credito ≥ valor_imovel × 0.9</code></td>
+      <td>+1</td>
+    </tr>
+    <tr>
+      <td><strong>Orçamento mensal</strong></td>
+      <td><code>grupo.parcela_inicial ≤ mensalidade_maxima × 1.1</code></td>
+      <td>+1</td>
+    </tr>
+    <tr>
+      <td><strong>Lance disponível</strong></td>
+      <td><code>pct_lance_disponivel ≥ melhor_perfil_lance_do_grupo</code></td>
+      <td>+1</td>
+    </tr>
+  </table>
+
+  <h3>Lógica do critério de lance</h3>
+  <p>O "melhor perfil" é o menor lance exigido entre os perfis disponíveis no grupo, na ordem: <code>investidor → conservador_24m → moderado_12m</code>. Ou seja, se o grupo tem uma opção com lance baixo (Investidor), e o cliente tem esse lance disponível, o critério é satisfeito.</p>
+
+  <h3>Filtro inteligente (<code>filtrarCompativeis</code>)</h3>
+  <p>O toggle "Mostrar apenas compatíveis" aplica dois filtros simultâneos na lista de grupos:</p>
+  <ul style="color: var(--muted); padding-left: 20px; line-height: 2;">
+    <li>Crédito cobre pelo menos 90% do valor do imóvel</li>
+    <li>Parcela inicial não ultrapassa 110% da mensalidade máxima declarada</li>
+  </ul>
+  <p>Este filtro é ativado automaticamente ao buscar uma oportunidade Piperun que contenha o campo <code>valor_imovel_num</code>.</p>
+</section>
+
+<!-- ── FORMULAS ───────────────────────────────────────── -->
+<section id="formulas">
+  <h2>Regras de Negócio — Fórmulas (f)(g)(h)</h2>
+
+  <p>Fórmulas utilizadas na análise de viabilidade e no Estudo Financeiro. Aplicadas por grupo + perfil de lance.</p>
+
+  <div class="formula">
+    <span class="label">(f) Crédito a contratar</span>
+    crédito = valor_imovel / (1 - pct_lance_embutido)
+    <br><br>
+    Onde pct_lance_embutido varia por ADM (ver tabela Lance Embutido).
+    <br>Objetivo: dimensionar o crédito real necessário considerando que parte do lance sai do próprio crédito.
+  </div>
+
+  <div class="formula">
+    <span class="label">(g) Lance máximo %</span>
+    pct_lance_maximo = (lance_recursos_proprios + lance_embutido) / credito × 100
+    <br><br>
+    lance_embutido = credito × pct_embutido_adm
+    <br>pct_lance_maximo indica qual perfil de lance é acessível para o cliente neste grupo.
+  </div>
+
+  <div class="formula">
+    <span class="label">(h) Prazo mínimo de contemplação</span>
+    Com base em pct_lance_maximo, consultar na coluna do grupo qual perfil é atingido:
+    <br>  ≥ agressivo_3m  → contemplação em 1-3 meses
+    <br>  ≥ moderado_12m  → contemplação em 4-6 meses
+    <br>  ≥ conservador_24m → contemplação em 7-12 meses
+    <br>  ≥ investidor    → contemplação em 13-24 meses
+    <br>  &lt; investidor   → apenas sorteio (prazo indefinido)
+  </div>
+</section>
+
+<!-- ── PARCELA ─────────────────────────────────────────── -->
+<section id="parcela">
+  <h2>Regras de Negócio — Regra da Parcela (30% da Renda)</h2>
+
+  <p>A parcela do consórcio não deve ultrapassar <strong>30% da renda mensal familiar</strong> do cliente.</p>
+
+  <div class="formula">
+    <span class="label">Parcela máxima permitida</span>
+    parcela_maxima = renda_mensal_num × 0.30
+  </div>
+
+  <p>No dashboard, quando a parcela inicial do grupo supera 30% da renda declarada pelo cliente:</p>
+  <ul style="color: var(--muted); padding-left: 20px; line-height: 2;">
+    <li>A célula da parcela é exibida em <strong style="color: var(--red)">vermelho</strong> no modal de detalhe</li>
+    <li>O critério de orçamento mensal usa <code>mensalidade_maxima</code> (campo do formulário), não a regra dos 30% — pois o cliente pode ter declarado um orçamento diferente</li>
+  </ul>
+
+  <div class="callout warn">
+    Versão futura: alertar visualmente na tabela principal quando a parcela ultrapassa 30% da renda.
+  </div>
+</section>
+
+<!-- ── LANCE EMBUTIDO ─────────────────────────────────── -->
+<section id="lance-embutido">
+  <h2>Regras de Negócio — Lance Embutido</h2>
+
+  <p>O <strong>lance embutido</strong> permite usar parte do próprio crédito para pagar o lance, reduzindo a necessidade de recursos próprios.</p>
+
+  <table>
+    <tr><th>Administradora</th><th>% Embutido permitido</th><th>Observação</th></tr>
+    <tr><td>ITAÚ</td><td>30%</td><td>—</td></tr>
+    <tr><td>CNP</td><td>50%</td><td>—</td></tr>
+    <tr><td>CAOA</td><td>30%</td><td>—</td></tr>
+    <tr><td>PORTO</td><td>30%</td><td>—</td></tr>
+    <tr><td>EMBRACON</td><td>25%</td><td>—</td></tr>
+    <tr><td>RODOBENS</td><td>0%</td><td>Verificar com ADM</td></tr>
+    <tr><td>CAIXA</td><td>0%</td><td>Verificar com ADM</td></tr>
+  </table>
+
+  <div class="callout">
+    O lance embutido afeta diretamente o cálculo do crédito a contratar pela fórmula (f) e o percentual máximo de lance pela fórmula (g).
+  </div>
+</section>
+
+<!-- ── DADOS GRUPOS ───────────────────────────────────── -->
+<section id="dados-grupos">
+  <h2>Dados dos Grupos — Estatísticas Atuais</h2>
+
+  <p>Base de dados: <code>data/grupos.json</code> — última atualização via planilha Google Sheets.</p>
+
+  <table>
+    <tr><th>ADM</th><th>Grupos</th><th>Tipo predominante</th></tr>
+    <tr><td>ITAÚ</td><td>132</td><td>Imóvel</td></tr>
+    <tr><td>PORTO</td><td>107</td><td>Imóvel</td></tr>
+    <tr><td>RODOBENS</td><td>36</td><td>Imóvel</td></tr>
+    <tr><td>AUTO-ITAÚ</td><td>28</td><td>Automóvel</td></tr>
+    <tr><td>CAIXA</td><td>22</td><td>Imóvel</td></tr>
+    <tr><td>CAOA</td><td>~11</td><td>Imóvel/Auto</td></tr>
+    <tr><td>CANOPUS</td><td>3</td><td>Imóvel</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>342</strong></td><td>—</td></tr>
+  </table>
+
+  <p>O histórico de cada grupo cobre até <strong>36 meses</strong> (JAN-24 a DEZ-26), com 3 campos por mês: maior lance, menor lance, quantidade de contemplações.</p>
+</section>
+
+<!-- ── INSTALACAO ─────────────────────────────────────── -->
+<section id="instalacao">
+  <h2>Instalação e Execução</h2>
+
+  <h3>Requisitos</h3>
+  <ul style="color: var(--muted); padding-left: 20px; line-height: 2;">
+    <li>Python 3.10+</li>
+    <li>Arquivo <code>credentials.json</code> do Google Cloud Console (OAuth 2.0) em <code>backend/</code></li>
+  </ul>
+
+  <h3>Setup inicial</h3>
+  <pre><code>cd C:\Users\User\crediclass-dashboard-grupos\backend
+
+# Criar e ativar ambiente virtual
+python -m venv venv
+venv\Scripts\activate
+
+# Instalar dependências
+pip install -r requirements.txt
+
+# Iniciar servidor
+python main.py
+# Acesse: http://localhost:8000</code></pre>
+
+  <h3>Primeira execução (Google OAuth)</h3>
+  <p>Na primeira vez, o sistema abrirá o navegador para autenticação Google. Depois de autorizar, o <code>token.json</code> é gerado e reutilizado automaticamente.</p>
+
+  <div class="callout warn">
+    <strong>Alternativa sem OAuth:</strong> Se não houver <code>credentials.json</code>, popular o arquivo <code>data/grupos.json</code> manualmente (via script Python com openpyxl + XLSX da planilha). O sistema usa o cache e não precisa da API Google.
+  </div>
+</section>
+
+<!-- ── DADOS ───────────────────────────────────────────── -->
+<section id="dados">
+  <h2>Atualizar Dados dos Grupos</h2>
+
+  <h3>Via painel (automático)</h3>
+  <p>Clique no botão <strong>Atualizar</strong> no header do dashboard. O endpoint <code>POST /api/refresh</code> força a recarga da planilha, invalida o cache e grava o novo <code>grupos.json</code>.</p>
+
+  <h3>Via planilha XLSX (manual)</h3>
+  <p>Se a API Google não estiver configurada, fazer o download da planilha como XLSX e processar com o script:</p>
+  <pre><code>cd backend
+python processar_xlsx.py  # (se disponível)
+# Ou reimportar via MCP Google Drive</code></pre>
+</section>
+
+<!-- ── ROADMAP ─────────────────────────────────────────── -->
+<section id="roadmap">
+  <h2>Próximas Funcionalidades (Roadmap)</h2>
+
+  <table>
+    <tr><th>Feature</th><th>Prioridade</th><th>Descrição</th></tr>
+    <tr>
+      <td>Calculadora completa no sidebar</td>
+      <td><span class="badge red">Alta</span></td>
+      <td>Campos FGTS, prazo de urgência, nascimento, classificação automática Agressivo/Moderado/Conservador, cálculo parcela 30% renda</td>
+    </tr>
+    <tr>
+      <td>Gerador de Estudo Financeiro</td>
+      <td><span class="badge red">Alta</span></td>
+      <td>Gerar PDF/HTML com 4 estratégias por grupo selecionado (Sorteio, Lance Fixo, Conservador, Moderado) — no modelo EF Crediclass</td>
+    </tr>
+    <tr>
+      <td>Filtro por prazo mínimo (h)</td>
+      <td><span class="badge yellow">Média</span></td>
+      <td>Filtrar grupos pelo prazo de contemplação estimado com base no lance disponível do cliente</td>
+    </tr>
+    <tr>
+      <td>Alerta de renda (30%)</td>
+      <td><span class="badge yellow">Média</span></td>
+      <td>Destacar em vermelho grupos cuja parcela ultrapassa 30% da renda declarada</td>
+    </tr>
+    <tr>
+      <td>Classificação automática por histórico</td>
+      <td><span class="badge">Normal</span></td>
+      <td>Classificar grupos como Agressivo/Moderado/Conservador com base na média histórica dos lances</td>
+    </tr>
+    <tr>
+      <td>Simulação com lance embutido</td>
+      <td><span class="badge">Normal</span></td>
+      <td>Aplicar fórmulas (f)(g)(h) automaticamente por ADM, exibindo crédito real a contratar</td>
+    </tr>
+    <tr>
+      <td>Export para PDF</td>
+      <td><span class="badge">Normal</span></td>
+      <td>Exportar o Estudo Financeiro no formato visual da Crediclass</td>
+    </tr>
+  </table>
+</section>
+
+<div style="margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--border); font-size: 12px;">
+  Crediclass Dashboard v1.0 &mdash; Documentação gerada em 06/05/2026
+</div>
+
+</main>
+</div>
+
+<script>
+  // Highlight active nav item on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 60) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+</script>
+</body>
+</html>

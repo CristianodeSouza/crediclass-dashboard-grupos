@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crediclass — Estudo Financeiro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: '#2563eb', 600: '#1d4ed8', 400: '#60a5fa' }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body class="bg-slate-950 text-slate-200 h-screen overflow-hidden flex flex-col" x-data="dashboard()" x-init="init()">
+
+<!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+<header class="flex-none bg-slate-900 border-b border-slate-800 px-5 h-14 flex items-center justify-between z-20">
+  <div class="flex items-center gap-3">
+    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white text-sm select-none">C</div>
+    <div>
+      <span class="font-semibold text-white text-sm">Crediclass</span>
+      <span class="text-slate-500 text-xs ml-2">Estudo Financeiro de Consórcio</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="text-xs text-slate-500" x-text="dataHoje"></span>
+    <div class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs"
+      :class="grupos.length > 0 ? 'bg-emerald-900/40 text-emerald-400' : 'bg-slate-800 text-slate-500'">
+      <span class="w-1.5 h-1.5 rounded-full" :class="grupos.length > 0 ? 'bg-emerald-400' : 'bg-slate-600'"></span>
+      <span x-text="grupos.length > 0 ? grupos.length + ' grupos' : 'Sem dados'"></span>
+    </div>
+    <button @click="refresh()" :disabled="loading"
+      class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 border border-slate-700 rounded-md text-xs transition">
+      <span x-show="!loading">↻ Atualizar</span>
+      <span x-show="loading" class="animate-pulse">Carregando...</span>
+    </button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ ABAS ═════════════════════════════════ -->
+<nav class="flex-none bg-slate-900 border-b border-slate-800 px-5 h-11 flex items-center gap-1 overflow-x-auto z-10">
+  <button
+    @click="abaAtiva = 'mapa'"
+    :class="abaAtiva === 'mapa' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
+    class="px-3 py-2.5 text-sm font-medium transition whitespace-nowrap">
+    📊 Mapa de Grupos
+  </button>
+  <button
+    @click="abaAtiva = 'calculadora'"
+    :class="abaAtiva === 'calculadora' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
+    class="px-3 py-2.5 text-sm font-medium transition whitespace-nowrap">
+    🧮 Calculadora Imóvel
+  </button>
+</nav>
+
+<!-- ═══════════════════════════════ BODY ════════════════════════════════ -->
+<div class="flex flex-1 min-h-0">
+
+  <!-- ════════════════════ ABA: MAPA DE GRUPOS ════════════════════ -->
+  <template x-if="abaAtiva === 'mapa'">
+    <div class="flex flex-1 min-h-0 min-w-0">
+
+  <!-- ─────────────────── SIDEBAR ESQUERDA ─────────────────── -->
+  <aside class="flex-none w-72 bg-slate-900 border-r border-slate-800 overflow-y-auto flex flex-col">
+
+    <!-- Buscar Oportunidade -->
+    <div class="p-4 border-b border-slate-800">
+      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Oportunidade CRM</p>
+      <div class="flex gap-2">
+        <input
+          x-model="piperunId"
+          @keydown.enter="buscarPiperun()"
+          placeholder="ID da oportunidade"
+          class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+        />
+        <button @click="buscarPiperun()" :disabled="piperunLoading || !piperunId.trim()"
+          class="px-3 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded-lg text-sm font-medium transition whitespace-nowrap">
+          <span x-show="!piperunLoading">Buscar</span>
+          <span x-show="piperunLoading" class="animate-pulse">...</span>
+        </button>
+      </div>
+      <div x-show="piperunError" class="mt-2 p-2 bg-red-900/30 border border-red-800/50 rounded-lg text-xs text-red-400" x-text="piperunError"></div>
+    </div>
+
+    <!-- Perfil do Cliente -->
+    <template x-if="oportunidade && formulario.nome">
+      <div class="border-b border-slate-800">
+
+        <!-- Avatar + Nome -->
+        <div class="p-4 pb-3">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-base flex-none"
+              x-text="(formulario.nome || '?').charAt(0).toUpperCase()"></div>
+            <div class="min-w-0">
+              <p class="font-semibold text-white text-sm truncate" x-text="formulario.nome"></p>
+              <p class="text-xs text-slate-500" x-text="formulario.titularidade || 'Pessoa Física'"></p>
+            </div>
+          </div>
+
+          <!-- Info grid -->
+          <div class="space-y-1.5">
+            <template x-if="formulario.email">
+              <div class="flex items-start gap-2 text-xs">
+                <span class="text-slate-500 w-4 mt-0.5 flex-none">✉</span>
+                <span class="text-slate-300 break-all" x-text="formulario.email"></span>
+              </div>
+            </template>
+            <template x-if="formulario.celular">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-slate-500 w-4 flex-none">☎</span>
+                <span class="text-slate-300" x-text="formulario.celular"></span>
+              </div>
+            </template>
+            <template x-if="formulario.cpf">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-slate-500 w-4 flex-none">ID</span>
+                <span class="text-slate-400 font-mono" x-text="formulario.cpf"></span>
+              </div>
+            </template>
+            <template x-if="formulario.nascimento">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-slate-500 w-4 flex-none">🎂</span>
+                <span class="text-slate-400" x-text="formulario.nascimento + (formulario.estado_civil ? ' · ' + formulario.estado_civil : '')"></span>
+              </div>
+            </template>
+            <template x-if="formulario.profissao">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-slate-500 w-4 flex-none">💼</span>
+                <span class="text-slate-400" x-text="formulario.profissao"></span>
+              </div>
+            </template>
+          </div>
+
+          <!-- Renda -->
+          <template x-if="formulario.renda_mensal_num">
+            <div class="mt-3 px-3 py-2 bg-emerald-900/20 border border-emerald-800/40 rounded-lg">
+              <p class="text-xs text-emerald-600">Renda Mensal</p>
+              <p class="text-sm font-semibold text-emerald-400" x-text="formatCurrency(formulario.renda_mensal_num)"></p>
+            </div>
+          </template>
+        </div>
+
+        <!-- Pedido -->
+        <div class="px-4 pb-4 space-y-3">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pedido</p>
+
+          <template x-if="formulario.operacao">
+            <span class="inline-flex px-2 py-0.5 bg-blue-900/40 border border-blue-700/40 rounded-full text-xs text-blue-400" x-text="formulario.operacao"></span>
+          </template>
+
+          <!-- Valor do Imóvel -->
+          <template x-if="formulario.valor_imovel_num">
+            <div class="bg-slate-800/60 rounded-xl p-3">
+              <p class="text-xs text-slate-500">Valor do Imóvel</p>
+              <p class="text-xl font-bold text-white mt-0.5" x-text="formatCurrency(formulario.valor_imovel_num)"></p>
+              <template x-if="formulario.tipo_imovel">
+                <p class="text-xs text-slate-500 mt-0.5" x-text="(formulario.tipo_imovel_condicao || '') + (formulario.tipo_imovel ? ' · ' + formulario.tipo_imovel : '')"></p>
+              </template>
+            </div>
+          </template>
+
+          <!-- Lance e Mensalidade -->
+          <div class="grid grid-cols-2 gap-2">
+            <template x-if="formulario.lance_maximo_num">
+              <div class="bg-slate-800/60 rounded-lg p-2.5">
+                <p class="text-xs text-slate-500">Lance Máx.</p>
+                <p class="text-sm font-semibold text-amber-400 mt-0.5" x-text="formatCurrency(formulario.lance_maximo_num)"></p>
+                <template x-if="formulario.pct_lance_disponivel">
+                  <p class="text-xs text-amber-600 font-mono" x-text="formulario.pct_lance_disponivel + '%'"></p>
+                </template>
+              </div>
+            </template>
+            <template x-if="formulario.mensalidade_maxima_num">
+              <div class="bg-slate-800/60 rounded-lg p-2.5">
+                <p class="text-xs text-slate-500">Mensalidade</p>
+                <p class="text-sm font-semibold text-purple-400 mt-0.5" x-text="formatCurrency(formulario.mensalidade_maxima_num)"></p>
+                <p class="text-xs text-slate-600">máxima/mês</p>
+              </div>
+            </template>
+          </div>
+
+          <template x-if="formulario.prazo_aquisicao">
+            <div class="flex items-center gap-2 text-xs">
+              <span class="text-slate-500">⏱</span>
+              <span class="text-slate-400" x-text="'Prazo: ' + formulario.prazo_aquisicao"></span>
+            </div>
+          </template>
+        </div>
+
+        <!-- Compatibilidade automática -->
+        <div class="px-4 pb-4 border-t border-slate-800 pt-3">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Compatibilidade</p>
+            <span class="text-xs font-bold text-blue-400" x-text="gruposCompativeis.length + ' grupos'"></span>
+          </div>
+
+          <!-- Lance % bar -->
+          <template x-if="formulario.pct_lance_disponivel">
+            <div class="mb-3">
+              <div class="flex justify-between text-xs text-slate-500 mb-1">
+                <span>Lance disponível</span>
+                <span class="text-amber-400 font-mono" x-text="formulario.pct_lance_disponivel + '%'"></span>
+              </div>
+              <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                <div class="h-full bg-amber-500 rounded-full transition-all"
+                  :style="'width: ' + Math.min(formulario.pct_lance_disponivel, 100) + '%'"></div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Filtro inteligente toggle -->
+          <label class="flex items-center gap-2.5 cursor-pointer group">
+            <div class="relative">
+              <input type="checkbox" x-model="filtrarCompativeis" @change="pagina=1" class="sr-only" />
+              <div class="w-9 h-5 rounded-full transition-colors" :class="filtrarCompativeis ? 'bg-blue-600' : 'bg-slate-700'"></div>
+              <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
+                :class="filtrarCompativeis ? 'translate-x-4' : ''"></div>
+            </div>
+            <span class="text-xs text-slate-400 group-hover:text-slate-300 transition" x-text="filtrarCompativeis ? 'Mostrando compatíveis' : 'Filtrar compatíveis'"></span>
+          </label>
+        </div>
+      </div>
+    </template>
+
+    <!-- Estado vazio (sem oportunidade) -->
+    <template x-if="!oportunidade">
+      <div class="flex-1 flex flex-col items-center justify-center p-6 text-center opacity-40">
+        <div class="text-4xl mb-3">🔍</div>
+        <p class="text-sm text-slate-400">Digite o ID da oportunidade no CRM Piperun para carregar o perfil do cliente</p>
+      </div>
+    </template>
+
+    <!-- Grupos Selecionados (sidebar bottom) -->
+    <template x-if="selecionados.length > 0">
+      <div class="flex-none border-t border-slate-700 bg-slate-900 p-3 space-y-2">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Selecionados</p>
+          <button @click="selecionados = []" class="text-xs text-slate-600 hover:text-slate-400 transition">Limpar</button>
+        </div>
+        <template x-for="g in selecionados" :key="g.grupo">
+          <div class="flex items-center justify-between bg-slate-800 rounded-lg px-2.5 py-2">
+            <div>
+              <p class="text-xs font-medium text-white">Grp <span x-text="g.grupo"></span></p>
+              <p class="text-xs text-slate-500" x-text="g.adm + ' · ' + formatCurrency(g.maior_credito)"></p>
+            </div>
+            <button @click="toggleSelecao(g)" class="text-slate-600 hover:text-red-400 transition text-base leading-none">×</button>
+          </div>
+        </template>
+        <button class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold text-white transition">
+          Gerar Estudo Financeiro
+        </button>
+      </div>
+    </template>
+
+  </aside>
+
+  <!-- ─────────────────── ÁREA PRINCIPAL ─────────────────── -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+    <!-- Filtros -->
+    <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3">
+      <div class="flex flex-wrap gap-2 items-center">
+        <input
+          x-model="filtros.busca" @input.debounce.300ms="pagina=1"
+          placeholder="Buscar grupo..."
+          class="w-40 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+        />
+        <select x-model="filtros.adm" @change="pagina=1"
+          class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+          <option value="">Todas as Adm.</option>
+          <template x-for="a in stats.administradoras || []" :key="a">
+            <option :value="a" x-text="a"></option>
+          </template>
+        </select>
+        <select x-model="filtros.tipo_bem" @change="pagina=1"
+          class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+          <option value="">Todos os Tipos</option>
+          <template x-for="t in stats.tipos_bem || []" :key="t">
+            <option :value="t" x-text="t"></option>
+          </template>
+        </select>
+        <div class="flex items-center gap-1">
+          <input x-model="filtros.prazo_min" @input.debounce.400ms="pagina=1" type="number" placeholder="Prazo min"
+            class="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+          <span class="text-slate-600 text-xs">–</span>
+          <input x-model="filtros.prazo_max" @input.debounce.400ms="pagina=1" type="number" placeholder="Prazo max"
+            class="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+        </div>
+        <input x-model="filtros.credito_min" @input.debounce.400ms="pagina=1" type="number" placeholder="Crédito mín (R$)"
+          class="w-36 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+
+        <div class="ml-auto flex items-center gap-3 text-xs text-slate-500">
+          <span>Exibindo <strong class="text-slate-300" x-text="gruposFiltrados.length"></strong> de <strong class="text-slate-300" x-text="grupos.length"></strong></span>
+          <template x-if="selecionados.length > 0">
+            <span class="text-blue-400 font-medium" x-text="selecionados.length + ' selecionados'"></span>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="flex-1 overflow-auto">
+      <table class="w-full text-xs border-collapse">
+        <thead class="sticky top-0 z-10 bg-slate-900">
+          <tr class="border-b border-slate-800 text-slate-500 uppercase tracking-wider">
+            <th class="w-8 px-3 py-3 text-left"></th>
+            <th class="px-3 py-3 text-left cursor-pointer hover:text-slate-300 whitespace-nowrap" @click="ordenar('adm')">Adm <span x-text="sortIcon('adm')"></span></th>
+            <th class="px-3 py-3 text-left cursor-pointer hover:text-slate-300 whitespace-nowrap" @click="ordenar('grupo')">Grupo <span x-text="sortIcon('grupo')"></span></th>
+            <th class="px-3 py-3 text-left">Tipo</th>
+            <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-300 whitespace-nowrap" @click="ordenar('maior_credito')">Crédito Máx. <span x-text="sortIcon('maior_credito')"></span></th>
+            <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-300 whitespace-nowrap" @click="ordenar('parcela_inicial')">Parcela <span x-text="sortIcon('parcela_inicial')"></span></th>
+            <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-300 whitespace-nowrap" @click="ordenar('prazo_restante')">Prazo Rest. <span x-text="sortIcon('prazo_restante')"></span></th>
+            <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-300 whitespace-nowrap" @click="ordenar('vida_grupo_pct')">% Vida <span x-text="sortIcon('vida_grupo_pct')"></span></th>
+            <th class="px-3 py-3 text-right cursor-pointer hover:text-slate-300 whitespace-nowrap" @click="ordenar('media_lance')">Média Lance <span x-text="sortIcon('media_lance')"></span></th>
+            <th class="px-3 py-3 text-right whitespace-nowrap">Investidor</th>
+            <th class="px-3 py-3 text-right whitespace-nowrap">Conserv. 24m</th>
+            <th class="px-3 py-3 text-right whitespace-nowrap">Moderado 12m</th>
+            <th class="px-3 py-3 text-right whitespace-nowrap">Agressivo 6m</th>
+            <th class="px-3 py-3 text-right whitespace-nowrap">S. Agress. 3m</th>
+            <template x-if="oportunidade">
+              <th class="px-3 py-3 text-center whitespace-nowrap">Compat.</th>
+            </template>
+            <th class="px-3 py-3 text-center">Ver</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Loading -->
+          <template x-if="loading && grupos.length === 0">
+            <tr><td colspan="20" class="text-center py-16 text-slate-500">
+              <div class="animate-pulse">Carregando grupos...</div>
+            </td></tr>
+          </template>
+
+          <!-- Sem dados -->
+          <template x-if="!loading && grupos.length === 0">
+            <tr><td colspan="20" class="text-center py-16 text-slate-500">
+              <div class="text-3xl mb-2">📊</div>
+              <p>Nenhum grupo carregado.</p>
+              <p class="text-xs mt-1">Configure as credenciais Google e execute <code class="bg-slate-800 px-1 rounded">python setup_google.py</code></p>
+            </td></tr>
+          </template>
+
+          <!-- Sem resultado no filtro -->
+          <template x-if="!loading && grupos.length > 0 && gruposFiltrados.length === 0">
+            <tr><td colspan="20" class="text-center py-12 text-slate-500">Nenhum grupo corresponde aos filtros aplicados.</td></tr>
+          </template>
+
+          <!-- Linhas -->
+          <template x-for="(g, i) in gruposPaginados" :key="g.grupo + '-' + g.adm">
+            <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition cursor-pointer"
+              :class="isSelecionado(g) ? 'bg-blue-950/30 border-blue-900/40' : ''"
+              @click="abrirDetalhe(g)">
+
+              <!-- Checkbox selecionar -->
+              <td class="px-3 py-2.5" @click.stop>
+                <input type="checkbox" :checked="isSelecionado(g)" @change="toggleSelecao(g)"
+                  class="w-3.5 h-3.5 accent-blue-500 cursor-pointer" />
+              </td>
+
+              <td class="px-3 py-2.5 font-medium text-blue-400 whitespace-nowrap" x-text="g.adm"></td>
+              <td class="px-3 py-2.5 font-mono text-white" x-text="g.grupo"></td>
+              <td class="px-3 py-2.5">
+                <span class="px-1.5 py-0.5 rounded-full text-xs"
+                  :class="g.tipo_bem === 'Imóvel' ? 'bg-emerald-900/40 text-emerald-400' : 'bg-amber-900/40 text-amber-400'"
+                  x-text="g.tipo_bem"></span>
+              </td>
+
+              <!-- Crédito Máx -->
+              <td class="px-3 py-2.5 text-right font-medium text-slate-200 whitespace-nowrap"
+                x-text="g.maior_credito ? 'R$ ' + (g.maior_credito/1000).toFixed(0) + 'k' : '—'"></td>
+
+              <!-- Parcela -->
+              <td class="px-3 py-2.5 text-right whitespace-nowrap"
+                :class="oportunidade && formulario.mensalidade_maxima_num && g.parcela_inicial && g.parcela_inicial <= formulario.mensalidade_maxima_num * 1.1 ? 'text-emerald-400' : 'text-slate-400'"
+                x-text="formatCurrency(g.parcela_inicial)"></td>
+
+              <!-- Prazo Restante -->
+              <td class="px-3 py-2.5 text-right text-slate-400" x-text="g.prazo_restante ? g.prazo_restante + 'm' : '—'"></td>
+
+              <!-- % Vida -->
+              <td class="px-3 py-2.5 text-right">
+                <span :class="vidaClass(g.vida_grupo_pct)" x-text="g.vida_grupo_pct ? g.vida_grupo_pct + '%' : '—'"></span>
+              </td>
+
+              <!-- Média Lance -->
+              <td class="px-3 py-2.5 text-right font-medium">
+                <span :class="lanceClass(g.media_lance)" x-text="g.media_lance ? g.media_lance.toFixed(1) + '%' : '—'"></span>
+              </td>
+
+              <!-- Perfis de lance -->
+              <td class="px-3 py-2.5 text-right text-purple-400" x-text="formatPct(g.investidor)"></td>
+              <td class="px-3 py-2.5 text-right text-blue-400" x-text="formatPct(g.conservador_24m)"></td>
+              <td class="px-3 py-2.5 text-right text-cyan-400" x-text="formatPct(g.moderado_12m)"></td>
+              <td class="px-3 py-2.5 text-right text-orange-400" x-text="formatPct(g.agressivo_6m)"></td>
+              <td class="px-3 py-2.5 text-right text-red-400" x-text="formatPct(g.super_agressivo_3m)"></td>
+
+              <!-- Compatibilidade (só quando há cliente carregado) -->
+              <template x-if="oportunidade">
+                <td class="px-3 py-2.5 text-center" @click.stop>
+                  <template x-if="compatibilidade(g) !== null">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium"
+                      :class="{
+                        'bg-emerald-900/40 text-emerald-400': compatibilidade(g) >= 3,
+                        'bg-yellow-900/40 text-yellow-400': compatibilidade(g) === 2,
+                        'bg-orange-900/40 text-orange-400': compatibilidade(g) === 1,
+                        'bg-red-900/40 text-red-400': compatibilidade(g) === 0
+                      }"
+                      x-text="['Baixo','Parcial','Bom','Ótimo'][compatibilidade(g)]">
+                    </span>
+                  </template>
+                </td>
+              </template>
+
+              <!-- Ver detalhe -->
+              <td class="px-3 py-2.5 text-center" @click.stop>
+                <button @click="abrirDetalhe(g)"
+                  class="px-2 py-0.5 border border-slate-700 hover:border-blue-600 text-slate-400 hover:text-blue-400 rounded text-xs transition">
+                  ▸ Ver
+                </button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginação -->
+    <div class="flex-none bg-slate-900/80 backdrop-blur border-t border-slate-800 px-4 py-2.5 flex items-center justify-between text-xs text-slate-500">
+      <span x-text="`Página ${pagina} de ${totalPaginas} · ${gruposFiltrados.length} grupos`"></span>
+      <div class="flex items-center gap-1">
+        <button @click="pagina = 1" :disabled="pagina === 1"
+          class="px-2 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded transition">«</button>
+        <button @click="pagina = Math.max(1, pagina-1)" :disabled="pagina === 1"
+          class="px-2 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded transition">‹ Ant.</button>
+        <span class="px-3 py-1 bg-slate-800 rounded" x-text="pagina"></span>
+        <button @click="pagina = Math.min(totalPaginas, pagina+1)" :disabled="pagina >= totalPaginas"
+          class="px-2 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded transition">Próx. ›</button>
+        <button @click="pagina = totalPaginas" :disabled="pagina >= totalPaginas"
+          class="px-2 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded transition">»</button>
+      </div>
+    </div>
+
+  </main>
+    </div>
+  </template>
+
+  <!-- ════════════════════ ABA: CALCULADORA IMÓVEL ════════════════════ -->
+  <template x-if="abaAtiva === 'calculadora'">
+    <div class="flex flex-1 min-h-0 min-w-0">
+
+      <!-- ─────────────────── SIDEBAR ESQUERDA: FORMULÁRIO ─────────────────── -->
+      <aside class="flex-none w-80 bg-slate-900 border-r border-slate-800 overflow-y-auto flex flex-col">
+
+        <!-- Título da seção -->
+        <div class="p-4 border-b border-slate-800">
+          <h2 class="text-sm font-bold text-white mb-1">1. Dados do Cliente</h2>
+          <p class="text-xs text-slate-500">Preencha as informações de entrada</p>
+        </div>
+
+        <!-- SEÇÃO 1: DADOS DO CLIENTE -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+
+          <!-- Buscar Oportunidade (Piperun) -->
+          <div class="bg-blue-900/20 border border-blue-800 rounded-lg p-3 space-y-2">
+            <label class="text-xs font-semibold text-blue-400 uppercase tracking-wider">📋 Buscar Oportunidade</label>
+            <div class="flex gap-2">
+              <input
+                x-model="piperunId"
+                type="text"
+                placeholder="ID da oportunidade"
+                class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              />
+              <button
+                @click="buscarOportunidade()"
+                :disabled="piperunLoading || !piperunId"
+                class="px-3 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded-lg text-xs font-semibold transition"
+              >
+                <span x-show="!piperunLoading">🔍</span>
+                <span x-show="piperunLoading" class="animate-pulse">...</span>
+              </button>
+            </div>
+            <div x-show="piperunError" class="text-xs rounded px-2 py-1"
+              :class="piperunError?.startsWith('✓') ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'"
+              x-text="piperunError">
+            </div>
+
+            <!-- Aviso de dados faltantes -->
+            <template x-if="oportunidade?.formulario?.decisao_por">
+              <div class="bg-yellow-900/20 border border-yellow-700 rounded px-2 py-1.5 text-xs">
+                <p class="text-yellow-400 font-semibold">⚠️ Dados do Cônjuge Faltando:</p>
+                <p class="text-yellow-300 mt-1">Preencha abaixo:</p>
+                <ul class="text-yellow-300 mt-1 space-y-0.5 ml-3">
+                  <li>• Renda Mensal (Cônjuge)</li>
+                  <li>• Nascimento (Cônjuge)</li>
+                  <li>• FGTS Cônjuge (se houver)</li>
+                </ul>
+              </div>
+            </template>
+          </div>
+
+          <!-- Crédito Desejado -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Crédito Desejado</label>
+            <input
+              x-model.number="calc.creditoDesejado"
+              type="number"
+              placeholder="450000"
+              class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+            />
+          </div>
+
+          <!-- Prazo Desejado -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Prazo Desejado</label>
+            <select x-model="calc.prazoDesejado" class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+              <option value="">Selecione...</option>
+              <option value="1a3">1 a 3 meses</option>
+              <option value="3a6">3 a 6 meses</option>
+              <option value="6a12">6 a 12 meses</option>
+              <option value="12+">12+ meses</option>
+            </select>
+          </div>
+
+          <!-- Conceito Lance -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Conceito Lance IA</label>
+            <select x-model="calc.conceitoLance" class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+              <option value="">Selecione...</option>
+              <option value="investidor">Investidor</option>
+              <option value="conservador">Conservador (24m)</option>
+              <option value="moderado">Moderado (12m)</option>
+              <option value="agressivo">Agressivo (6m)</option>
+              <option value="super">Super Agressivo (3m)</option>
+            </select>
+          </div>
+
+          <!-- Lance Máximo Disponível -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lance Máximo Disponível</label>
+            <input
+              x-model.number="calc.lancemaximo"
+              type="number"
+              placeholder="150000"
+              class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+            />
+          </div>
+
+          <!-- FGTS Titular -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">FGTS Titular</label>
+            <input
+              x-model.number="calc.fgtsTitular"
+              type="number"
+              placeholder="0"
+              class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+            />
+          </div>
+
+          <!-- FGTS Cônjuge -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">FGTS Cônjuge</label>
+            <input
+              x-model.number="calc.fgtsCunjuge"
+              type="number"
+              placeholder="0"
+              class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+            />
+          </div>
+
+          <hr class="border-slate-700 my-2" />
+
+          <!-- Nascimento Titular -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Nascimento (Titular)</label>
+            <input
+              x-model="calc.nascimentoTitular"
+              type="date"
+              class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          <!-- Nascimento Cônjuge -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Nascimento (Cônjuge)</label>
+            <input
+              x-model="calc.nascimentoCunjuge"
+              type="date"
+              class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          <hr class="border-slate-700 my-2" />
+
+          <!-- Renda Titular -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Renda Mensal (Titular)</label>
+            <input
+              x-model.number="calc.rendaTitular"
+              type="number"
+              placeholder="3500"
+              class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+            />
+          </div>
+
+          <!-- Renda Cônjuge -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Renda Mensal (Cônjuge)</label>
+            <input
+              x-model.number="calc.rendaCunjuge"
+              type="number"
+              placeholder="0"
+              class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+            />
+          </div>
+
+          <hr class="border-slate-700 my-2" />
+
+          <!-- Parcela Desejada -->
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Parcela Desejada/Máxima</label>
+            <input
+              x-model.number="calc.parcelaDesejada"
+              type="number"
+              placeholder="6000"
+              class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+            />
+          </div>
+
+        </div>
+
+        <!-- Botão Calcular -->
+        <div class="flex-none border-t border-slate-800 p-4 space-y-3">
+          <button
+            @click="executarCalculo()"
+            class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-semibold text-white transition">
+            🧮 Executar Cálculo
+          </button>
+
+          <!-- Score de Viabilidade -->
+          <template x-if="calc.resultados.length > 0">
+            <div class="bg-slate-800/50 rounded-lg p-3 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400">Viabilidade</span>
+                <span class="text-xs font-bold" :class="scoreViabilidade >= 70 ? 'text-green-400' : scoreViabilidade >= 40 ? 'text-yellow-400' : 'text-red-400'"
+                  x-text="scoreViabilidade + '%'">
+                </span>
+              </div>
+              <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                <div class="h-full transition-all"
+                  :style="`width: ${scoreViabilidade}%`"
+                  :class="scoreViabilidade >= 70 ? 'bg-green-500' : scoreViabilidade >= 40 ? 'bg-yellow-500' : 'bg-red-500'">
+                </div>
+              </div>
+              <template x-if="avisoViabilidade">
+                <div class="space-y-1">
+                  <template x-for="aviso in avisoViabilidade" :key="aviso">
+                    <p class="text-xs text-red-400" x-text="aviso"></p>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+
+      </aside>
+
+      <!-- ─────────────────── ÁREA PRINCIPAL: FLUXO ESTUDO ─────────────────── -->
+      <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        <!-- PASSO 1: COMPARATIVO DE ADMs -->
+        <template x-if="!admSelecionada">
+          <!-- Header -->
+          <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3">
+            <h2 class="text-sm font-bold text-white">2. Comparativo de Administradoras</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Clique em uma ADM para ver grupos compatíveis</p>
+          </div>
+
+          <!-- Tabela de Resultado -->
+          <div class="flex-1 overflow-auto">
+            <table class="w-full text-xs border-collapse">
+              <thead class="sticky top-0 z-10 bg-slate-900">
+                <tr class="border-b border-slate-800 text-slate-500 uppercase tracking-wider">
+                  <th class="px-3 py-3 text-left">Administradora</th>
+                  <th class="px-3 py-3 text-right">Taxa ADM</th>
+                  <th class="px-3 py-3 text-right">Fundo RSV</th>
+                  <th class="px-3 py-3 text-right">% Lance Embutido</th>
+                  <th class="px-3 py-3 text-right">Crédito a Contratar</th>
+                  <th class="px-3 py-3 text-right">Lance Máximo %</th>
+                  <th class="px-3 py-3 text-right">Prazo Mínimo</th>
+                  <th class="px-3 py-3 text-center">Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Linhas de resultado -->
+                <template x-for="adm in calc.resultados" :key="adm.nome">
+                  <tr class="border-b border-slate-800/60 hover:bg-slate-800/40 transition">
+                    <td class="px-3 py-2.5 font-medium text-blue-400" x-text="adm.nome"></td>
+                    <td class="px-3 py-2.5 text-right text-slate-400" x-text="(adm.taxaAdm * 100).toFixed(2) + '%'"></td>
+                    <td class="px-3 py-2.5 text-right text-slate-400" x-text="(adm.fundoRsv * 100).toFixed(2) + '%'"></td>
+                    <td class="px-3 py-2.5 text-right text-slate-400" x-text="(adm.pctLanceEmbutido * 100).toFixed(2) + '%'"></td>
+                    <td class="px-3 py-2.5 text-right font-medium text-slate-200" x-text="'R$ ' + (adm.creditoContratar || 0).toLocaleString('pt-BR', {maximumFractionDigits: 0})"></td>
+                    <td class="px-3 py-2.5 text-right text-amber-400 font-medium" x-text="(adm.lanceMaximo * 100).toFixed(2) + '%'"></td>
+                    <td class="px-3 py-2.5 text-right text-slate-200" x-text="Math.ceil(adm.prazoMinimo) + ' meses'"></td>
+                    <td class="px-3 py-2.5 text-center">
+                      <button @click="selecionarAdm(adm)"
+                        class="px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs text-white transition">
+                        Ver grupos →
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+
+                <!-- Vazio -->
+                <template x-if="calc.resultados.length === 0">
+                  <tr>
+                    <td colspan="8" class="text-center py-8 text-slate-500">
+                      <div class="text-sm">Preencha os dados acima e clique em "Executar Cálculo"</div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </template>
+
+        <!-- PASSO 2: SELEÇÃO DE GRUPOS -->
+        <template x-if="admSelecionada && !grupoSelecionado">
+          <!-- Header -->
+          <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-sm font-bold text-white">3. Grupos Compatíveis: <span x-text="admSelecionada" class="text-blue-400"></span></h2>
+              <p class="text-xs text-slate-500 mt-0.5"><span x-text="gruposAdmFiltrados.length"></span> grupos encontrados</p>
+            </div>
+            <button @click="admSelecionada = null; gruposAdmFiltrados = []; grupoSelecionado = null; simulacoesEstudo = []"
+              class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs transition">
+              ← Voltar para ADMs
+            </button>
+          </div>
+
+          <!-- Lista de Grupos -->
+          <div class="flex-1 overflow-auto">
+            <div class="p-4 grid gap-3 auto-rows-max">
+              <template x-for="grupo in gruposAdmFiltrados" :key="grupo.grupo">
+                <div @click="selecionarGrupo(grupo)"
+                  class="bg-slate-800/40 border border-slate-700 rounded-lg p-4 hover:bg-slate-800 hover:border-blue-600 transition cursor-pointer">
+                  <div class="flex items-start justify-between mb-2">
+                    <div>
+                      <p class="font-semibold text-white">Grupo <span x-text="grupo.grupo" class="text-blue-400"></span></p>
+                      <p class="text-xs text-slate-500 mt-0.5" x-text="grupo.tipo_bem"></p>
+                    </div>
+                    <span class="px-2 py-1 bg-blue-600 text-white text-xs rounded font-medium">Selecionar →</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-2 text-xs">
+                    <div>
+                      <p class="text-slate-500">Crédito Máx.</p>
+                      <p class="font-semibold text-slate-200" x-text="formatCurrency(grupo.maior_credito)"></p>
+                    </div>
+                    <div>
+                      <p class="text-slate-500">Parcela 30%</p>
+                      <p class="font-semibold text-slate-200" x-text="formatCurrency(grupo.parcela_inicial)"></p>
+                    </div>
+                    <div>
+                      <p class="text-slate-500">Prazo</p>
+                      <p class="font-semibold text-slate-200" x-text="grupo.prazo_restante + ' meses'"></p>
+                    </div>
+                    <div>
+                      <p class="text-slate-500">Média Lance</p>
+                      <p class="font-semibold" :class="lanceClass(grupo.media_lance)" x-text="formatPct(grupo.media_lance)"></p>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Vazio -->
+              <template x-if="gruposAdmFiltrados.length === 0">
+                <div class="text-center py-12 text-slate-500">
+                  <p class="text-sm">Nenhum grupo compatível encontrado para esta ADM.</p>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- PASSO 3: PREVIEW DO ESTUDO -->
+        <template x-if="grupoSelecionado">
+          <!-- Header -->
+          <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-sm font-bold text-white">4. Preview do Estudo Financeiro</h2>
+              <p class="text-xs text-slate-500 mt-0.5"><span x-text="admSelecionada"></span> - Grupo <span x-text="grupoSelecionado.grupo"></span></p>
+            </div>
+            <button @click="grupoSelecionado = null; simulacoesEstudo = []"
+              class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs transition">
+              ← Voltar para Grupos
+            </button>
+          </div>
+
+          <!-- Conteúdo Preview -->
+          <div class="flex-1 overflow-auto">
+            <div class="p-6 max-w-4xl">
+              <!-- Cards Resumo -->
+              <div class="grid grid-cols-5 gap-3 mb-6">
+                <div class="bg-slate-800 rounded-lg p-3">
+                  <p class="text-xs text-slate-500">Crédito Máx.</p>
+                  <p class="font-semibold text-white text-sm mt-1" x-text="formatCurrency(grupoSelecionado.maior_credito)"></p>
+                </div>
+                <div class="bg-slate-800 rounded-lg p-3">
+                  <p class="text-xs text-slate-500">Parcela 30%</p>
+                  <p class="font-semibold text-white text-sm mt-1" x-text="formatCurrency(grupoSelecionado.parcela_inicial)"></p>
+                </div>
+                <div class="bg-slate-800 rounded-lg p-3">
+                  <p class="text-xs text-slate-500">Prazo</p>
+                  <p class="font-semibold text-white text-sm mt-1" x-text="grupoSelecionado.prazo_restante + ' meses'"></p>
+                </div>
+                <div class="bg-slate-800 rounded-lg p-3">
+                  <p class="text-xs text-slate-500">Taxa ADM</p>
+                  <p class="font-semibold text-white text-sm mt-1">1,08% a.a</p>
+                </div>
+                <div class="bg-slate-800 rounded-lg p-3">
+                  <p class="text-xs text-slate-500">Fundo RSV</p>
+                  <p class="font-semibold text-white text-sm mt-1">0,16% a.a</p>
+                </div>
+              </div>
+
+              <!-- Simulações de Modalidades -->
+              <div class="mb-6">
+                <h3 class="text-sm font-semibold text-white mb-3">Simulações de Contemplação</h3>
+                <template x-if="simulacoesEstudo.length > 0">
+                  <div class="grid gap-3">
+                    <template x-for="sim in simulacoesEstudo" :key="sim.tipo">
+                      <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+                        <div class="flex items-start justify-between mb-3">
+                          <div>
+                            <p class="font-semibold text-white" x-text="sim.tipo"></p>
+                            <p class="text-xs text-slate-500 mt-0.5" x-text="sim.descricao"></p>
+                          </div>
+                          <span class="px-2 py-1 rounded text-xs font-medium"
+                            :class="sim.lancePercentual === 0 ? 'bg-slate-700 text-slate-300' : 'bg-amber-900/40 text-amber-400'"
+                            x-text="sim.lancePercentual + '% lance'"></span>
+                        </div>
+                        <div class="grid grid-cols-5 gap-2 text-xs">
+                          <div>
+                            <p class="text-slate-500">Lance Total</p>
+                            <p class="font-semibold text-slate-200" x-text="formatCurrency(sim.lanceTotalR$)"></p>
+                          </div>
+                          <div>
+                            <p class="text-slate-500">Crédito Disp.</p>
+                            <p class="font-semibold text-blue-400" x-text="formatCurrency(sim.creditoDisponivel)"></p>
+                          </div>
+                          <div>
+                            <p class="text-slate-500">Rec. Próprio</p>
+                            <p class="font-semibold text-amber-400" x-text="formatCurrency(sim.pegtoRecProprio)"></p>
+                          </div>
+                          <div>
+                            <p class="text-slate-500">Parcela Estim.</p>
+                            <p class="font-semibold text-slate-200" x-text="formatCurrency(sim.parcelasMeses)"></p>
+                          </div>
+                          <div>
+                            <p class="text-slate-500">Prazo Est.</p>
+                            <p class="font-semibold text-slate-200" x-text="Math.ceil(sim.parcelasMeses) + ' meses'"></p>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Botão Gerar Estudo -->
+              <button @click="gerarEstudoFinal()"
+                class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-semibold transition">
+                ✓ Gerar Estudo Financeiro Final
+              </button>
+            </div>
+          </div>
+        </template>
+
+      </main>
+
+    </div>
+  </template>
+
+</div>
+
+<!-- ═════════════════════════════ MODAL DETALHE ════════════════════════════ -->
+<div x-show="grupoDetalhe"
+  x-transition:enter="transition ease-out duration-150"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="transition ease-in duration-100"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0"
+  @click.self="fecharModal()"
+  class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+
+  <div x-show="grupoDetalhe"
+    x-transition:enter="transition ease-out duration-150"
+    x-transition:enter-start="scale-95 opacity-0"
+    x-transition:enter-end="scale-100 opacity-100"
+    class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[88vh] overflow-y-auto shadow-2xl">
+
+    <template x-if="grupoDetalhe">
+      <div>
+        <!-- Header modal -->
+        <div class="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-start justify-between rounded-t-2xl z-10">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-500 font-mono" x-text="grupoDetalhe.adm"></span>
+              <span class="text-slate-700">/</span>
+              <h2 class="text-lg font-bold text-white">Grupo <span class="text-blue-400" x-text="grupoDetalhe.grupo"></span></h2>
+              <template x-if="oportunidade">
+                <span class="px-2 py-0.5 rounded-full text-xs font-medium ml-2"
+                  :class="{
+                    'bg-emerald-900/40 text-emerald-400': compatibilidade(grupoDetalhe) >= 3,
+                    'bg-yellow-900/40 text-yellow-400': compatibilidade(grupoDetalhe) === 2,
+                    'bg-orange-900/40 text-orange-400': compatibilidade(grupoDetalhe) === 1,
+                    'bg-red-900/40 text-red-400': compatibilidade(grupoDetalhe) === 0
+                  }"
+                  x-text="['Baixa Compat.','Compat. Parcial','Boa Compat.','Ótima Compat.'][compatibilidade(grupoDetalhe)]">
+                </span>
+              </template>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5"
+              x-text="[grupoDetalhe.tipo_bem, grupoDetalhe.categoria, grupoDetalhe.data_termino ? 'Encerra ' + grupoDetalhe.data_termino : ''].filter(Boolean).join(' · ')"></p>
+          </div>
+          <button @click="fecharModal()" class="text-slate-500 hover:text-white transition text-2xl leading-none mt-0.5">×</button>
+        </div>
+
+        <!-- Cards de métricas -->
+        <div class="p-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-slate-800 rounded-xl p-3">
+            <p class="text-xs text-slate-500">Crédito Máx.</p>
+            <p class="font-semibold text-white text-sm mt-1" x-text="formatCurrency(grupoDetalhe.maior_credito)"></p>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-3">
+            <p class="text-xs text-slate-500">Parcela Inicial</p>
+            <p class="font-semibold text-sm mt-1"
+              :class="oportunidade && formulario.mensalidade_maxima_num && grupoDetalhe.parcela_inicial && grupoDetalhe.parcela_inicial <= formulario.mensalidade_maxima_num * 1.1 ? 'text-emerald-400' : 'text-white'"
+              x-text="formatCurrency(grupoDetalhe.parcela_inicial)"></p>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-3">
+            <p class="text-xs text-slate-500">Prazo Restante</p>
+            <p class="font-semibold text-white text-sm mt-1" x-text="(grupoDetalhe.prazo_restante || '—') + ' meses'"></p>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-3">
+            <p class="text-xs text-slate-500">% Vida do Grupo</p>
+            <p class="font-semibold text-sm mt-1" :class="vidaClass(grupoDetalhe.vida_grupo_pct)"
+              x-text="(grupoDetalhe.vida_grupo_pct || '—') + '%'"></p>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-3">
+            <p class="text-xs text-slate-500">Taxa Adm.</p>
+            <p class="font-semibold text-white text-sm mt-1" x-text="grupoDetalhe.taxa_adm ? grupoDetalhe.taxa_adm + '%' : '—'"></p>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-3">
+            <p class="text-xs text-slate-500">Fundo RSV</p>
+            <p class="font-semibold text-white text-sm mt-1" x-text="grupoDetalhe.fundo_rsv ? grupoDetalhe.fundo_rsv + '%' : '—'"></p>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-3">
+            <p class="text-xs text-slate-500">Média Lance</p>
+            <p class="font-semibold text-sm mt-1" :class="lanceClass(grupoDetalhe.media_lance)"
+              x-text="grupoDetalhe.media_lance ? grupoDetalhe.media_lance.toFixed(1) + '%' : '—'"></p>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-3">
+            <p class="text-xs text-slate-500">Média Contemp.</p>
+            <p class="font-semibold text-blue-400 text-sm mt-1"
+              x-text="grupoDetalhe.media_contemp ? grupoDetalhe.media_contemp.toFixed(1) + '%' : '—'"></p>
+          </div>
+        </div>
+
+        <!-- Perfis de Lance -->
+        <div class="px-6 pb-5">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Perfis de Lance</p>
+          <div class="grid grid-cols-5 gap-2">
+            <template x-for="[label, val, cor, perfil] in [
+              ['Investidor', grupoDetalhe.investidor, 'purple', 'investidor'],
+              ['Conservador 24m', grupoDetalhe.conservador_24m, 'blue', 'conservador'],
+              ['Moderado 12m', grupoDetalhe.moderado_12m, 'cyan', 'moderado'],
+              ['Agressivo 6m', grupoDetalhe.agressivo_6m, 'orange', 'agressivo'],
+              ['S. Agress. 3m', grupoDetalhe.super_agressivo_3m, 'red', 'super']
+            ]">
+              <div class="rounded-xl p-3 text-center border"
+                :class="{
+                  'bg-purple-900/20 border-purple-800/40': cor === 'purple',
+                  'bg-blue-900/20 border-blue-800/40': cor === 'blue',
+                  'bg-cyan-900/20 border-cyan-800/40': cor === 'cyan',
+                  'bg-orange-900/20 border-orange-800/40': cor === 'orange',
+                  'bg-red-900/20 border-red-800/40': cor === 'red',
+                }">
+                <p class="text-xs text-slate-400 mb-1" x-text="label"></p>
+                <p class="text-sm font-bold" :class="{
+                  'text-purple-400': cor === 'purple',
+                  'text-blue-400': cor === 'blue',
+                  'text-cyan-400': cor === 'cyan',
+                  'text-orange-400': cor === 'orange',
+                  'text-red-400': cor === 'red',
+                }" x-text="val ? val.toFixed(1) + '%' : '—'"></p>
+                <template x-if="oportunidade && formulario.pct_lance_disponivel && val">
+                  <p class="text-xs mt-0.5" :class="formulario.pct_lance_disponivel >= val ? 'text-emerald-500' : 'text-slate-600'"
+                    x-text="formulario.pct_lance_disponivel >= val ? '✓ Compatível' : '✗ Insuficiente'"></p>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Histórico -->
+        <div x-show="grupoDetalhe.historico && grupoDetalhe.historico.length > 0" class="px-6 pb-6">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Histórico de Lances</p>
+          <div class="bg-slate-800 rounded-xl p-4">
+            <canvas id="historicoChart" height="100"></canvas>
+          </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="px-6 pb-6 flex gap-2">
+          <button @click="toggleSelecao(grupoDetalhe)"
+            class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition border"
+            :class="isSelecionado(grupoDetalhe)
+              ? 'bg-red-900/20 border-red-800/40 text-red-400 hover:bg-red-900/40'
+              : 'bg-blue-600 border-blue-600 text-white hover:bg-blue-500'"
+            x-text="isSelecionado(grupoDetalhe) ? '− Remover da seleção' : '+ Adicionar ao estudo'">
+          </button>
+          <button @click="fecharModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm text-slate-300 transition">
+            Fechar
+          </button>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+
+<!-- TEMPLATE: ESTUDO FINANCEIRO (para PDF) -->
+<div id="estudoFinanceiroPDF" class="hidden print:block" style="background: white; color: black; padding: 40px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11px; line-height: 1.4;">
+
+  <!-- CABEÇALHO -->
+  <div style="border-bottom: 3px solid #1a202c; padding-bottom: 10px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <div>
+        <div style="font-size: 14px; font-weight: bold; color: #1a202c;">CREDICLASS</div>
+        <div style="font-size: 10px; color: #666;">SOLUÇÕES INTELIGENTES</div>
+      </div>
+      <div style="text-align: right; font-size: 11px; color: #666;">
+        <div>Data: <span id="efData"></span></div>
+        <div>Validade: 10 dias após o recebimento</div>
+      </div>
+    </div>
+    <h1 style="margin: 0; font-size: 16px; color: #1a202c; font-weight: 600;">ESTUDO FINANCEIRO</h1>
+  </div>
+
+  <!-- Apresentação -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #f5f5f5; border-left: 3px solid #1a202c;">
+    <div style="font-weight: bold; margin-bottom: 8px;">Prezado Cliente,</div>
+    <div style="text-align: justify;">
+      Apresentamos o seu Estudo Financeiro com as Melhores Opções pesquisadas em nossa plataforma Multi-Bancos,
+      para realizar a sua <u>Aquisição de imóvel</u>, conforme o seu perfil e objetivo.
+    </div>
+  </div>
+
+  <!-- QUADRO RESUMO -->
+  <div style="margin-bottom: 20px; border: 1px solid #ddd;">
+    <div style="background: #1a202c; color: white; padding: 8px; font-weight: bold; font-size: 11px;">QUADRO RESUMO</div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr style="border-bottom: 1px solid #ddd;">
+        <td style="padding: 8px; font-weight: bold; width: 30%;">Carta de Crédito</td>
+        <td style="padding: 8px; text-align: right; width: 20%;" id="efCartaCredito"></td>
+        <td style="padding: 8px; font-weight: bold; width: 25%;">Parcelas 30% Reduzidas</td>
+        <td style="padding: 8px; text-align: right; width: 25%;" id="efParcelaReduzida"></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <td style="padding: 8px; font-weight: bold;">Lance Embutido</td>
+        <td style="padding: 8px; text-align: right;" id="efLanceEmbutido"></td>
+        <td style="padding: 8px; font-weight: bold;">Prazo</td>
+        <td style="padding: 8px; text-align: right;" id="efPrazo"></td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; font-weight: bold;">Taxa Administrativa</td>
+        <td style="padding: 8px; text-align: right;" id="efTaxaAdm"></td>
+        <td style="padding: 8px; font-weight: bold;">Fundo Reserva</td>
+        <td style="padding: 8px; text-align: right;" id="efFundoReserva"></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- SIMULAÇÕES -->
+  <div style="margin-bottom: 20px;">
+    <div style="background: #1a202c; color: white; padding: 8px; font-weight: bold; font-size: 11px; margin-bottom: 10px;">SIMULAÇÃO - MODALIDADES DE CONTEMPLAÇÃO</div>
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+      <thead>
+        <tr style="background: #e8e8e8; border-bottom: 2px solid #1a202c;">
+          <th style="padding: 6px; text-align: left; border-right: 1px solid #ddd;">#</th>
+          <th style="padding: 6px; text-align: left; border-right: 1px solid #ddd;">Modalidade de Contemplação</th>
+          <th style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">Lance Recurso Próprio</th>
+          <th style="padding: 6px; text-align: right; border-right: 1px solid #ddd;">Carta Disponível</th>
+          <th style="padding: 6px; text-align: right; border-right: 1px solid #ddd;">Parcelas (s/ seguro)</th>
+          <th style="padding: 6px; text-align: right;">Prazo Meses</th>
+        </tr>
+      </thead>
+      <tbody id="efSimulacoes"></tbody>
+    </table>
+  </div>
+
+  <!-- MODALIDADES -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #f9f9f9; border: 1px solid #ddd;">
+    <div style="font-weight: bold; margin-bottom: 10px;">Contemplações Mensais:</div>
+    <div style="margin-bottom: 10px;">
+      <div style="font-weight: bold; color: #1a202c; margin-bottom: 4px;">1) Sorteio Geral</div>
+      <div style="text-align: justify; font-size: 10px;">Participam do sorteio todos consorciados que estão com suas mensalidades em dia.</div>
+    </div>
+    <div style="margin-bottom: 10px;">
+      <div style="font-weight: bold; color: #1a202c; margin-bottom: 4px;">2) Lance Fixo</div>
+      <div style="text-align: justify; font-size: 10px;">Modalidade com percentual de lance fixo para o grupo. Bastante utilizada por investidores.</div>
+    </div>
+    <div style="margin-bottom: 10px;">
+      <div style="font-weight: bold; color: #1a202c; margin-bottom: 4px;">3) Lance Livre</div>
+      <div style="text-align: justify; font-size: 10px;">Possibilita a oferta de qualquer valor de lance. Múltiplos ganhadores mensalmente.</div>
+    </div>
+  </div>
+
+  <!-- ESTRATÉGIAS -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #f0f4ff; border-left: 3px solid #2563eb;">
+    <div style="font-weight: bold; margin-bottom: 10px; color: #1a202c;">ESTRATÉGIAS DE CONTEMPLAÇÃO</div>
+    <div style="font-size: 10px; text-align: justify; margin-bottom: 8px;">
+      Para sua comodidade, oferecemos consultoria, oferta de lance e acompanhamento mensal de contemplação.
+    </div>
+    <div style="margin-bottom: 6px;">
+      <strong>Estratégia 1) Super Conservadora:</strong> Sorteio + Lance Fixo
+    </div>
+    <div style="margin-bottom: 6px;">
+      <strong>Estratégia 2) Conservadora:</strong> Sorteio + Lance Livre Conservador (1 das últimas 17 assembleias)
+    </div>
+    <div>
+      <strong>Estratégia 3) Moderada:</strong> Sorteio + Lance Livre Moderado (3 das últimas 17 assembleias)
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div style="margin-bottom: 20px;">
+    <div style="background: #1a202c; color: white; padding: 8px; font-weight: bold; font-size: 11px; margin-bottom: 10px;">HISTÓRICO DE LANCES - ÚLTIMOS 12 MESES</div>
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; font-size: 10px;">
+      <thead>
+        <tr style="background: #e8e8e8; border-bottom: 2px solid #1a202c;">
+          <th style="padding: 6px; border-right: 1px solid #ddd;">Mês</th>
+          <th style="padding: 6px; border-right: 1px solid #ddd;">Sorteio %</th>
+          <th style="padding: 6px; border-right: 1px solid #ddd;">Qtde</th>
+          <th style="padding: 6px; border-right: 1px solid #ddd;">Lance Fixo %</th>
+          <th style="padding: 6px;">Qtde</th>
+        </tr>
+      </thead>
+      <tbody id="efHistoricoLances"></tbody>
+    </table>
+  </div>
+
+  <!-- DATAS LIMITES -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #fff3cd; border-left: 3px solid #ff9800;">
+    <div style="font-weight: bold; color: #1a202c; margin-bottom: 10px;">DATAS LIMITES PARA ADESÃO</div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+      <tr><td style="padding: 4px;"><strong>Limite Adesão - Reserva:</strong></td><td style="padding: 4px;" id="efLimiteReserva"></td></tr>
+      <tr><td style="padding: 4px;"><strong>Limite Adesão - Assembleia:</strong></td><td style="padding: 4px;" id="efLimiteAssembleia"></td></tr>
+      <tr><td style="padding: 4px;"><strong>Vencimento 1ª Parcela:</strong></td><td style="padding: 4px;" id="efVencimento1Parcela"></td></tr>
+      <tr><td style="padding: 4px;"><strong>Próxima Assembleia:</strong></td><td style="padding: 4px;" id="efProximaAssembleia"></td></tr>
+    </table>
+  </div>
+
+  <!-- RODAPÉ -->
+  <div style="border-top: 3px solid #1a202c; padding-top: 15px; text-align: center; font-size: 9px; color: #666;">
+    <div style="margin-bottom: 10px;"><strong>CREDICLASS</strong> - Soluções Inteligentes para Aquisição de Imóvel</div>
+    <div>Validade: 10 dias após o recebimento</div>
+  </div>
+
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

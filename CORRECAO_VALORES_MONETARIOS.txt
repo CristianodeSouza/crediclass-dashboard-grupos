@@ -1,0 +1,96 @@
+================================================================================
+  CORRECAO: PARSING DE VALORES MONETARIOS
+  Data: 13 de Maio de 2026
+================================================================================
+
+PROBLEMA IDENTIFICADO:
+================================================================================
+
+Os valores monetários estavam sendo parseados incorretamente:
+  ✗ "2.500" era interpretado como 2,5 (ao invés de 2.500)
+  ✗ "400.000" era interpretado como 400,0 (ao invés de 400.000)
+  ✗ Todos os valores com pontos eram divididos por 1000
+
+CAUSA:
+  Função _parse_num() não diferenciava entre:
+  - "2.500" (dois mil e quinhentos em formato brasileiro)
+  - "2.5" (dois e meio em formato decimal)
+
+SOLUCAO IMPLEMENTADA:
+================================================================================
+
+Corrigida a função _parse_num() em backend/piperun.py com lógica inteligente:
+
+1. SE tem PONTO E VIRGULA: "600.000,00" → 600000.0
+   - Remove ponto (separador de milhares)
+   - Converte vírgula em ponto (decimal)
+
+2. SE tem APENAS PONTO: "2.500" ou "400.000" → 2500.0 ou 400000.0
+   - Se 3 dígitos após o ponto → é separador de milhares (remove)
+   - Se menos de 3 dígitos → é decimal (mantém)
+
+3. SE tem APENAS VIRGULA: "2,5" → 2.5
+   - Converte vírgula em ponto (decimal)
+
+4. SE sem separador: "2500" → 2500.0
+   - Mantém como está
+
+TESTES EXECUTADOS:
+================================================================================
+
+[OK] "2.500" → 2500.0 (Parcela desejada)
+[OK] "400.000" → 400000.0 (Crédito desejado)
+[OK] "200.000" → 200000.0 (Renda mensal)
+[OK] "600.000,00" → 600000.0 (Valor com decimais)
+[OK] "2,5" → 2.5 (Número decimal)
+[OK] "2500" → 2500.0 (Sem separador)
+
+Status: TODOS PASSANDO ✓
+
+VALORES EXTRAIDOS (Oportunidade 59393258):
+================================================================================
+
+valor_imovel_num: 400000.0 ✓ (antes: 400.0)
+lance_maximo_num: 400000.0 ✓ (antes: 400.0)
+mensalidade_maxima_num: 2500.0 ✓ (antes: 2.5)
+renda_mensal_num: 200000.0 ✓ (antes: 200.0)
+
+ATUALIZACOES NECESSARIAS NO FRONTEND:
+================================================================================
+
+Os valores agora vêm corretos do backend. O frontend (app.js) já está
+configurado para usar esses valores:
+
+✓ calc.creditoDesejado recebe 400000.0
+✓ calc.lancemaximo recebe 400000.0
+✓ calc.parcelaDesejada recebe 2500.0
+✓ calc.rendaTitular recebe 200000.0
+
+Nenhuma alteração necessária no app.js ou index.html.
+
+SERVIDOR ATUALIZADO:
+================================================================================
+
+✓ Backend restarted com código corrigido
+✓ Função _parse_num() implementada
+✓ Testes validando corretamente
+✓ Endpoint /api/piperun retornando valores corretos
+
+PROXIMO PASSO:
+================================================================================
+
+Acesse http://localhost:8000 e veja:
+  1. Aba "Calculadora Imóvel"
+  2. Digite: 59393258
+  3. Clique em 🔍
+
+Valores agora aparecem corretos:
+  ✓ Crédito Desejado: R$ 400.000,00 (não 400,00)
+  ✓ Lance Máximo: R$ 400.000,00 (não 400,00)
+  ✓ Parcela Desejada: R$ 2.500,00 (não 2,50)
+  ✓ Renda Titular: R$ 200.000,00 (não 200,00)
+
+================================================================================
+Correcao implementada em: 13/05/2026
+Status: VALIDADA E PRONTA ✓
+================================================================================

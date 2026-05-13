@@ -1,0 +1,217 @@
+<!-- ESTUDO FINANCEIRO - Template para Geração de PDF -->
+<!-- Este arquivo é carregado dinamicamente pelo app.js quando o usuário gera o estudo -->
+
+<div id="estudoFinanceiroPDF" class="hidden print:block" style="background: white; color: black; padding: 40px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11px; line-height: 1.4;">
+
+  <!-- ═══════════════════════════════ CABEÇALHO ═══════════════════════════════ -->
+  <div style="border-bottom: 3px solid #1a202c; padding-bottom: 10px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <div>
+        <div style="font-size: 14px; font-weight: bold; color: #1a202c;">CREDICLASS</div>
+        <div style="font-size: 10px; color: #666;">SOLUÇÕES INTELIGENTES</div>
+      </div>
+      <div style="text-align: right; font-size: 11px; color: #666;">
+        <div>Data: <span id="efData"></span></div>
+        <div>Validade: 10 dias após o recebimento</div>
+      </div>
+    </div>
+    <h1 style="margin: 0; font-size: 16px; color: #1a202c; font-weight: 600;">ESTUDO FINANCEIRO</h1>
+  </div>
+
+  <!-- Apresentação -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #f5f5f5; border-left: 3px solid #1a202c;">
+    <div style="font-weight: bold; margin-bottom: 8px;">Prezado Cliente,</div>
+    <div style="text-align: justify;">
+      Apresentamos o seu Estudo Financeiro com as Melhores Opções pesquisadas em nossa plataforma Multi-Bancos,
+      para realizar a sua <u>Aquisição de imóvel</u>, conforme o seu perfil e objetivo.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ QUADRO RESUMO ═══════════════════════════════ -->
+  <div style="margin-bottom: 20px; border: 1px solid #ddd;">
+    <div style="background: #1a202c; color: white; padding: 8px; font-weight: bold; font-size: 11px;">QUADRO RESUMO</div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr style="border-bottom: 1px solid #ddd;">
+        <td style="padding: 8px; font-weight: bold; width: 30%;">Carta de Crédito</td>
+        <td style="padding: 8px; text-align: right; width: 20%;" id="efCartaCredito"></td>
+        <td style="padding: 8px; font-weight: bold; width: 25%;">Parcelas 30% Reduzidas</td>
+        <td style="padding: 8px; text-align: right; width: 25%;" id="efParcelaReduzida"></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <td style="padding: 8px; font-weight: bold;">Lance Embutido</td>
+        <td style="padding: 8px; text-align: right;" id="efLanceEmbutido"></td>
+        <td style="padding: 8px; font-weight: bold;">Prazo</td>
+        <td style="padding: 8px; text-align: right;" id="efPrazo"></td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; font-weight: bold;">Taxa Administrativa</td>
+        <td style="padding: 8px; text-align: right;" id="efTaxaAdm"></td>
+        <td style="padding: 8px; font-weight: bold;">Fundo Reserva</td>
+        <td style="padding: 8px; text-align: right;" id="efFundoReserva"></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════ SIMULAÇÕES ═══════════════════════════════ -->
+  <div style="margin-bottom: 20px;">
+    <div style="background: #1a202c; color: white; padding: 8px; font-weight: bold; font-size: 11px; margin-bottom: 10px;">SIMULAÇÃO - MODALIDADES DE CONTEMPLAÇÃO</div>
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+      <thead>
+        <tr style="background: #e8e8e8; border-bottom: 2px solid #1a202c;">
+          <th style="padding: 6px; text-align: left; border-right: 1px solid #ddd;">#</th>
+          <th style="padding: 6px; text-align: left; border-right: 1px solid #ddd;">Modalidade de Contemplação</th>
+          <th style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">Lance Recurso Próprio</th>
+          <th style="padding: 6px; text-align: right; border-right: 1px solid #ddd;">Carta Disponível</th>
+          <th style="padding: 6px; text-align: right; border-right: 1px solid #ddd;">Parcelas (s/ seguro)</th>
+          <th style="padding: 6px; text-align: right;">Prazo Meses</th>
+        </tr>
+      </thead>
+      <tbody id="efSimulacoes"></tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════ MODALIDADES EXPLICADAS ═══════════════════════════════ -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #f9f9f9; border: 1px solid #ddd;">
+    <div style="font-weight: bold; margin-bottom: 8px;">Contemplações Mensais:</div>
+
+    <div style="margin-bottom: 10px;">
+      <div style="font-weight: bold; color: #1a202c; margin-bottom: 4px;">1) Sorteio Geral</div>
+      <div style="text-align: justify; font-size: 10px;">
+        Participam do sorteio todos consorciados que estão com suas mensalidades em dia.
+      </div>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+      <div style="font-weight: bold; color: #1a202c; margin-bottom: 4px;">2) Lance Fixo</div>
+      <div style="text-align: justify; font-size: 10px;">
+        O lance fixo é a modalidade com percentual de lance fixo para o grupo, sendo a contemplação determinada por sorteio
+        entre aqueles que ofertarem esta modalidade no mês. Esta modalidade é bastante utilizada por investidores, pois o valor
+        do lance oferecido é inferior se comparado ao valor dos lances livres e as chances de liberação da carta são muito maiores
+        se comparado ao sorteio geral.
+      </div>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+      <div style="font-weight: bold; color: #1a202c; margin-bottom: 4px;">3) Lance Livre</div>
+      <div style="text-align: justify; font-size: 10px;">
+        O lance livre é a modalidade que possibilita a oferta de qualquer valor de lance, sendo liberada as cartas com as maiores
+        ofertas. Esta modalidade é utilizada pelos consorciados que desejam contemplar a sua carta de crédito sem depender do
+        sorteio. São contemplados múltiplos ganhadores mensalmente.
+      </div>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+      <div style="font-weight: bold; color: #1a202c; margin-bottom: 4px;">4) Lance Conservador / Lance Moderado</div>
+      <div style="text-align: justify; font-size: 10px;">
+        Lances baseados no histórico de contemplações: Conservador (1 das últimas 17 assembleias) ou Moderado (3 das últimas 17 assembleias).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ ESTRATÉGIAS DE CONTEMPLAÇÃO ═══════════════════════════════ -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #f0f4ff; border-left: 3px solid #2563eb;">
+    <div style="font-weight: bold; margin-bottom: 10px; color: #1a202c;">ESTRATÉGIAS DE CONTEMPLAÇÃO</div>
+    <div style="font-size: 10px; text-align: justify; margin-bottom: 8px;">
+      Para sua comodidade, oferecemos o serviço de consultoria, oferta de lance e acompanhamento mensal de contemplação,
+      conforme as estratégias sugeridas abaixo:
+    </div>
+
+    <div style="margin-bottom: 8px;">
+      <div style="font-weight: bold; color: #1a202c;">Estratégia 1) Super Conservadora</div>
+      <div style="margin-left: 10px; font-size: 10px;">
+        → Sorteio + Lance Fixo (recomendada para quem não possui urgência na contemplação e prioriza ampliar a alavancagem de crédito).
+      </div>
+    </div>
+
+    <div style="margin-bottom: 8px;">
+      <div style="font-weight: bold; color: #1a202c;">Estratégia 2) Conservadora</div>
+      <div style="margin-left: 10px; font-size: 10px;">
+        → Sorteio + Lance Livre Conservador (será ofertado um lance que teria sido contemplado em 1 das últimas 17 assembleias).
+      </div>
+    </div>
+
+    <div style="margin-bottom: 8px;">
+      <div style="font-weight: bold; color: #1a202c;">Estratégia 3) Moderada</div>
+      <div style="margin-left: 10px; font-size: 10px;">
+        → Sorteio + Lance Livre Moderado (será ofertado um lance que teria sido contemplado em 3 das últimas 17 assembleias).
+      </div>
+    </div>
+
+    <div style="margin-top: 10px; font-size: 9px; color: #666; text-align: justify;">
+      <em>As estratégias acima são apenas uma sugestão e você pode utilizá-las ou não conforme o seu próprio critério.</em>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ VANTAGENS DO PRODUTO ═══════════════════════════════ -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #f9f9f9; border: 1px solid #ddd;">
+    <div style="font-weight: bold; margin-bottom: 10px; color: #1a202c;">Vantagens Produto:</div>
+    <ul style="margin: 0; padding-left: 20px; font-size: 10px; text-align: justify;">
+      <li>Linha de crédito com menor custo do mercado, não possui juros, apenas taxa de administração;</li>
+      <li>Amplia seu poder de compra, pois alavanca recursos através da contemplação;</li>
+      <li>A mensalidade funciona como uma poupança "forçada" e auxilia na disciplina financeira e contribui para formar patrimônio;</li>
+      <li>Diversifica seus investimentos;</li>
+      <li>Amplia os rendimentos em sua carteira de investimentos, pois a carta de crédito fica aplicada após a contemplação;</li>
+      <li>Evita resgate em sua carteira de investimentos, que possui rentabilidade superior a taxa de administração da carta;</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════ HISTÓRICO DE LANCES ═══════════════════════════════ -->
+  <div style="margin-bottom: 20px;">
+    <div style="background: #1a202c; color: white; padding: 8px; font-weight: bold; font-size: 11px; margin-bottom: 10px;">HISTÓRICO DE LANCES CONTEMPLADOS - ÚLTIMOS 12 MESES</div>
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
+      <thead>
+        <tr style="background: #e8e8e8; border-bottom: 2px solid #1a202c; font-size: 10px;">
+          <th style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">Mês</th>
+          <th style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">Sorteio<br>Menor Lance</th>
+          <th style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">Qtde</th>
+          <th style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">Lance Fixo<br>Menor Lance</th>
+          <th style="padding: 6px; text-align: center;">Qtde</th>
+        </tr>
+      </thead>
+      <tbody id="efHistoricoLances"></tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════ DATAS LIMITES ═══════════════════════════════ -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #fff3cd; border-left: 3px solid #ff9800;">
+    <div style="font-weight: bold; color: #1a202c; margin-bottom: 10px;">DATAS LIMITES PARA ADESÃO</div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+      <tr>
+        <td style="padding: 4px;"><strong>Limite Adesão - Reserva Vagas:</strong></td>
+        <td style="padding: 4px;" id="efLimiteReserva"></td>
+      </tr>
+      <tr>
+        <td style="padding: 4px;"><strong>Limite Adesão - Assembleia:</strong></td>
+        <td style="padding: 4px;" id="efLimiteAssembleia"></td>
+      </tr>
+      <tr>
+        <td style="padding: 4px;"><strong>Vencimento 1ª Parcela:</strong></td>
+        <td style="padding: 4px;" id="efVencimento1Parcela"></td>
+      </tr>
+      <tr>
+        <td style="padding: 4px;"><strong>Próxima Assembleia:</strong></td>
+        <td style="padding: 4px;" id="efProximaAssembleia"></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════ SERVIÇOS OFERECIDOS ═══════════════════════════════ -->
+  <div style="margin-bottom: 20px; padding: 10px; background: #e8f5e9; border-left: 3px solid #4caf50;">
+    <div style="font-weight: bold; margin-bottom: 8px; color: #1a202c;">SERVIÇOS OFERECIDOS</div>
+    <ul style="margin: 0; padding-left: 20px; font-size: 10px;">
+      <li><strong>Equipe de Gestão da Contemplação:</strong> ofertamos o seu lance todos os meses. Especializada para auxiliar nas estratégias de decisões de lance, conforme a necessidade.</li>
+      <li><strong>Equipe de Gestão da Utilização do Crédito:</strong> trâmites com a administradora, vendedores, prefeitura, cartório de imóveis, certidões, contrato de compromisso de venda e compra, entre outros.</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════ RODAPÉ ═══════════════════════════════ -->
+  <div style="border-top: 3px solid #1a202c; padding-top: 15px; margin-top: 20px; text-align: center; font-size: 9px; color: #666;">
+    <div style="margin-bottom: 10px;">
+      <strong>CREDICLASS</strong> - Soluções Inteligentes para Aquisição de Imóvel
+    </div>
+    <div>
+      Validade: 10 dias após o recebimento | Documento Confidencial
+    </div>
+  </div>
+
+</div>
