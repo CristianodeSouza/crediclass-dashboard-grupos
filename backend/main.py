@@ -55,8 +55,14 @@ app.add_middleware(
     allow_credentials=False,
 )
 
+print(f"DEBUG: FRONTEND_DIR = {FRONTEND_DIR}")
+print(f"DEBUG: FRONTEND_DIR exists? {os.path.exists(FRONTEND_DIR)}")
 if os.path.exists(FRONTEND_DIR):
+    print(f"DEBUG: Contents of FRONTEND_DIR: {os.listdir(FRONTEND_DIR)}")
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
+    print("DEBUG: StaticFiles mounted at /")
+else:
+    print("DEBUG: FRONTEND_DIR not found!")
 
 
 class GrupoUpdate(BaseModel):
@@ -70,6 +76,17 @@ class GrupoUpdate(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/debug")
+def debug_info():
+    return {
+        "frontend_dir": FRONTEND_DIR,
+        "frontend_exists": os.path.exists(FRONTEND_DIR),
+        "frontend_contents": os.listdir(FRONTEND_DIR) if os.path.exists(FRONTEND_DIR) else "NOT FOUND",
+        "working_dir": os.getcwd(),
+        "app_dirname": os.path.dirname(__file__),
+    }
 
 
 @app.get("/api/grupos")
