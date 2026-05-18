@@ -8,6 +8,12 @@ COPY . .
 # Install dependencies from backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
+# Ensure frontend directory is readable and all files have correct permissions
+RUN if [ -d /app/frontend ]; then \
+      chmod -R 755 /app/frontend && \
+      find /app/frontend -type f -exec chmod 644 {} \;; \
+    fi
+
 # Expose port
 EXPOSE 8000
 

@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, Query, HTTPException, status
@@ -12,7 +13,28 @@ from piperun import fetch_oportunidade
 
 app = FastAPI(title="Crediclass Dashboard Grupos")
 
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+# Robust path resolution for frontend directory
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.abspath(os.path.join(BACKEND_DIR, "..", "frontend"))
+
+# Diagnostics logging
+_DIAGNOSTICS = {
+    "backend_dir": BACKEND_DIR,
+    "frontend_dir": FRONTEND_DIR,
+    "frontend_exists": os.path.exists(FRONTEND_DIR),
+    "cwd": os.getcwd(),
+    "script_file": __file__,
+}
+
+print(f"[STARTUP] Backend dir: {BACKEND_DIR}")
+print(f"[STARTUP] Frontend dir: {FRONTEND_DIR}")
+print(f"[STARTUP] Frontend exists: {_DIAGNOSTICS['frontend_exists']}")
+print(f"[STARTUP] Current working dir: {os.getcwd()}")
+
+if not os.path.exists(FRONTEND_DIR):
+    print(f"[ERROR] Frontend directory not found: {FRONTEND_DIR}")
+    print(f"[ERROR] This will cause static files to not be served!")
+    sys.exit(1)
 
 GRUPOS_STORAGE = [
     {
@@ -55,14 +77,35 @@ app.add_middleware(
     allow_credentials=False,
 )
 
-print(f"DEBUG: FRONTEND_DIR = {FRONTEND_DIR}")
-print(f"DEBUG: FRONTEND_DIR exists? {os.path.exists(FRONTEND_DIR)}")
+# Mount static files for frontend
+print(f"[SETUP] Attempting to mount StaticFiles at / from {FRONTEND_DIR}")
 if os.path.exists(FRONTEND_DIR):
-    print(f"DEBUG: Contents of FRONTEND_DIR: {os.listdir(FRONTEND_DIR)}")
-    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
-    print("DEBUG: StaticFiles mounted at /")
+    contents = os.listdir(FRONTEND_DIR)
+    print(f"[SETUP] Frontend directory contents: {contents}")
+
+    # Verify key files exist
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if not os.path.exists(index_path):
+        print(f"[WARNING] index.html not found at {index_path}")
+    else:
+        print(f"[SETUP] ✓ index.html found")
+
+    js_app_path = os.path.join(FRONTEND_DIR, "js", "app.js")
+    if not os.path.exists(js_app_path):
+        print(f"[WARNING] js/app.js not found at {js_app_path}")
+    else:
+        print(f"[SETUP] ✓ js/app.js found")
+
+    try:
+        app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
+        print("[SETUP] ✓ StaticFiles mounted successfully at /")
+    except Exception as e:
+        print(f"[ERROR] Failed to mount StaticFiles: {e}")
+        sys.exit(1)
 else:
-    print("DEBUG: FRONTEND_DIR not found!")
+    print(f"[ERROR] FRONTEND_DIR does not exist: {FRONTEND_DIR}")
+    print(f"[ERROR] This is a critical error - static files will not be served!")
+    sys.exit(1)
 
 
 class GrupoUpdate(BaseModel):
@@ -80,12 +123,45 @@ def health():
 
 @app.get("/debug")
 def debug_info():
+    """Comprehensive debugging endpoint for diagnosing static file serving issues."""
+    frontend_exists = os.path.exists(FRONTEND_DIR)
+    frontend_contents = []
+    file_checks = {}
+
+    if frontend_exists:
+        try:
+            frontend_contents = os.listdir(FRONTEND_DIR)
+            # Check specific files
+            index_path = os.path.join(FRONTEND_DIR, "index.html")
+            js_app_path = os.path.join(FRONTEND_DIR, "js", "app.js")
+            css_path = os.path.join(FRONTEND_DIR, "css", "style.css")
+
+            file_checks = {
+                "index_html": os.path.exists(index_path),
+                "js_app": os.path.exists(js_app_path),
+                "css_style": os.path.exists(css_path),
+            }
+
+            # Check permissions (unix-like systems)
+            if os.name == "posix":
+                index_stat = os.stat(index_path) if os.path.exists(index_path) else None
+                if index_stat:
+                    file_checks["index_readable"] = bool(index_stat.st_mode & 0o400)
+                    file_checks["index_mode"] = oct(index_stat.st_mode)
+        except Exception as e:
+            frontend_contents = f"Error listing: {str(e)}"
+
     return {
+        "status": "ok" if frontend_exists else "error",
         "frontend_dir": FRONTEND_DIR,
-        "frontend_exists": os.path.exists(FRONTEND_DIR),
-        "frontend_contents": os.listdir(FRONTEND_DIR) if os.path.exists(FRONTEND_DIR) else "NOT FOUND",
+        "frontend_exists": frontend_exists,
+        "frontend_contents": frontend_contents,
+        "file_checks": file_checks,
         "working_dir": os.getcwd(),
-        "app_dirname": os.path.dirname(__file__),
+        "backend_dir": BACKEND_DIR,
+        "script_file": __file__,
+        "python_version": sys.version,
+        "platform": sys.platform,
     }
 
 
