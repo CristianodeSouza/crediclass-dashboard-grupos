@@ -19,13 +19,13 @@ function dashboard() {
       creditoDesejado: 450000,
       prazoDesejado: "1a3",
       conceitoLance: "agressivo",
-      lancemaximo: 150000,
+      lanceMaximo: 150000,
       fgtsTitular: 0,
-      fgtsCunjuge: 0,
+      fgtsConjuge: 0,
       nascimentoTitular: "",
-      nascimentoCunjuge: "",
+      nascimentoConjuge: "",
       rendaTitular: 3500,
-      rendaCunjuge: 0,
+      rendaConjuge: 0,
       parcelaDesejada: 6000,
       resultados: [], // Array com resultados dos cálculos por ADM
     },
@@ -382,7 +382,7 @@ function dashboard() {
 
         // Auto-preencher campos com dados do Piperun
         if (f.valor_imovel_num) this.calc.creditoDesejado = f.valor_imovel_num;
-        if (f.lance_maximo_num) this.calc.lancemaximo = f.lance_maximo_num;
+        if (f.lance_maximo_num) this.calc.lanceMaximo = f.lance_maximo_num;
         if (f.mensalidade_maxima_num) this.calc.parcelaDesejada = f.mensalidade_maxima_num;
         if (f.renda_mensal_num) this.calc.rendaTitular = f.renda_mensal_num;
 
@@ -426,9 +426,9 @@ function dashboard() {
       ];
 
       // Calcula valores auxiliares
-      const totalFGTS = (c.fgtsTitular || 0) + (c.fgtsCunjuge || 0);
-      const totalDisponivel = c.lancemaximo + totalFGTS;
-      const rendaTotal = (c.rendaTitular || 0) + (c.rendaCunjuge || 0);
+      const totalFGTS = (c.fgtsTitular || 0) + (c.fgtsConjuge || 0);
+      const totalDisponivel = c.lanceMaximo + totalFGTS;
+      const rendaTotal = (c.rendaTitular || 0) + (c.rendaConjuge || 0);
       const parcelaMaximaRenda = rendaTotal * 0.30; // 30% da renda
       const parcelaDesejada = c.parcelaDesejada || 6000;
 
@@ -440,14 +440,14 @@ function dashboard() {
 
         // (g) LANCE MÁXIMO (em %)
         // Fórmula: (Crédito × % Lance + Lance + FGTS) / (Crédito × (1 + Taxa + Fundo))
-        const numeradorG = (creditoContratar * adm.pctLanceEmbutido) + c.lancemaximo + totalFGTS;
+        const numeradorG = (creditoContratar * adm.pctLanceEmbutido) + c.lanceMaximo + totalFGTS;
         const denominadorG = creditoContratar * (1 + adm.taxaAdm + adm.fundoRsv);
         const lanceMaximo = numeradorG / denominadorG;
 
         // (h) PRAZO MÍNIMO
         // Fórmula: (Crédito × (1 + Taxa + Fundo) - (Crédito × % Lance + Lance + FGTS)) / Parcela Desejada
         const creditoComTaxas = creditoContratar * (1 + adm.taxaAdm + adm.fundoRsv);
-        const lanceComFGTS = (creditoContratar * adm.pctLanceEmbutido) + c.lancemaximo + totalFGTS;
+        const lanceComFGTS = (creditoContratar * adm.pctLanceEmbutido) + c.lanceMaximo + totalFGTS;
         const prazoMinimo = (creditoComTaxas - lanceComFGTS) / parcelaDesejada;
 
         return {
@@ -470,7 +470,7 @@ function dashboard() {
     validarViabilidade() {
       const c = this.calc;
       const parcelaDesejada = c.parcelaDesejada || 6000;
-      const rendaTotal = (c.rendaTitular || 0) + (c.rendaCunjuge || 0);
+      const rendaTotal = (c.rendaTitular || 0) + (c.rendaConjuge || 0);
       const parcelaMaximaRenda = rendaTotal * 0.30;
 
       const avisos = [];
@@ -490,7 +490,7 @@ function dashboard() {
       }
 
       // Lance muito agressivo
-      const lanceMaxDisp = c.lancemaximo || 0;
+      const lanceMaxDisp = c.lanceMaximo || 0;
       const creditoDesejado = c.creditoDesejado || 0;
       if (creditoDesejado > 0 && lanceMaxDisp / creditoDesejado > 0.8) {
         avisos.push("⚠️ Lance muito agressivo (> 80% do imóvel) - reduz chance de contemplação");
@@ -505,7 +505,7 @@ function dashboard() {
       this.admSelecionada = adm.nome;
       // Filtrar grupos compatíveis desta ADM
       const v = this.oportunidade?.formulario?.valor_imovel_num || this.calc.creditoDesejado;
-      const lanceDisp = this.calc.lancemaximo || 0;
+      const lanceDisp = this.calc.lanceMaximo || 0;
 
       this.gruposAdmFiltrados = this.grupos.filter(g => {
         if (g.adm !== adm.nome) return false;
