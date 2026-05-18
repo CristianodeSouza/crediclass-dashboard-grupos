@@ -151,7 +151,7 @@ function dashboard() {
 
     // ── Lifecycle ───────────────────────────────────────
     async init() {
-      await Promise.all([this.loadStats(), this.loadGrupos()]);
+      await Promise.all([this.loadStats(), this.loadGrupos(), this.sincronizarGrupos()]);
     },
 
     async loadStats() {

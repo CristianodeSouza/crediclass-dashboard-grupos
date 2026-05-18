@@ -1187,8 +1187,7 @@
 </div>
 
   <!-- ════════════════════ ABA: GERENCIADOR DE GRUPOS ════════════════════ -->
-  <template x-if="abaAtiva === 'gerenciador'">
-    <div class="flex flex-1 min-h-0 min-w-0 bg-slate-950">
+  <div x-show="abaAtiva === 'gerenciador'" class="flex flex-1 min-h-0 min-w-0 bg-slate-950" style="display:none">
       <!-- SIDEBAR FILTROS -->
       <aside class="flex-none w-72 bg-slate-900 border-r border-slate-800 overflow-y-auto p-4 flex flex-col gap-4">
         <div>
@@ -1318,7 +1317,7 @@
         </div>
       </div>
     </div>
-  </template>
+  </div>
 
 </div>
 
