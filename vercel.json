@@ -1,19 +1,22 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && ls -la",
+  "buildCommand": "cd frontend && echo 'Frontend build complete'",
   "outputDirectory": "frontend",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://your-backend-railway.app/api/$1"
-    },
+      "source": "/api/:path*",
+      "destination": "https://your-backend-railway.app/api/:path*"
+    }
+  ],
+  "headers": [
     {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "^/(?!api|static).*",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
     }
   ]
 }
