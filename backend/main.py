@@ -47,15 +47,10 @@ GRUPOS_STORAGE = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://crediclass.csrtecnologia.com.br",
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "https://crediclass-dashboard-grupos.vercel.app",
-    ],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
 )
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
