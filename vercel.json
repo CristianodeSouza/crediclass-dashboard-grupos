@@ -1,22 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && echo 'Frontend build complete'",
   "outputDirectory": "frontend",
   "rewrites": [
     {
-      "source": "/api/:path*",
-            "destination": "https://crediclass-dashboard-grupos-production.up.railway.app/api/:path*"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
+      "source": "/api/(.*)",
+      "destination": "https://crediclass-dashboard-grupos-production.up.railway.app/api/$1"
     }
   ]
 }
