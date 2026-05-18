@@ -96,12 +96,6 @@ if os.path.exists(FRONTEND_DIR):
     else:
         print(f"[SETUP] ✓ js/app.js found")
 
-    try:
-        app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
-        print("[SETUP] ✓ StaticFiles mounted successfully at /")
-    except Exception as e:
-        print(f"[ERROR] Failed to mount StaticFiles: {e}")
-        sys.exit(1)
 else:
     print(f"[ERROR] FRONTEND_DIR does not exist: {FRONTEND_DIR}")
     print(f"[ERROR] This is a critical error - static files will not be served!")
@@ -329,6 +323,18 @@ def refresh_dados():
         return {"message": "Dados atualizados", "total": len(grupos)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ┌─ MOUNT STATIC FILES LAST ─┐
+# StaticFiles must be mounted AFTER all API routes,
+# otherwise it will intercept all requests
+if os.path.exists(FRONTEND_DIR):
+    try:
+        app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
+        print("[SETUP] ✓ StaticFiles mounted successfully at / (AFTER all API routes)")
+    except Exception as e:
+        print(f"[ERROR] Failed to mount StaticFiles: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
