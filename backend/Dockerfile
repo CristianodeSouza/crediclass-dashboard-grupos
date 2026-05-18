@@ -11,5 +11,8 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 # Expose port
 EXPOSE 8000
 
+# Force rebuild timestamp
+# Built: 2025-05-18
+
 # Run the application from backend directory with PORT env var support
 CMD ["sh", "-c", "cd backend && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
