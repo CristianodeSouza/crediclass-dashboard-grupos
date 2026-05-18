@@ -36,7 +36,6 @@ token.json
 # Cache
 .cache/
 *.cache
-data/grupos.json
 
 # IDE
 .vscode/
