@@ -647,3 +647,6 @@ function dashboard() {
     },
   };
 }
+
+// Expose dashboard function to global scope for Alpine.js
+window.dashboard = dashboard;
