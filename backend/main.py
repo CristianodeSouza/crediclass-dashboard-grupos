@@ -282,6 +282,21 @@ def criar_grupo(grupo_data: GrupoUpdate):
     return new_grupo
 
 
+@app.delete("/api/grupos/{grupo_id}")
+def excluir_grupo(grupo_id: str):
+    try:
+        grupos = fetch_grupos()
+    except Exception:
+        grupos = GRUPOS_STORAGE
+
+    for i, g in enumerate(grupos):
+        if str(g["grupo"]) == str(grupo_id):
+            grupos.pop(i)
+            return {"message": "Grupo excluído com sucesso", "grupo_id": grupo_id}
+
+    raise HTTPException(status_code=404, detail="Grupo não encontrado")
+
+
 @app.get("/api/stats")
 def estatisticas():
     try:

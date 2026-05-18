@@ -704,34 +704,52 @@ function dashboard() {
     },
 
     async editarGrupo(grupo) {
-      const novoAdm = prompt("Nova ADM:", grupo.adm);
+      const novoAdm = prompt("Nova ADM (CNP, ITAÚ, CAOA, PORTO, EMBRACON, RODOBENS):", grupo.adm);
       if (novoAdm === null) return;
+      const admValidas = ["CNP", "ITAÚ", "CAOA", "PORTO", "EMBRACON", "RODOBENS"];
+      if (!admValidas.includes(novoAdm.toUpperCase())) {
+        alert("ADM inválida. Use uma das opções: " + admValidas.join(", "));
+        return;
+      }
       try {
         const res = await fetch(`/api/grupos/${grupo.grupo}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ adm: novoAdm })
+          body: JSON.stringify({ adm: novoAdm.toUpperCase() })
         });
         if (res.ok) {
-          grupo.adm = novoAdm;
+          grupo.adm = novoAdm.toUpperCase();
           alert("Grupo atualizado com sucesso!");
         } else {
-          alert("Erro ao atualizar grupo");
+          const err = await res.json();
+          alert("Erro ao atualizar: " + (err.detail || "Desconhecido"));
         }
       } catch (e) {
         console.error("Erro ao editar grupo", e);
-        alert("Erro ao editar grupo");
+        alert("Erro ao editar grupo: " + e.message);
       }
     },
 
     async excluirGrupo(grupoId) {
       if (!confirm(`Tem certeza que deseja excluir o grupo ${grupoId}?`)) return;
+      this.loadingGerenciador = true;
       try {
-        this.gruposGerenciador = this.gruposGerenciador.filter(g => g.grupo !== grupoId);
-        alert("Grupo removido da lista!");
+        const res = await fetch(`/api/grupos/${grupoId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (res.ok) {
+          this.gruposGerenciador = this.gruposGerenciador.filter(g => g.grupo !== grupoId);
+          alert("Grupo excluído com sucesso!");
+        } else {
+          const err = await res.json();
+          alert("Erro ao excluir: " + (err.detail || "Desconhecido"));
+        }
       } catch (e) {
         console.error("Erro ao excluir grupo", e);
-        alert("Erro ao excluir grupo");
+        alert("Erro ao excluir grupo: " + e.message);
+      } finally {
+        this.loadingGerenciador = false;
       }
     },
 
