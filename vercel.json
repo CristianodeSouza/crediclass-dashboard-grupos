@@ -1,4 +1,10 @@
 {
   "version": 2,
-  "outputDirectory": "frontend"
+  "outputDirectory": "frontend",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://crediclass-dashboard-grupos.onrender.com/api/:path*"
+    }
+  ]
 }

@@ -12,9 +12,17 @@ CACHE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "grupos.json"
 
 
 def get_service():
+    # Option 1: Simple API key (for publicly shared spreadsheets)
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if api_key:
+        return build("sheets", "v4", developerKey=api_key)
+
+    # Option 2: Service account credentials (JSON, optionally base64-encoded)
     creds_json_str = os.getenv("GOOGLE_CREDENTIALS")
     if not creds_json_str:
-        raise ValueError("GOOGLE_CREDENTIALS environment variable not set")
+        raise ValueError(
+            "Set GOOGLE_API_KEY (for public sheets) or GOOGLE_CREDENTIALS (service account JSON)"
+        )
 
     try:
         creds_json_str = base64.b64decode(creds_json_str).decode("utf-8")
