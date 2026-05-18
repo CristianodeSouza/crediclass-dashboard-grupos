@@ -13,8 +13,6 @@ from piperun import fetch_oportunidade
 app = FastAPI(title="Crediclass Dashboard Grupos")
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 GRUPOS_STORAGE = [
     {
@@ -57,9 +55,8 @@ app.add_middleware(
     allow_credentials=False,
 )
 
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 if os.path.exists(FRONTEND_DIR):
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
 
 
 class GrupoUpdate(BaseModel):
@@ -73,14 +70,6 @@ class GrupoUpdate(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-
-@app.get("/")
-def index():
-    index_path = os.path.join(FRONTEND_DIR, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"message": "Frontend não está disponível neste container. Use Vercel pra frontend."}
 
 
 @app.get("/api/grupos")
