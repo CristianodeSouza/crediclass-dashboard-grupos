@@ -12,6 +12,10 @@ from piperun import fetch_oportunidade
 
 app = FastAPI(title="Crediclass Dashboard Grupos")
 
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
 GRUPOS_STORAGE = [
     {
         "grupo": "ABC-001",
