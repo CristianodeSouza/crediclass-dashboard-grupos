@@ -555,7 +555,7 @@
           <div>
             <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lance Máximo Disponível</label>
             <input
-              x-model.number="calc.lancemaximo"
+              x-model.number="calc.lanceMaximo"
               type="number"
               placeholder="150000"
               class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
@@ -577,7 +577,7 @@
           <div>
             <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">FGTS Cônjuge</label>
             <input
-              x-model.number="calc.fgtsCunjuge"
+              x-model.number="calc.fgtsConjuge"
               type="number"
               placeholder="0"
               class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
@@ -600,7 +600,7 @@
           <div>
             <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Nascimento (Cônjuge)</label>
             <input
-              x-model="calc.nascimentoCunjuge"
+              x-model="calc.nascimentoConjuge"
               type="date"
               class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
             />
@@ -623,7 +623,7 @@
           <div>
             <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Renda Mensal (Cônjuge)</label>
             <input
-              x-model.number="calc.rendaCunjuge"
+              x-model.number="calc.rendaConjuge"
               type="number"
               placeholder="0"
               class="w-full mt-1.5 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
@@ -988,32 +988,32 @@
         <div class="px-6 pb-5">
           <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Perfis de Lance</p>
           <div class="grid grid-cols-5 gap-2">
-            <template x-for="[label, val, cor, perfil] in [
-              ['Investidor', grupoDetalhe.investidor, 'purple', 'investidor'],
-              ['Conservador 24m', grupoDetalhe.conservador_24m, 'blue', 'conservador'],
-              ['Moderado 12m', grupoDetalhe.moderado_12m, 'cyan', 'moderado'],
-              ['Agressivo 6m', grupoDetalhe.agressivo_6m, 'orange', 'agressivo'],
-              ['S. Agress. 3m', grupoDetalhe.super_agressivo_3m, 'red', 'super']
+            <template x-for="item in [
+              {label: 'Investidor', val: grupoDetalhe.investidor, cor: 'purple', perfil: 'investidor'},
+              {label: 'Conservador 24m', val: grupoDetalhe.conservador_24m, cor: 'blue', perfil: 'conservador'},
+              {label: 'Moderado 12m', val: grupoDetalhe.moderado_12m, cor: 'cyan', perfil: 'moderado'},
+              {label: 'Agressivo 6m', val: grupoDetalhe.agressivo_6m, cor: 'orange', perfil: 'agressivo'},
+              {label: 'S. Agress. 3m', val: grupoDetalhe.super_agressivo_3m, cor: 'red', perfil: 'super'}
             ]">
               <div class="rounded-xl p-3 text-center border"
                 :class="{
-                  'bg-purple-900/20 border-purple-800/40': cor === 'purple',
-                  'bg-blue-900/20 border-blue-800/40': cor === 'blue',
-                  'bg-cyan-900/20 border-cyan-800/40': cor === 'cyan',
-                  'bg-orange-900/20 border-orange-800/40': cor === 'orange',
-                  'bg-red-900/20 border-red-800/40': cor === 'red',
+                  'bg-purple-900/20 border-purple-800/40': item.cor === 'purple',
+                  'bg-blue-900/20 border-blue-800/40': item.cor === 'blue',
+                  'bg-cyan-900/20 border-cyan-800/40': item.cor === 'cyan',
+                  'bg-orange-900/20 border-orange-800/40': item.cor === 'orange',
+                  'bg-red-900/20 border-red-800/40': item.cor === 'red',
                 }">
-                <p class="text-xs text-slate-400 mb-1" x-text="label"></p>
+                <p class="text-xs text-slate-400 mb-1" x-text="item.label"></p>
                 <p class="text-sm font-bold" :class="{
-                  'text-purple-400': cor === 'purple',
-                  'text-blue-400': cor === 'blue',
-                  'text-cyan-400': cor === 'cyan',
-                  'text-orange-400': cor === 'orange',
-                  'text-red-400': cor === 'red',
-                }" x-text="val ? val.toFixed(1) + '%' : '—'"></p>
-                <template x-if="oportunidade && formulario.pct_lance_disponivel && val">
-                  <p class="text-xs mt-0.5" :class="formulario.pct_lance_disponivel >= val ? 'text-emerald-500' : 'text-slate-600'"
-                    x-text="formulario.pct_lance_disponivel >= val ? '✓ Compatível' : '✗ Insuficiente'"></p>
+                  'text-purple-400': item.cor === 'purple',
+                  'text-blue-400': item.cor === 'blue',
+                  'text-cyan-400': item.cor === 'cyan',
+                  'text-orange-400': item.cor === 'orange',
+                  'text-red-400': item.cor === 'red',
+                }" x-text="item.val ? item.val.toFixed(1) + '%' : '—'"></p>
+                <template x-if="oportunidade && formulario.pct_lance_disponivel && item.val">
+                  <p class="text-xs mt-0.5" :class="formulario.pct_lance_disponivel >= item.val ? 'text-emerald-500' : 'text-slate-600'"
+                    x-text="formulario.pct_lance_disponivel >= item.val ? '✓ Compatível' : '✗ Insuficiente'"></p>
                 </template>
               </div>
             </template>
@@ -1187,7 +1187,7 @@
 </div>
 
   <!-- ════════════════════ ABA: GERENCIADOR DE GRUPOS ════════════════════ -->
-  <div x-show="abaAtiva === 'gerenciador'" class="flex flex-1 min-h-0 min-w-0 bg-slate-950" style="display:none">
+  <div x-show="abaAtiva === 'gerenciador'" class="flex flex-1 min-h-0 min-w-0 bg-slate-950">
       <!-- SIDEBAR FILTROS -->
       <aside class="flex-none w-72 bg-slate-900 border-r border-slate-800 overflow-y-auto p-4 flex flex-col gap-4">
         <div>
@@ -1282,7 +1282,7 @@
                 <tr class="hover:bg-slate-800/50 transition">
                   <td class="px-6 py-3 text-slate-200 font-medium" x-text="grupo.adm"></td>
                   <td class="px-6 py-3 text-slate-200" x-text="grupo.grupo"></td>
-                  <td class="px-6 py-3 text-right text-slate-300" x-text="'R$ ' + (grupo.maior_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></td>
+                  <td class="px-6 py-3 text-right text-slate-300" x-text="'R$ ' + (grupo.menor_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></td>
                   <td class="px-6 py-3 text-right text-slate-300" x-text="'R$ ' + (grupo.maior_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></td>
                   <td class="px-6 py-3 text-right text-slate-300" x-text="(grupo.taxa_adm || '—')"></td>
                   <td class="px-6 py-3 text-center">
