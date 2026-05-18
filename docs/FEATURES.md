@@ -454,6 +454,232 @@ async gerarEstudoFinal() {
 
 ---
 
+## 6️⃣ Operações CRUD de Grupos (Nova - 2026-05-18)
+
+### Status: ✅ Implementado (4 Bugs Corrigidos)
+
+### O que faz
+Permite criar, ler, atualizar e deletar grupos de consórcio via API REST.
+
+### Endpoints
+
+#### 1. GET /api/grupos-gerenciador
+**Paginação com suporte até 500 itens**
+
+```
+GET /api/grupos-gerenciador?pagina=1&por_pagina=100
+```
+
+**Parâmetros:**
+- `pagina`: int (≥ 1) — página desejada
+- `por_pagina`: int (1-500) — itens por página [**Bug #1 corrigido**]
+
+**Response (200):**
+```json
+{
+  "total": 1809,
+  "pagina": 1,
+  "por_pagina": 100,
+  "total_paginas": 19,
+  "grupos": [
+    {"grupo": "ABC-001", "adm": "ITAÚ", "tipo_bem": "Imóvel", ...},
+    ...
+  ]
+}
+```
+
+**Localização:** `backend/main.py` linhas 81-102
+
+---
+
+#### 2. GET /api/grupos/{grupo_id}
+**Obter detalhes de um grupo**
+
+```
+GET /api/grupos/ABC-001
+```
+
+**Response (200):**
+```json
+{
+  "grupo": "ABC-001",
+  "adm": "ITAÚ",
+  "tipo_bem": "Imóvel",
+  "categoria": "Residencial",
+  "maior_credito": 500000,
+  "media_lance": 45000,
+  ...
+}
+```
+
+**Erros:**
+- 404: Grupo não encontrado
+- 503: Dados não disponíveis
+
+**Localização:** `backend/main.py` linhas 105-114
+
+---
+
+#### 3. PUT /api/grupos/{grupo_id}
+**Atualizar grupo existente**
+
+```
+PUT /api/grupos/ABC-001
+Content-Type: application/json
+
+{
+  "status": "inativo",
+  "adm": "CAOA"
+}
+```
+
+**Body:**
+```json
+{
+  "grupo": "string (optional)",
+  "adm": "string (optional)",
+  "tipo_bem": "string (optional)",
+  "categoria": "string (optional)",
+  "status": "string (optional)"  // [**Bug #3 corrigido**]
+}
+```
+
+**Response (200):**
+```json
+{
+  "grupo": "ABC-001",
+  "status": "inativo",
+  "editado_em": "2026-05-18T13:50:00.000Z",  // [**Bug #2 corrigido**]
+  ...
+}
+```
+
+**Validações:**
+- Todos os campos são opcionais
+- Timestamp `editado_em` adicionado automaticamente com `datetime.now().isoformat()`
+- Retorna grupo atualizado
+
+**Erros:**
+- 404: Grupo não encontrado
+- 503: Dados não disponíveis
+
+**Localização:** `backend/main.py` linhas 117-139
+
+---
+
+#### 4. POST /api/grupos
+**Criar novo grupo**
+
+```
+POST /api/grupos
+Content-Type: application/json
+
+{
+  "grupo": "XYZ-999",
+  "adm": "RODOBENS",
+  "tipo_bem": "Imóvel",
+  "categoria": "Residencial",
+  "status": "ativo"
+}
+```
+
+**Request Body:**
+```json
+{
+  "grupo": "string (required)",
+  "adm": "string (required)",
+  "tipo_bem": "string (required)",
+  "categoria": "string (required)",
+  "status": "string (optional, default: 'ativo')"
+}
+```
+
+**Response (201):**  [**Bug #4 corrigido**]
+```json
+{
+  "grupo": "XYZ-999",
+  "adm": "RODOBENS",
+  "tipo_bem": "Imóvel",
+  "categoria": "Residencial",
+  "status": "ativo",
+  "criado_em": "2026-05-18T13:50:00.000Z"
+}
+```
+
+**Status Code:** 201 Created (em vez de 200 OK)
+
+**Validações:**
+- Todos os campos obrigatórios validados pelo Pydantic
+- Timestamp `criado_em` adicionado automaticamente
+- Default status: "ativo"
+
+**Erros:**
+- 422: Validação falhou
+- 503: Dados não disponíveis
+
+**Localização:** `backend/main.py` linhas 142-158
+
+---
+
+### Modelo Pydantic GrupoUpdate
+
+```python
+class GrupoUpdate(BaseModel):
+    grupo: Optional[str] = None
+    adm: Optional[str] = None
+    tipo_bem: Optional[str] = None
+    categoria: Optional[str] = None
+    status: Optional[str] = None  # [**Bug #3 corrigido**]
+```
+
+**Localização:** `backend/main.py` linhas 25-30
+
+---
+
+### Bugs Corrigidos nesta Feature
+
+| Bug | Problema | Solução | Linha |
+|-----|----------|---------|-------|
+| #1 | Validação hard-coded `por_pagina ≤ 100` | Novo endpoint com suporte até 500 | 84 |
+| #2 | Import datetime faltando | Adicionado `from datetime import datetime` | 2 |
+| #3 | Campo `status` faltando em GrupoUpdate | Adicionado `status: Optional[str]` | 30 |
+| #4 | POST retorna 200 em vez de 201 | Adicionado `status_code=status.HTTP_201_CREATED` | 142 |
+
+---
+
+### Exemplos cURL
+
+**Listar com paginação:**
+```bash
+curl "http://localhost:8000/api/grupos-gerenciador?pagina=1&por_pagina=50"
+```
+
+**Obter detalhe:**
+```bash
+curl "http://localhost:8000/api/grupos/ABC-001"
+```
+
+**Atualizar status:**
+```bash
+curl -X PUT http://localhost:8000/api/grupos/ABC-001 \
+  -H "Content-Type: application/json" \
+  -d '{"status": "inativo"}'
+```
+
+**Criar novo:**
+```bash
+curl -X POST http://localhost:8000/api/grupos \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grupo": "XYZ-999",
+    "adm": "ITAÚ",
+    "tipo_bem": "Imóvel",
+    "categoria": "Residencial"
+  }'
+```
+
+---
+
 ## 📌 Resumo de Status
 
 | Feature | Pronto? | Testado? | Deploy? | Notes |
@@ -462,6 +688,7 @@ async gerarEstudoFinal() {
 | Buscar Oportunidade | ✅ | ✅ | ✅ | Deal #59393258 OK |
 | Filtro Compatibilidade | ✅ | ✅ | ✅ | Relaxado para 0.70 |
 | Score Viabilidade | ✅ | ✅ | ✅ | 3 validações ativas |
+| **CRUD Grupos** | **✅** | **✅** | **✅** | **4 Bugs corrigidos** |
 | Gerar PDF | ⏳ | ❌ | ❌ | Prazo 2026-05-31 |
 | UI/UX Melhorias | ⏳ | ❌ | ❌ | Mobile + dark mode |
 | Testes Automatizados | ⏳ | ❌ | ❌ | pytest + Cypress |
