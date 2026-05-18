@@ -58,6 +58,17 @@ function dashboard() {
     grupoDetalhe: null,
     historicoChart: null,
 
+    // ── GERENCIADOR DE GRUPOS ──────────────────────────
+    gruposGerenciador: [],
+    loadingGerenciador: false,
+    paginaGerenciador: 1,
+    porPaginaGerenciador: 20,
+    filtroGerenciadorAdm: "",
+    filtroGerenciadorStatus: "",
+    filtroGerenciadorCreditoMin: "",
+    filtroGerenciadorCreditoMax: "",
+    filtroGerenciadorBusca: "",
+
     // ── Computed ────────────────────────────────────────
     get formulario() { return this.oportunidade?.formulario || {}; },
 
@@ -114,6 +125,28 @@ function dashboard() {
         const ok2 = !m || !g.parcela_inicial || g.parcela_inicial <= m * 1.1;
         return ok1 && ok2;
       });
+    },
+
+    get totalGruposGerenciador() { return this.gruposGerenciador.length; },
+
+    get gruposGerenciadorFiltrados() {
+      let list = [...this.gruposGerenciador];
+      if (this.filtroGerenciadorAdm) list = list.filter(g => g.adm === this.filtroGerenciadorAdm);
+      if (this.filtroGerenciadorStatus) list = list.filter(g => (g.status || "ativo") === this.filtroGerenciadorStatus);
+      if (this.filtroGerenciadorCreditoMin) list = list.filter(g => g.maior_credito && g.maior_credito >= parseFloat(this.filtroGerenciadorCreditoMin));
+      if (this.filtroGerenciadorCreditoMax) list = list.filter(g => g.maior_credito && g.maior_credito <= parseFloat(this.filtroGerenciadorCreditoMax));
+      if (this.filtroGerenciadorBusca) {
+        const b = this.filtroGerenciadorBusca.toLowerCase();
+        list = list.filter(g => String(g.grupo).toLowerCase().includes(b) || g.adm.toLowerCase().includes(b));
+      }
+      return list;
+    },
+
+    get totalPaginasGerenciador() { return Math.max(1, Math.ceil(this.gruposGerenciadorFiltrados.length / this.porPaginaGerenciador)); },
+
+    get gruposGerenciadorPaginados() {
+      const s = (this.paginaGerenciador - 1) * this.porPaginaGerenciador;
+      return this.gruposGerenciadorFiltrados.slice(s, s + this.porPaginaGerenciador);
     },
 
     // ── Lifecycle ───────────────────────────────────────
@@ -644,6 +677,72 @@ function dashboard() {
 
     formatarDataBR(data) {
       return `${String(data.getDate()).padStart(2, '0')}/${String(data.getMonth() + 1).padStart(2, '0')}/${data.getFullYear()}`;
+    },
+
+    // ── MÉTODOS GERENCIADOR DE GRUPOS ───────────────────
+    async sincronizarGrupos() {
+      this.loadingGerenciador = true;
+      try {
+        const res = await fetch("/api/grupos-gerenciador?pagina=1&por_pagina=500");
+        const data = await res.json();
+        this.gruposGerenciador = data.grupos || [];
+        this.paginaGerenciador = 1;
+      } catch (e) {
+        console.error("Erro ao carregar grupos gerenciador", e);
+      } finally {
+        this.loadingGerenciador = false;
+      }
+    },
+
+    limparFiltrosGerenciador() {
+      this.filtroGerenciadorAdm = "";
+      this.filtroGerenciadorStatus = "";
+      this.filtroGerenciadorCreditoMin = "";
+      this.filtroGerenciadorCreditoMax = "";
+      this.filtroGerenciadorBusca = "";
+      this.paginaGerenciador = 1;
+    },
+
+    async editarGrupo(grupo) {
+      const novoAdm = prompt("Nova ADM:", grupo.adm);
+      if (novoAdm === null) return;
+      try {
+        const res = await fetch(`/api/grupos/${grupo.grupo}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ adm: novoAdm })
+        });
+        if (res.ok) {
+          grupo.adm = novoAdm;
+          alert("Grupo atualizado com sucesso!");
+        } else {
+          alert("Erro ao atualizar grupo");
+        }
+      } catch (e) {
+        console.error("Erro ao editar grupo", e);
+        alert("Erro ao editar grupo");
+      }
+    },
+
+    async excluirGrupo(grupoId) {
+      if (!confirm(`Tem certeza que deseja excluir o grupo ${grupoId}?`)) return;
+      try {
+        this.gruposGerenciador = this.gruposGerenciador.filter(g => g.grupo !== grupoId);
+        alert("Grupo removido da lista!");
+      } catch (e) {
+        console.error("Erro ao excluir grupo", e);
+        alert("Erro ao excluir grupo");
+      }
+    },
+
+    novoGrupo() {
+      const adm = prompt("ADM do novo grupo:");
+      if (!adm) return;
+      const grupo = prompt("ID do novo grupo:");
+      if (!grupo) return;
+      const novoGrupo = { grupo, adm, status: "ativo", maior_credito: 0 };
+      this.gruposGerenciador.unshift(novoGrupo);
+      alert("Novo grupo criado! Lembre-se de salvar as mudanças.");
     },
   };
 }
