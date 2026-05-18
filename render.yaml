@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: crediclass-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port 10000
+    healthCheckPath: /health
+    healthCheckInterval: 30
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
