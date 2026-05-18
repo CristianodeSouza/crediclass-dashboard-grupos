@@ -3,12 +3,18 @@ import json
 from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, Query, HTTPException, status
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sheets import fetch_grupos
 from piperun import fetch_oportunidade
 
 app = FastAPI(title="Crediclass Dashboard Grupos")
+
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 GRUPOS_STORAGE = [
     {
@@ -51,12 +57,30 @@ app.add_middleware(
     allow_credentials=False,
 )
 
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+
 class GrupoUpdate(BaseModel):
     grupo: Optional[str] = None
     adm: Optional[str] = None
     tipo_bem: Optional[str] = None
     categoria: Optional[str] = None
     status: Optional[str] = None
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.get("/")
+def index():
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "Frontend não está disponível neste container. Use Vercel pra frontend."}
 
 
 @app.get("/api/grupos")
