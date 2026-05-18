@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: crediclass-backend
+    name: crediclass-dashboard-grupos
     env: docker
     plan: free
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     healthCheckInterval: 30
     envVars:
