@@ -1,8 +1,11 @@
 import os
-from fastapi import FastAPI, Query, HTTPException
+from datetime import datetime
+from typing import Optional
+from fastapi import FastAPI, Query, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from sheets import fetch_grupos
 from piperun import fetch_oportunidade
 
@@ -17,6 +20,14 @@ app.add_middleware(
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+
+class GrupoUpdate(BaseModel):
+    grupo: Optional[str] = None
+    adm: Optional[str] = None
+    tipo_bem: Optional[str] = None
+    categoria: Optional[str] = None
+    status: Optional[str] = None
 
 
 @app.get("/")
@@ -67,6 +78,30 @@ def listar_grupos(
     return {"total": len(grupos), "grupos": grupos}
 
 
+@app.get("/api/grupos-gerenciador")
+def listar_grupos_gerenciador(
+    pagina: int = Query(1, ge=1),
+    por_pagina: int = Query(20, ge=1, le=500),
+):
+    try:
+        grupos = fetch_grupos()
+    except Exception:
+        return {"total": 0, "pagina": pagina, "por_pagina": por_pagina, "grupos": [], "aviso": "Dados não carregados"}
+
+    total = len(grupos)
+    inicio = (pagina - 1) * por_pagina
+    fim = inicio + por_pagina
+    grupos_paginado = grupos[inicio:fim]
+
+    return {
+        "total": total,
+        "pagina": pagina,
+        "por_pagina": por_pagina,
+        "total_paginas": (total + por_pagina - 1) // por_pagina,
+        "grupos": grupos_paginado
+    }
+
+
 @app.get("/api/grupos/{grupo_id}")
 def detalhe_grupo(grupo_id: str):
     try:
@@ -77,6 +112,50 @@ def detalhe_grupo(grupo_id: str):
         if str(g["grupo"]) == str(grupo_id):
             return g
     raise HTTPException(status_code=404, detail="Grupo não encontrado")
+
+
+@app.put("/api/grupos/{grupo_id}")
+def atualizar_grupo(grupo_id: str, grupo_update: GrupoUpdate):
+    try:
+        grupos = fetch_grupos()
+    except Exception:
+        raise HTTPException(status_code=503, detail="Dados não disponíveis")
+
+    for g in grupos:
+        if str(g["grupo"]) == str(grupo_id):
+            if grupo_update.grupo is not None:
+                g["grupo"] = grupo_update.grupo
+            if grupo_update.adm is not None:
+                g["adm"] = grupo_update.adm
+            if grupo_update.tipo_bem is not None:
+                g["tipo_bem"] = grupo_update.tipo_bem
+            if grupo_update.categoria is not None:
+                g["categoria"] = grupo_update.categoria
+            if grupo_update.status is not None:
+                g["status"] = grupo_update.status
+            g["editado_em"] = datetime.now().isoformat()
+            return g
+
+    raise HTTPException(status_code=404, detail="Grupo não encontrado")
+
+
+@app.post("/api/grupos", status_code=status.HTTP_201_CREATED)
+def criar_grupo(grupo_data: GrupoUpdate):
+    try:
+        grupos = fetch_grupos()
+    except Exception:
+        raise HTTPException(status_code=503, detail="Dados não disponíveis")
+
+    new_grupo = {
+        "grupo": grupo_data.grupo,
+        "adm": grupo_data.adm,
+        "tipo_bem": grupo_data.tipo_bem,
+        "categoria": grupo_data.categoria,
+        "status": grupo_data.status or "ativo",
+        "criado_em": datetime.now().isoformat(),
+    }
+
+    return new_grupo
 
 
 @app.get("/api/stats")
