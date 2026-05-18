@@ -53,21 +53,18 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy to Vercel
+    name: Deploy to Render
     needs: test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./
-          production: ${{ github.ref == 'refs/heads/main' }}
+      - name: Trigger Render Deployment
+        run: |
+          curl --request POST \
+            --url https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }} \
+            --header 'accept: application/json'
 
       - name: Comment PR with deployment info
         if: github.event_name == 'pull_request'
