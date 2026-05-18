@@ -61,6 +61,7 @@ function dashboard() {
     // ── GERENCIADOR DE GRUPOS ──────────────────────────
     gruposGerenciador: [],
     loadingGerenciador: false,
+    mostrarFiltrosMobile: false,
     paginaGerenciador: 1,
     porPaginaGerenciador: 20,
     filtroGerenciadorAdm: "",
