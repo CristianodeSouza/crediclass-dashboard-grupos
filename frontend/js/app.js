@@ -747,5 +747,22 @@ function dashboard() {
   };
 }
 
+// Expor funções globalmente para Alpine.js
+window.dashboard = dashboard;
+
+window.init = function() {
+  // Esta função é chamada quando a página carrega (x-init="init()")
+  // O contexto 'this' é o objeto retornado por dashboard()
+  if (this && typeof this.loadGerenciador === 'function') {
+    this.loadGerenciador();
+  }
+  if (this && typeof this.loadGrupos === 'function') {
+    this.loadGrupos();
+  }
+  if (this && typeof this.loadStats === 'function') {
+    this.loadStats();
+  }
+};
+
 // Expose dashboard function to global scope for Alpine.js
 window.dashboard = dashboard;
