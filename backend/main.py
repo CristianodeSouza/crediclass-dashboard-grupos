@@ -3,8 +3,6 @@ import json
 from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, Query, HTTPException, status
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sheets import fetch_grupos
@@ -57,21 +55,12 @@ app.add_middleware(
     allow_credentials=True,
 )
 
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
-app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
-
-
 class GrupoUpdate(BaseModel):
     grupo: Optional[str] = None
     adm: Optional[str] = None
     tipo_bem: Optional[str] = None
     categoria: Optional[str] = None
     status: Optional[str] = None
-
-
-@app.get("/")
-def index():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 
 @app.get("/api/grupos")
