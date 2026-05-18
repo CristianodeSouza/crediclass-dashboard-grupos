@@ -49,6 +49,7 @@ app.add_middleware(
         "https://crediclass.csrtecnologia.com.br",
         "http://localhost:3000",
         "http://localhost:8000",
+        "https://crediclass-dashboard-grupos.vercel.app",
     ],
     allow_methods=["*"],
     allow_headers=["*"],
