@@ -30,6 +30,11 @@ class GrupoUpdate(BaseModel):
     status: Optional[str] = None
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.get("/")
 def index():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
