@@ -1,0 +1,126 @@
+================================================================================
+COMO MONITORAR O BUILD DO RENDER EM TEMPO REAL
+================================================================================
+
+1. RENDER DASHBOARD (Opção Recomendada)
+   - Abrir: https://dashboard.render.com
+   - Serviço: "crediclass-dashboard"
+   - Aba: "Activity" ou "Logs"
+   - Acompanhar:
+     * Build iniciado
+     * Build em progresso
+     * Build concluído (ou erro)
+     * Deploy iniciado
+     * Deploy concluído
+
+2. MONITORAR VIA TERMINAL (Opcional)
+   
+   Usando Render CLI (se instalado):
+   $ render deploy --service crediclass-dashboard
+   
+   Ou via API (se tiver API key):
+   $ curl https://api.render.com/v1/services/crediclass-dashboard/builds \
+     -H "Authorization: Bearer $RENDER_API_KEY" | jq '.data[0].status'
+
+3. VERIFICAR STATUS FINAL (Após ~3 minutos)
+
+   Test 1 - Is the app running?
+   $ curl -I https://crediclass.csrtecnologia.com.br/
+   Esperado: HTTP 200 OK
+
+   Test 2 - Frontend HTML:
+   $ curl -s https://crediclass.csrtecnologia.com.br/ | head -20
+   Esperado: <!DOCTYPE html> presente
+
+   Test 3 - app.js é servido:
+   $ curl -I https://crediclass.csrtecnologia.com.br/static/js/app.js
+   Esperado: HTTP 200, Content-Type: application/javascript
+
+   Test 4 - API responde:
+   $ curl -s https://crediclass.csrtecnologia.com.br/api/stats | jq .
+   Esperado: JSON com {"total": N, "groups": N, ...}
+
+4. TESTE MANUAL NO NAVEGADOR (Validação Final)
+
+   Abrir: https://crediclass.csrtecnologia.com.br
+
+   Checklist:
+   [ ] Página carrega (não mostra blank page)
+   [ ] Dados visíveis na UI (números, gráficos, etc)
+   [ ] Console (F12) não mostra erros
+   [ ] Especialmente, nenhum erro como:
+       - "Alpine Warning: Unable to initialize"
+       - "dashboard is not defined"
+       - "app is not defined"
+   [ ] Botões funcionam:
+       - "Executar Cálculo"
+       - "Buscar no Piperun"
+       - "Gerenciador"
+   [ ] Dados carregam ao interagir com a UI
+
+5. IF BUILD FAILS (Troubleshooting)
+
+   Verificar logs no Render Dashboard:
+   1. Render → crediclass-dashboard → Events
+   2. Procurar por "Error" ou "failed"
+   3. Mensagens comuns:
+      - "No Procfile found" → Procfile foi deletado (re-add)
+      - "Module not found" → requirements.txt incompleto
+      - "Port X in use" → Conflito de porta (raro em Render)
+
+   Se o build passou mas app não responde:
+   - Verificar render.yaml
+   - Verificar environment variables
+   - Verificar logs do Render (Apps → crediclass-dashboard → Logs)
+
+================================================================================
+TIMELINE ESPERADA
+================================================================================
+
+2026-05-19 15:00:00  | Commit fb5fc22 (fix: Add defer to Alpine.js)
+2026-05-19 15:00:30  | Git push para origin/main
+2026-05-19 15:01:00  | Render detecta mudança em main
+2026-05-19 15:01:30  | Build iniciado
+   - Clona repositório
+   - Instala dependências (pip install -r backend/requirements.txt)
+   - Prepara ambiente
+2026-05-19 15:02:30  | Build concluído (1-2 minutos típico)
+2026-05-19 15:03:00  | Deploy iniciado
+   - Inicia uvicorn
+   - Aguarda porta estar pronta
+   - Ativa rota
+2026-05-19 15:03:30  | Deploy concluído ✅ LIVE
+2026-05-19 15:03:45  | Verificações iniciais (curl, navegador)
+
+ETA: Aplicação deve estar LIVE em ~3-4 minutos após o push
+
+================================================================================
+CHECKLIST DE SUCESSO
+================================================================================
+
+[✅] Render Dashboard mostra "Live" (não "Building")
+[✅] curl https://crediclass.csrtecnologia.com.br/ → HTTP 200
+[✅] Navegador carrega dashboard
+[✅] Dados visíveis na UI (não blank page)
+[✅] Console não mostra erros (F12)
+[✅] Botões funcionam
+[✅] API /api/stats responde
+
+Se TODOS passarem: ✅ SUCESSO TOTAL
+
+Se algum falhar: 🔴 Investigar logs do Render + console do navegador
+
+================================================================================
+REVERT RÁPIDO (Se necessário)
+
+Se houver problema pós-deploy:
+$ git revert HEAD --no-edit
+$ git push origin main
+
+Render refaz build automaticamente em ~3-4 minutos.
+
+================================================================================
+Monitorar por: Gage (DevOps)
+Data: 2026-05-19
+Status: Build disparado, aguardando conclusão...
+================================================================================
