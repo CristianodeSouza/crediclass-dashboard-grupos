@@ -35,7 +35,7 @@ def calcular_summary_analytics() -> Dict[str, Any]:
 
     # Cálculos básicos
     total_grupos = len(grupos_ativos)
-    total_credito = sum(g.get("maior_credito", 0) for g in grupos_ativos)
+    total_credito = sum((g.get("maior_credito") or 0) for g in grupos_ativos)
     credito_medio = total_credito / total_grupos if total_grupos > 0 else 0
 
     # Taxa ADM média
@@ -93,7 +93,7 @@ def calcular_comparativo_adms() -> Dict[str, Any]:
             }
 
         adms_data[adm]["total_grupos"] += 1
-        adms_data[adm]["total_credito"] += g.get("maior_credito", 0)
+        adms_data[adm]["total_credito"] += (g.get("maior_credito") or 0)
 
         taxa = g.get("taxa_adm")
         if taxa is not None:
@@ -261,7 +261,7 @@ def calcular_distribuicao_creditos() -> Dict[str, Any]:
     for faixa_def in faixas_definicao:
         contagem = sum(
             1 for g in grupos_ativos
-            if faixa_def["min"] <= g.get("maior_credito", 0) < faixa_def["max"]
+            if faixa_def["min"] <= (g.get("maior_credito") or 0) < faixa_def["max"]
         )
         percentual = (contagem / total * 100) if total > 0 else 0
 
@@ -310,7 +310,7 @@ def calcular_estatisticas_detalhadas() -> Dict[str, Any]:
         }
 
     # Créditos
-    creditos = sorted([g.get("maior_credito", 0) for g in grupos_ativos if g.get("maior_credito")])
+    creditos = sorted([(g.get("maior_credito") or 0) for g in grupos_ativos if g.get("maior_credito")])
     credito_minimo = creditos[0] if creditos else 0
     credito_maximo = creditos[-1] if creditos else 0
     credito_mediana = creditos[len(creditos) // 2] if creditos else 0
