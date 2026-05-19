@@ -1289,7 +1289,7 @@
           <table class="w-full border-collapse text-sm">
             <thead class="sticky top-0 bg-slate-800">
               <tr class="border-b border-slate-700">
-                <th class="text-center px-3 py-3 font-semibold text-slate-300 w-8">+</th>
+                <th class="text-center px-1 py-3 font-semibold text-slate-300 w-6"></th>
                 <th class="text-left px-6 py-3 font-semibold text-slate-300">ADM</th>
                 <th class="text-left px-6 py-3 font-semibold text-slate-300">Grupo ID</th>
                 <th class="text-right px-4 py-3 font-semibold text-slate-300">Vida %</th>
@@ -1304,7 +1304,7 @@
               <template x-for="grupo in gruposGerenciadorPaginados" :key="grupo.grupo">
                 <template>
                   <tr class="hover:bg-slate-800/50 transition cursor-pointer" @click="grupo._expandido = !grupo._expandido">
-                    <td class="text-center px-3 py-3 text-slate-400" x-text="grupo._expandido ? '▼' : '▶'"></td>
+                    <td class="text-center px-1 py-3 text-slate-400 text-sm" x-text="grupo._expandido ? '▼' : '▶'"></td>
                     <td class="px-6 py-3 text-slate-200 font-medium" x-text="grupo.adm"></td>
                     <td class="px-6 py-3 text-slate-200" x-text="grupo.grupo"></td>
                     <td class="px-4 py-3 text-right text-slate-300" x-text="(grupo.vida_grupo_pct ? grupo.vida_grupo_pct.toFixed(1) : '—') + '%'"></td>
