@@ -1375,7 +1375,7 @@
 
   <!-- ════════════════════════ ABA: ANALYTICS DASHBOARD ════════════════════════ -->
   <template x-if="abaAtiva === 'analytics'">
-    <div class="space-y-6">
+    <div class="space-y-6 px-4 md:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full overflow-y-auto">
       <!-- Header com Loading -->
       <div class="flex items-center justify-between">
         <h1 class="text-3xl font-bold text-white">📈 Dashboard Analítico</h1>
@@ -1448,12 +1448,12 @@
       </div>
 
       <!-- Gráficos Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
 
         <!-- Gráfico 1: Distribuição entre ADMs (Donut) -->
         <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
           <h3 class="text-lg font-bold text-white mb-4">Distribuição de Crédito por ADM</h3>
-          <div class="relative h-64">
+          <div class="relative h-48 md:h-64 lg:h-80">
             <canvas id="chartDistribuicaoAdm"></canvas>
           </div>
         </div>
@@ -1461,7 +1461,7 @@
         <!-- Gráfico 2: Comparativo ADMs (Bar) -->
         <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
           <h3 class="text-lg font-bold text-white mb-4">Comparativo de Grupos por ADM</h3>
-          <div class="relative h-64">
+          <div class="relative h-48 md:h-64 lg:h-80">
             <canvas id="chartComparativoAdm"></canvas>
           </div>
         </div>
@@ -1469,7 +1469,7 @@
         <!-- Gráfico 3: Tendências Mensais (Line) -->
         <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6 lg:col-span-2">
           <h3 class="text-lg font-bold text-white mb-4">Tendências de Lances - Últimos 12 Meses</h3>
-          <div class="relative h-80">
+          <div class="relative h-48 md:h-64 lg:h-80">
             <canvas id="chartTendencias"></canvas>
           </div>
         </div>
@@ -1477,7 +1477,7 @@
         <!-- Gráfico 4: Distribuição por Faixa de Crédito (Bar) -->
         <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6 lg:col-span-2">
           <h3 class="text-lg font-bold text-white mb-4">Distribuição de Grupos por Faixa de Crédito</h3>
-          <div class="relative h-80">
+          <div class="relative h-48 md:h-64 lg:h-80">
             <canvas id="chartDistribuicaoFaixa"></canvas>
           </div>
         </div>
@@ -1486,7 +1486,7 @@
       <!-- Estatísticas Detalhadas -->
       <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
         <h2 class="text-lg font-bold text-white mb-4">📊 Estatísticas Detalhadas</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <p class="text-slate-400 text-xs uppercase tracking-wide">Crédito Mínimo</p>
             <p class="text-2xl font-bold text-white mt-2">
