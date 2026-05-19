@@ -10,7 +10,7 @@ from typing import List, Dict, Tuple, Optional
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 import pandas as pd
-from sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo
+from .sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo
 
 
 # ═════════════════════════════════════════════════════════════════════════════

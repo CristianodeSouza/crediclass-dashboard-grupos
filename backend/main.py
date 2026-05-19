@@ -5,10 +5,10 @@ from fastapi import FastAPI, Query, HTTPException, Body, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_grupo, duplicar_grupo, obter_auditoria_grupo, obter_auditoria_grupo_detalhada
-from piperun import fetch_oportunidade
-from import_export import validar_arquivo_excel, extrair_dados_excel, validar_schema, preview_importacao, processar_importacao, exportar_excel_completo, exportar_por_adm, exportar_grupo, exportar_relatorio_adms
-from analytics import calcular_summary_analytics, calcular_comparativo_adms, calcular_tendencias_mensais, calcular_distribuicao_creditos, calcular_estatisticas_detalhadas
+from .sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_grupo, duplicar_grupo, obter_auditoria_grupo, obter_auditoria_grupo_detalhada
+from .piperun import fetch_oportunidade
+from .import_export import validar_arquivo_excel, extrair_dados_excel, validar_schema, preview_importacao, processar_importacao, exportar_excel_completo, exportar_por_adm, exportar_grupo, exportar_relatorio_adms
+from .analytics import calcular_summary_analytics, calcular_comparativo_adms, calcular_tendencias_mensais, calcular_distribuicao_creditos, calcular_estatisticas_detalhadas
 from pydantic import BaseModel
 from typing import Optional, Any
 import io
