@@ -906,14 +906,33 @@
         <!-- STATUS DE SINCRONIZAÇÃO -->
         <div class="p-4 border-b border-slate-800">
           <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Status de Sincronização</p>
-          <div class="bg-slate-800 rounded p-2 text-xs text-slate-300 mb-3">
+
+          <!-- Informações de carregamento -->
+          <div class="bg-slate-800 rounded p-2 text-xs text-slate-300 mb-3 space-y-1">
             <div>Grupos carregados: <span x-text="totalGerenciadorFiltrado" class="font-bold text-white"></span></div>
             <div>Total: <span x-text="gerenciador.totalGrupos" class="font-bold text-white"></span></div>
           </div>
+
+          <!-- Última sincronização -->
+          <template x-if="gerenciador.ultimaSincronizacao">
+            <div class="bg-green-950/40 border border-green-900/50 rounded p-2 text-xs text-green-300 mb-3">
+              <div class="font-medium mb-1">✅ Última sincronização:</div>
+              <div x-text="gerenciador.ultimaSincronizacao.data_formatada" class="text-xs"></div>
+              <div x-text="`${gerenciador.ultimaSincronizacao.total_grupos} grupos em ${gerenciador.ultimaSincronizacao.tempo_segundos}s`" class="text-xs text-green-400 mt-1"></div>
+            </div>
+          </template>
+
+          <!-- Botão sincronizar -->
           <button @click="sincronizarComSheets()" :disabled="gerenciador.sincronizando"
-            class="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm rounded font-medium transition">
+            class="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-wait text-white text-sm rounded font-medium transition flex items-center justify-center gap-2">
             <span x-show="!gerenciador.sincronizando">🔄 Sincronizar Agora</span>
-            <span x-show="gerenciador.sincronizando">⏳ Sincronizando...</span>
+            <span x-show="gerenciador.sincronizando" class="flex items-center gap-2">
+              <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              ⏳ Sincronizando...
+            </span>
           </button>
         </div>
 
@@ -929,16 +948,34 @@
           </select>
         </div>
 
-        <!-- FILTRO: STATUS -->
+        <!-- FILTRO: STATUS (Multi-select) — P2.4 -->
         <div class="p-4 border-b border-slate-800">
-          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Status</label>
-          <select x-model="gerenciador.filtros.status"
-            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:outline-none focus:border-blue-500">
-            <option value="">— Todos —</option>
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
-            <option value="deletado">Deletado</option>
-          </select>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</label>
+            <button @click="limparStatusFiltros()" class="text-xs text-slate-500 hover:text-slate-400">Limpar</button>
+          </div>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 p-2 rounded hover:bg-slate-900 cursor-pointer group">
+              <input type="checkbox" @change="togglearStatusFiltro('ativo')" :checked="gerenciador.filtros.statusMulti && gerenciador.filtros.statusMulti.includes('ativo')" class="w-4 h-4 rounded accent-green-500" />
+              <span class="text-sm text-slate-300 group-hover:text-green-400 transition">🟢 Ativo</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded hover:bg-slate-900 cursor-pointer group">
+              <input type="checkbox" @change="togglearStatusFiltro('inativo')" :checked="gerenciador.filtros.statusMulti && gerenciador.filtros.statusMulti.includes('inativo')" class="w-4 h-4 rounded accent-gray-500" />
+              <span class="text-sm text-slate-300 group-hover:text-gray-400 transition">⚫ Inativo</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded hover:bg-slate-900 cursor-pointer group">
+              <input type="checkbox" @change="togglearStatusFiltro('encerrado')" :checked="gerenciador.filtros.statusMulti && gerenciador.filtros.statusMulti.includes('encerrado')" class="w-4 h-4 rounded accent-red-500" />
+              <span class="text-sm text-slate-300 group-hover:text-red-400 transition">🔴 Encerrado</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded hover:bg-slate-900 cursor-pointer group">
+              <input type="checkbox" @change="togglearStatusFiltro('arquivado')" :checked="gerenciador.filtros.statusMulti && gerenciador.filtros.statusMulti.includes('arquivado')" class="w-4 h-4 rounded accent-blue-500" />
+              <span class="text-sm text-slate-300 group-hover:text-blue-400 transition">🔵 Arquivado</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded hover:bg-slate-900 cursor-pointer group">
+              <input type="checkbox" @change="togglearStatusFiltro('em_revisao')" :checked="gerenciador.filtros.statusMulti && gerenciador.filtros.statusMulti.includes('em_revisao')" class="w-4 h-4 rounded accent-yellow-500" />
+              <span class="text-sm text-slate-300 group-hover:text-yellow-400 transition">🟡 Em Revisão</span>
+            </label>
+          </div>
         </div>
 
         <!-- FILTRO: CRÉDITO MÍNIMO -->
@@ -1066,12 +1103,21 @@
                   <td class="px-4 py-3 text-right text-slate-300" x-text="formatCurrency(grupo.maior_credito)"></td>
                   <td class="px-4 py-3 text-right text-slate-300" x-text="formatPct(grupo.taxa_adm)"></td>
                   <td class="px-4 py-3 text-center">
-                    <span :class="grupo.status === 'ativo' ? 'bg-green-900 text-green-200' : grupo.status === 'inativo' ? 'bg-yellow-900 text-yellow-200' : 'bg-red-900 text-red-200'"
-                      class="px-2 py-1 rounded text-xs font-medium" x-text="grupo.status || 'ativo'"></span>
+                    <span
+                      :class="grupo.status === 'ativo' ? 'bg-green-900/30 text-green-400 border border-green-700' :
+                               grupo.status === 'inativo' ? 'bg-gray-900/30 text-gray-400 border border-gray-700' :
+                               grupo.status === 'encerrado' ? 'bg-red-900/30 text-red-400 border border-red-700' :
+                               grupo.status === 'arquivado' ? 'bg-blue-900/30 text-blue-400 border border-blue-700' :
+                               grupo.status === 'em_revisao' ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700' : 'bg-slate-800 text-slate-400 border border-slate-700'"
+                      class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold">
+                      <span x-text="grupo.status === 'ativo' ? '🟢' : grupo.status === 'inativo' ? '⚫' : grupo.status === 'encerrado' ? '🔴' : grupo.status === 'arquivado' ? '🔵' : grupo.status === 'em_revisao' ? '🟡' : '⚪'"></span>
+                      <span x-text="grupo.status ? grupo.status.charAt(0).toUpperCase() + grupo.status.slice(1).replace('_', ' ') : 'Ativo'"></span>
+                    </span>
                   </td>
                   <td class="px-4 py-3 text-center">
                     <div class="flex gap-1 justify-center">
                       <button @click="abrirModalEditarGrupo(grupo)" class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded" title="Editar">✏️</button>
+                      <button @click="abrirModalDetalheGerenciador(grupo)" class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded" title="Detalhes">👁️</button>
                       <button @click="abrirModalDuplicarGrupo(grupo)" class="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded" title="Duplicar">📋</button>
                       <button @click="abrirModalDeletarGrupo(grupo)" class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded" title="Deletar">🗑️</button>
                       <button @click="abrirModalAuditoria(grupo)" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded" title="Auditoria">📜</button>
@@ -1547,42 +1593,191 @@
   <div x-show="gerenciador.modals.auditoria" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0"
     x-transition:leave="transition ease-in duration-100" x-transition:leave-end="opacity-0"
     @click="fecharModalGerenciador()" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-3xl max-h-[85vh] overflow-y-auto">
       <div class="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-        <h2 class="text-lg font-bold text-white">📜 Auditoria - Grupo <span x-text="gerenciador.grupoSelecionado?.grupo" class="text-slate-400"></span></h2>
+        <div>
+          <h2 class="text-lg font-bold text-white">📜 Histórico de Alterações</h2>
+          <p class="text-xs text-slate-400 mt-1">Grupo <span x-text="gerenciador.grupoSelecionado?.grupo" class="font-mono text-slate-300"></span></p>
+        </div>
         <button @click="fecharModalGerenciador()" class="text-slate-400 hover:text-white text-xl">✕</button>
       </div>
       <div class="p-6">
         <template x-if="gerenciador.auditoria.length === 0">
-          <p class="text-slate-400 text-center py-8">Nenhum registro de auditoria encontrado</p>
+          <div class="text-center py-12">
+            <p class="text-slate-500">📭 Nenhum registro de alteração encontrado</p>
+            <p class="text-xs text-slate-600 mt-2">Este é um grupo novo ou ainda não teve alterações registradas</p>
+          </div>
         </template>
         <template x-if="gerenciador.auditoria.length > 0">
-          <div class="space-y-4">
-            <template x-for="registro in gerenciador.auditoria" :key="registro.timestamp">
-              <div class="bg-slate-800 rounded p-4 border border-slate-700">
-                <div class="flex items-start justify-between mb-2">
-                  <div>
-                    <div class="font-bold text-white" x-text="registro.acao"></div>
-                    <div class="text-xs text-slate-400" x-text="new Date(registro.timestamp).toLocaleString('pt-BR')"></div>
-                  </div>
-                  <div class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-200" x-text="registro.usuario"></div>
-                </div>
-                <template x-if="Object.keys(registro.mudancas).length > 0">
-                  <div class="text-sm text-slate-300 space-y-1">
-                    <template x-for="(mudanca, chave) in registro.mudancas" :key="chave">
-                      <div class="text-xs">
-                        <span class="text-slate-400" x-text="chave + ':'" class="font-medium"></span>
-                        <span class="text-red-400" x-text="' ' + mudanca.antes"></span>
-                        <span class="text-slate-500">→</span>
-                        <span class="text-green-400" x-text="mudanca.depois"></span>
+          <div class="space-y-3">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-700">
+              <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full" x-text="`${gerenciador.auditoria.length} alteração(ões)`"></span>
+              <span class="text-xs text-slate-500">• Mais recente em primeiro</span>
+            </div>
+            <template x-for="(registro, idx) in gerenciador.auditoria" :key="idx">
+              <div class="relative pl-6 pb-4" :class="{ 'border-l border-slate-700 pb-6': idx < gerenciador.auditoria.length - 1 }">
+                <!-- Timeline dot -->
+                <div class="absolute -left-3 top-2 w-4 h-4 rounded-full border-2 border-slate-800 bg-slate-950"
+                  :class="registro.acao_traduzida.includes('Criado') ? 'border-blue-500' :
+                           registro.acao_traduzida.includes('Deletado') ? 'border-red-500' :
+                           'border-amber-500'"></div>
+
+                <!-- Card -->
+                <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50 hover:border-slate-600 transition">
+                  <div class="flex items-start justify-between gap-3 mb-3">
+                    <div class="flex-1">
+                      <!-- Ação e tipo -->
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="font-bold text-white" x-text="registro.acao_traduzida"></span>
+                        <span class="text-xs px-2 py-0.5 rounded-full font-medium"
+                          :class="registro.acao_traduzida.includes('Criado') ? 'bg-blue-900/40 text-blue-300' :
+                                   registro.acao_traduzida.includes('Deletado') ? 'bg-red-900/40 text-red-300' :
+                                   'bg-amber-900/40 text-amber-300'"
+                          x-text="registro.acao"></span>
                       </div>
-                    </template>
+                      <!-- Timestamp -->
+                      <div class="text-xs text-slate-400" x-text="registro.data_formatada"></div>
+                    </div>
+                    <!-- Usuário -->
+                    <div class="text-right">
+                      <div class="text-xs bg-slate-700/60 px-2 py-1 rounded text-slate-200 font-medium" x-text="registro.usuario"></div>
+                    </div>
                   </div>
-                </template>
+
+                  <!-- Mudanças -->
+                  <template x-if="registro.mudancas && Object.keys(registro.mudancas).length > 0">
+                    <div class="mt-3 pt-3 border-t border-slate-700/50 space-y-2">
+                      <template x-for="(mudanca, campo) in registro.mudancas" :key="campo">
+                        <div class="bg-slate-900/40 rounded p-3 text-sm">
+                          <div class="font-medium text-slate-300 mb-1" x-text="campo"></div>
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <span class="inline-block bg-red-950/50 text-red-300 px-2 py-1 rounded text-xs max-w-xs truncate"
+                              x-text="'❌ ' + (mudanca.antes || 'vazio')" :title="mudanca.antes || 'vazio'"></span>
+                            <span class="text-slate-500">→</span>
+                            <span class="inline-block bg-green-950/50 text-green-300 px-2 py-1 rounded text-xs max-w-xs truncate"
+                              x-text="'✅ ' + (mudanca.depois || 'vazio')" :title="mudanca.depois || 'vazio'"></span>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
               </div>
             </template>
           </div>
         </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ MODAL: DETALHE GERENCIADOR ════════════════════ -->
+  <div x-show="gerenciador.modals.detalhe" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0"
+    x-transition:leave="transition ease-in duration-100" x-transition:leave-end="opacity-0"
+    @click="fecharModalGerenciador()" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white">👁️ Visualização Detalhada</h2>
+          <p class="text-xs text-slate-400 mt-1">
+            <span x-text="gerenciador.grupoSelecionado?.adm" class="font-mono text-slate-300"></span>
+            <span class="text-slate-500"> • </span>
+            <span x-text="'Grupo ' + gerenciador.grupoSelecionado?.grupo" class="font-mono text-slate-300"></span>
+          </p>
+        </div>
+        <button @click="fecharModalGerenciador()" class="text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 space-y-6">
+        <!-- Informações Principais -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-900 p-4 rounded border border-slate-800">
+            <div class="text-xs text-slate-500 uppercase tracking-wider">Tipo de Bem</div>
+            <div class="text-lg font-bold text-white mt-1" x-text="gerenciador.grupoSelecionado?.tipo_bem"></div>
+          </div>
+          <div class="bg-slate-900 p-4 rounded border border-slate-800">
+            <div class="text-xs text-slate-500 uppercase tracking-wider">Status</div>
+            <div class="text-lg font-bold mt-1" x-text="gerenciador.grupoSelecionado?.status"
+              :class="gerenciador.grupoSelecionado?.status === 'ativo' ? 'text-green-400' :
+                       gerenciador.grupoSelecionado?.status === 'inativo' ? 'text-gray-400' :
+                       gerenciador.grupoSelecionado?.status === 'encerrado' ? 'text-red-400' :
+                       gerenciador.grupoSelecionado?.status === 'arquivado' ? 'text-blue-400' : 'text-yellow-400'"></div>
+          </div>
+        </div>
+
+        <!-- Créditos e Taxas -->
+        <div class="grid grid-cols-4 gap-3">
+          <div class="bg-slate-900 p-4 rounded border border-slate-800">
+            <div class="text-xs text-slate-500 uppercase tracking-wider">Menor Crédito</div>
+            <div class="text-lg font-bold text-cyan-400 mt-1" x-text="'R$ ' + (gerenciador.grupoSelecionado?.menor_credito?.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) || '0,00')"></div>
+          </div>
+          <div class="bg-slate-900 p-4 rounded border border-slate-800">
+            <div class="text-xs text-slate-500 uppercase tracking-wider">Maior Crédito</div>
+            <div class="text-lg font-bold text-cyan-400 mt-1" x-text="'R$ ' + (gerenciador.grupoSelecionado?.maior_credito?.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) || '0,00')"></div>
+          </div>
+          <div class="bg-slate-900 p-4 rounded border border-slate-800">
+            <div class="text-xs text-slate-500 uppercase tracking-wider">Taxa ADM</div>
+            <div class="text-lg font-bold text-amber-400 mt-1" x-text="(gerenciador.grupoSelecionado?.taxa_adm?.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) || '0,00') + '%'"></div>
+          </div>
+          <div class="bg-slate-900 p-4 rounded border border-slate-800">
+            <div class="text-xs text-slate-500 uppercase tracking-wider">Fundo RSV</div>
+            <div class="text-lg font-bold text-emerald-400 mt-1" x-text="(gerenciador.grupoSelecionado?.fundo_rsv?.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) || '0,00') + '%'"></div>
+          </div>
+        </div>
+
+        <!-- Estatísticas de Lances -->
+        <div class="bg-slate-900 border border-slate-800 rounded p-4">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">📊 Estatísticas de Lances</h3>
+          <div class="grid grid-cols-4 gap-3">
+            <div class="bg-slate-950 p-3 rounded border border-slate-700">
+              <div class="text-xs text-slate-500">Média de Lance</div>
+              <div class="text-2xl font-bold text-blue-400 mt-1" x-text="(gerenciador.estatisticas.media_lance?.toFixed(2) || '0') + '%'"></div>
+            </div>
+            <div class="bg-slate-950 p-3 rounded border border-slate-700">
+              <div class="text-xs text-slate-500">Maior Lance (Histórico)</div>
+              <div class="text-2xl font-bold text-red-400 mt-1" x-text="(gerenciador.estatisticas.maior_lance?.toFixed(2) || '0') + '%'"></div>
+            </div>
+            <div class="bg-slate-950 p-3 rounded border border-slate-700">
+              <div class="text-xs text-slate-500">Menor Lance (Histórico)</div>
+              <div class="text-2xl font-bold text-green-400 mt-1" x-text="(gerenciador.estatisticas.menor_lance?.toFixed(2) || '0') + '%'"></div>
+            </div>
+            <div class="bg-slate-950 p-3 rounded border border-slate-700">
+              <div class="text-xs text-slate-500">Meses com Dados</div>
+              <div class="text-2xl font-bold text-yellow-400 mt-1" x-text="gerenciador.estatisticas.ultimos_meses?.length || 0"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráfico de Histórico -->
+        <div class="bg-slate-900 border border-slate-800 rounded p-4">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">📈 Evolução de Lances (36 meses)</h3>
+          <div class="bg-slate-950 rounded p-4" style="height: 300px;">
+            <canvas id="historicoChartGerenciador"></canvas>
+          </div>
+        </div>
+
+        <!-- Últimos Meses Atualizados -->
+        <div class="bg-slate-900 border border-slate-800 rounded p-4">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-3">📅 Últimos Meses Atualizados</h3>
+          <template x-if="gerenciador.estatisticas.ultimos_meses?.length === 0">
+            <p class="text-slate-500 text-sm">Nenhum mês com dados registrados</p>
+          </template>
+          <template x-if="gerenciador.estatisticas.ultimos_meses?.length > 0">
+            <div class="flex flex-wrap gap-2">
+              <template x-for="mes in gerenciador.estatisticas.ultimos_meses" :key="mes">
+                <span class="bg-slate-800 text-slate-200 px-3 py-1 rounded text-xs font-mono" x-text="mes"></span>
+              </template>
+            </div>
+          </template>
+        </div>
+
+        <!-- Botão Fechar -->
+        <div class="flex gap-3 pt-4 border-t border-slate-800">
+          <button @click="fecharModalGerenciador()" class="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium">
+            ✕ Fechar
+          </button>
+        </div>
       </div>
     </div>
   </div>

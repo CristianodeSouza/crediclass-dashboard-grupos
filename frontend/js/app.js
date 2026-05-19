@@ -66,7 +66,7 @@ function dashboard() {
       porPagina: 500,
       totalGrupos: 0,
       adms: [],
-      filtros: { adm: "", status: "", credito_min: "", credito_max: "", busca: "" },
+      filtros: { adm: "", status: "", credito_min: "", credito_max: "", busca: "", statusMulti: [] },
       buscaTemporal: "", // Para debounce
       timeoutBusca: null, // ID do timeout
       ordenarPor: "adm",
@@ -79,15 +79,23 @@ function dashboard() {
         editarGrupo: false,
         duplicarGrupo: false,
         deletarGrupo: false,
-        auditoria: false
+        auditoria: false,
+        detalhe: false
       },
       grupoSelecionado: null,
       tipoDelete: "soft", // "soft" ou "hard"
       sincronizando: false,
       salvando: false,
       auditoria: [],
+      ultimaSincronizacao: null, // { timestamp, data_formatada, total_grupos, tempo_segundos }
       abaEditarGrupo: 1, // Tab ativa (1-5)
       abaHistoricoAno: 2024, // Ano ativo no histórico mensal
+      estatisticas: {
+        media_lance: 0,
+        maior_lance: 0,
+        menor_lance: 0,
+        ultimos_meses: []
+      }
     },
 
     // ── Computed ────────────────────────────────────────
@@ -730,8 +738,14 @@ function dashboard() {
       // Adicionar apenas parâmetros não-vazios (string vazia é falsy)
       if (this.gerenciador.filtros.adm && this.gerenciador.filtros.adm.trim())
         p.append("adm", this.gerenciador.filtros.adm.trim());
-      if (this.gerenciador.filtros.status && this.gerenciador.filtros.status.trim())
+
+      // Suportar statusMulti (array) ou status (string legado)
+      if (this.gerenciador.filtros.statusMulti && this.gerenciador.filtros.statusMulti.length > 0) {
+        this.gerenciador.filtros.statusMulti.forEach(s => p.append("status", s));
+      } else if (this.gerenciador.filtros.status && this.gerenciador.filtros.status.trim()) {
         p.append("status", this.gerenciador.filtros.status.trim());
+      }
+
       if (this.gerenciador.filtros.credito_min && String(this.gerenciador.filtros.credito_min).trim())
         p.append("credito_min", this.gerenciador.filtros.credito_min);
       if (this.gerenciador.filtros.credito_max && String(this.gerenciador.filtros.credito_max).trim())
@@ -802,14 +816,116 @@ function dashboard() {
       this.obterAuditoria(grupo.grupo);
     },
 
+    abrirModalDetalheGerenciador(grupo) {
+      this.gerenciador.grupoSelecionado = grupo;
+      this.gerenciador.modals.detalhe = true;
+      this.calcularEstatisticasGerenciador(grupo);
+      this.$nextTick(() => {
+        this.inicializarGraficoHistoricoGerenciador();
+      });
+    },
+
+    calcularEstatisticasGerenciador(grupo) {
+      if (!grupo.historico || grupo.historico.length === 0) {
+        this.gerenciador.estatisticas = { media_lance: 0, maior_lance: 0, menor_lance: 0, ultimos_meses: [] };
+        return;
+      }
+      const historico = grupo.historico;
+      const lances_maiores = historico.filter(h => h.maior_lance).map(h => h.maior_lance);
+      const lances_menores = historico.filter(h => h.menor_lance).map(h => h.menor_lance);
+      const media_maior = lances_maiores.length > 0 ? lances_maiores.reduce((a, b) => a + b, 0) / lances_maiores.length : 0;
+      const maior = lances_maiores.length > 0 ? Math.max(...lances_maiores) : 0;
+      const menor = lances_menores.length > 0 ? Math.min(...lances_menores) : 0;
+      const ultimos = historico.slice(-3).reverse();
+      this.gerenciador.estatisticas = {
+        media_lance: parseFloat(media_maior.toFixed(2)),
+        maior_lance: maior,
+        menor_lance: menor,
+        ultimos_meses: ultimos
+      };
+    },
+
+    inicializarGraficoHistoricoGerenciador() {
+      const grupo = this.gerenciador.grupoSelecionado;
+      if (!grupo || !grupo.historico || grupo.historico.length === 0) return;
+      const ctx = document.getElementById("historicoChartGerenciador");
+      if (!ctx) return;
+      if (this.historicoChartGerenciador) this.historicoChartGerenciador.destroy();
+      const labels = grupo.historico.map(h => {
+        const [ano, mes] = h.mes.split("-");
+        const nomeMes = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"][parseInt(mes) - 1];
+        return `${nomeMes}/${ano.slice(-2)}`;
+      });
+      const maiores = grupo.historico.map(h => h.maior_lance || null);
+      const menores = grupo.historico.map(h => h.menor_lance || null);
+      this.historicoChartGerenciador = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Maior Lance (%)",
+              data: maiores,
+              borderColor: "#ef4444",
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              tension: 0.4,
+              borderWidth: 2,
+              pointBackgroundColor: "#ef4444",
+              pointBorderColor: "#fff",
+              pointRadius: 4,
+              pointHoverRadius: 6
+            },
+            {
+              label: "Menor Lance (%)",
+              data: menores,
+              borderColor: "#3b82f6",
+              backgroundColor: "rgba(59, 130, 246, 0.1)",
+              tension: 0.4,
+              borderWidth: 2,
+              pointBackgroundColor: "#3b82f6",
+              pointBorderColor: "#fff",
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              labels: { color: "#cbd5e1", font: { size: 12 } }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { color: "#94a3b8", font: { size: 11 } },
+              grid: { color: "rgba(15, 23, 42, 0.3)" }
+            },
+            x: {
+              ticks: { color: "#94a3b8", font: { size: 11 } },
+              grid: { color: "rgba(15, 23, 42, 0.3)" }
+            }
+          }
+        }
+      });
+    },
+
     fecharModalGerenciador() {
       this.gerenciador.modals.criarGrupo = false;
       this.gerenciador.modals.editarGrupo = false;
       this.gerenciador.modals.duplicarGrupo = false;
       this.gerenciador.modals.deletarGrupo = false;
       this.gerenciador.modals.auditoria = false;
+      this.gerenciador.modals.detalhe = false;
       this.gerenciador.grupoSelecionado = null;
       this.gerenciador.auditoria = [];
+      if (this.historicoChartGerenciador) {
+        this.historicoChartGerenciador.destroy();
+        this.historicoChartGerenciador = null;
+      }
     },
 
     async salvarGrupo() {
@@ -899,19 +1015,36 @@ function dashboard() {
 
     async sincronizarComSheets() {
       this.gerenciador.sincronizando = true;
+      this.gerenciador.ultimaSincronizacao = null;
+
       try {
+        const inicioSync = Date.now();
         const res = await fetch("/api/sync-sheets", { method: "POST" });
         const data = await res.json();
 
         if (res.ok && data.status === "sucesso") {
-          this.mostrarToast(`Sincronização concluída! ${data.total_grupos} grupos.`, "sucesso");
+          const tempoTotal = ((Date.now() - inicioSync) / 1000).toFixed(1);
+          this.gerenciador.ultimaSincronizacao = {
+            timestamp: data.timestamp,
+            data_formatada: data.data_formatada,
+            total_grupos: data.total_grupos,
+            tempo_segundos: tempoTotal
+          };
+          this.mostrarToast(
+            `✅ Sincronização concluída!\n${data.total_grupos} grupos em ${tempoTotal}s`,
+            "sucesso"
+          );
           await this.fetchGruposGerenciador();
         } else {
-          this.mostrarToast("Erro ao sincronizar", "erro");
+          throw new Error(data.detail || "Falha na sincronização");
         }
       } catch (e) {
         console.error("Erro ao sincronizar", e);
-        this.mostrarToast("Erro ao sincronizar", "erro");
+        this.gerenciador.ultimaSincronizacao = null;
+        this.mostrarToast(
+          `❌ Erro ao sincronizar: ${e.message}\nTente novamente em alguns instantes.`,
+          "erro"
+        );
       } finally {
         this.gerenciador.sincronizando = false;
       }
@@ -920,11 +1053,20 @@ function dashboard() {
     async obterAuditoria(grupoId) {
       try {
         const res = await fetch(`/api/grupos/${grupoId}/auditoria`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        this.gerenciador.auditoria = data.historico || [];
+
+        if (data.historico && Array.isArray(data.historico)) {
+          this.gerenciador.auditoria = data.historico.sort((a, b) =>
+            new Date(b.timestamp) - new Date(a.timestamp)
+          );
+        } else {
+          this.gerenciador.auditoria = [];
+        }
       } catch (e) {
         console.error("Erro ao obter auditoria", e);
-        this.mostrarToast("Erro ao obter auditoria", "erro");
+        this.gerenciador.auditoria = [];
+        this.mostrarToast("Erro ao carregar histórico de alterações", "erro");
       }
     },
 
@@ -939,12 +1081,13 @@ function dashboard() {
     },
 
     limparFiltrosGerenciador() {
-      this.gerenciador.filtros = { adm: "", status: "", credito_min: "", credito_max: "", busca: "" };
+      this.gerenciador.filtros = { adm: "", status: "", credito_min: "", credito_max: "", busca: "", statusMulti: [] };
       this.gerenciador.buscaTemporal = "";
       if (this.gerenciador.timeoutBusca) {
         clearTimeout(this.gerenciador.timeoutBusca);
       }
       this.gerenciador.paginaAtual = 1;
+      this.fetchGruposGerenciador();
     },
 
     mudarPaginaGerenciador(direcao) {
@@ -953,6 +1096,56 @@ function dashboard() {
         this.gerenciador.paginaAtual--;
       } else if (direcao === "proxima" && this.gerenciador.paginaAtual < maxPaginas) {
         this.gerenciador.paginaAtual++;
+      }
+    },
+
+    // P2.4 — Status Avançado de Grupos
+    togglearStatusFiltro(status) {
+      if (!this.gerenciador.filtros.statusMulti) {
+        this.gerenciador.filtros.statusMulti = [];
+      }
+      const idx = this.gerenciador.filtros.statusMulti.indexOf(status);
+      if (idx > -1) {
+        this.gerenciador.filtros.statusMulti.splice(idx, 1);
+      } else {
+        this.gerenciador.filtros.statusMulti.push(status);
+      }
+      this.gerenciador.paginaAtual = 1;
+      this.fetchGruposGerenciador();
+    },
+
+    limparStatusFiltros() {
+      this.gerenciador.filtros.statusMulti = [];
+      this.gerenciador.paginaAtual = 1;
+      this.fetchGruposGerenciador();
+    },
+
+    async mudarStatusGrupo(grupo, novoStatus) {
+      if (!grupo || !novoStatus) return;
+
+      this.gerenciador.salvando = true;
+      try {
+        const res = await fetch(`/api/grupos/${grupo.grupo}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ novo_status: novoStatus })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.status === "sucesso") {
+          this.mostrarToast(`Status alterado para ${novoStatus}`, "sucesso");
+          await this.fetchGruposGerenciador();
+          if (this.gerenciador.grupoSelecionado && this.gerenciador.grupoSelecionado.grupo === grupo.grupo) {
+            this.gerenciador.grupoSelecionado.status = novoStatus;
+          }
+        } else {
+          this.mostrarToast(data.detail || "Erro ao alterar status", "erro");
+        }
+      } catch (e) {
+        console.error("Erro ao mudar status", e);
+        this.mostrarToast("Erro ao alterar status: " + e.message, "erro");
+      } finally {
+        this.gerenciador.salvando = false;
       }
     },
 
