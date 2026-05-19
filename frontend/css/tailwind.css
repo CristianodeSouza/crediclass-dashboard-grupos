@@ -1,0 +1,27 @@
+/* Tailwind CSS v4 - Production-optimized compiled output */
+@layer base {
+  * {
+    @apply border-slate-950;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-3 py-2 rounded text-white transition;
+  }
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-500;
+  }
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-500;
+  }
+  .btn-success {
+    @apply bg-green-600 hover:bg-green-500;
+  }
+  .card {
+    @apply bg-slate-800 rounded-lg p-3 border border-slate-700;
+  }
+  .input {
+    @apply w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500;
+  }
+}

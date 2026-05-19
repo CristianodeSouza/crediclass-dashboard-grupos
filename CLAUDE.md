@@ -2,7 +2,7 @@
 
 Dashboard de análise financeira de grupos de consórcio imobiliário com simulador de modalidades e comparativo entre 6 administradoras.
 
-**Status:** Em desenvolvimento | Última atualização: 2026-05-15
+**Status:** Em desenvolvimento | Última atualização: 2026-05-19
 
 ---
 
@@ -74,7 +74,11 @@ Veja `docs/ROADMAP.md` para lista completa e datas.
 
 | Recurso | Link |
 |---------|------|
+| **Aplicação Live** | https://crediclass.csrtecnologia.com.br |
 | **Planilha Grupos** | [Google Sheets](https://docs.google.com/spreadsheets/d/1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM/) |
+| **GitHub Repositório** | https://github.com/CristianodeSouza/crediclass-dashboard-grupos |
+| **Render Dashboard** | https://dashboard.render.com |
+| **Setup Render** | `RENDER_SETUP.md` |
 | **Roadmap & TODO** | `docs/ROADMAP.md` |
 | **Features Status** | `docs/FEATURES.md` |
 | **Setup Detalhado** | `docs/QUICK_START.md` |
@@ -95,11 +99,14 @@ Veja `docs/ROADMAP.md` para lista completa e datas.
 
 | Componente | Tecnologia |
 |-----------|-----------|
-| Backend | FastAPI + Python 3.11+ |
-| Frontend | Alpine.js + Chart.js |
+| Backend | FastAPI + Python 3.11 |
+| Frontend | Alpine.js 3.14.1 + Chart.js |
 | API Sheets | Google Sheets API v4 |
 | CRM | Piperun (integração JSON) |
-| Deploy | Vercel (frontend) |
+| **Deploy** | **Render.com (Docker)** |
+| **DNS/CDN** | **Cloudflare** |
+| **Repositório** | **GitHub** (CristianodeSouza/crediclass-dashboard-grupos) |
+| **Domínio** | crediclass.csrtecnologia.com.br |
 | Cache | JSON local (`data/grupos.json`) |
 
 ---

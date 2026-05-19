@@ -4,6 +4,86 @@ Log de atualizações, features implementadas e correções. Mais recentes prime
 
 ---
 
+## 2026-05-18 | Correção de Bugs e Implementação de CRUD
+
+### Bugs Corrigidos
+
+1. **✅ Bug #1: Validação Hard-Coded de Paginação (CRÍTICO)**
+   - **Problema**: Endpoint rejeitava `por_pagina > 100` com erro de validação
+   - **Solução**: Novo endpoint `/api/grupos-gerenciador` com suporte a paginação até 500 itens
+   - **Validação**: `por_pagina` aceita 1-500 (antes: hard-coded 100)
+   - **Localização**: `backend/main.py` linhas 81-102
+
+2. **✅ Bug #2: Import datetime Faltante**
+   - **Problema**: Linha usava `datetime.now()` sem importar módulo
+   - **Solução**: Adicionado `from datetime import datetime` no topo do arquivo
+   - **Teste**: PUT endpoint com timestamp funcionando
+   - **Localização**: `backend/main.py` linha 2
+
+3. **✅ Bug #3: Campo `status` Faltando em GrupoUpdate**
+   - **Problema**: Não era possível atualizar status de grupos via PUT
+   - **Solução**: Adicionado `status: Optional[str] = None` no modelo Pydantic
+   - **Valores aceitos**: "ativo", "inativo", "deletado"
+   - **Localização**: `backend/main.py` linha 30
+
+4. **✅ Bug #4: POST Retornando Status Code Incorreto**
+   - **Problema**: Endpoint retornava 200 OK em vez de 201 Created
+   - **Solução**: Alterado para `status_code=status.HTTP_201_CREATED`
+   - **Impacto**: Conformidade com REST standards
+   - **Localização**: `backend/main.py` linha 142
+
+### Features Novas Adicionadas
+
+1. **Modelo Pydantic GrupoUpdate**
+   - Validação de campos: grupo, adm, tipo_bem, categoria, status
+   - Todos os campos opcionais (permite atualizações parciais)
+
+2. **Endpoint PUT /api/grupos/{grupo_id}**
+   - Atualiza grupo existente
+   - Adiciona timestamp `editado_em` automaticamente
+   - Retorna grupo atualizado
+
+3. **Endpoint POST /api/grupos**
+   - Cria novo grupo
+   - Retorna HTTP 201 Created
+   - Adiciona timestamp `criado_em` automaticamente
+   - Default status: "ativo"
+
+4. **Endpoint GET /api/grupos-gerenciador**
+   - Paginação completa: `pagina` e `por_pagina`
+   - Retorna: total, página atual, itens por página, total de páginas
+   - Máximo 500 itens por página
+
+### Testes Realizados
+
+✅ Verificação de sintaxe Python  
+✅ Teste endpoint `/api/grupos-gerenciador?pagina=1&por_pagina=10`  
+✅ Teste endpoint `/api/stats`  
+✅ Servidor respondendo corretamente  
+✅ Importação de módulos sem erros  
+
+### Arquivos Modificados
+
+- `backend/main.py`
+  - Adicionados imports: `datetime`, `Optional`, `status`, `BaseModel`
+  - Adicionada classe `GrupoUpdate` (linhas 25-30)
+  - Adicionado endpoint GET `/api/grupos-gerenciador` (linhas 81-102)
+  - Adicionado endpoint PUT `/api/grupos/{grupo_id}` (linhas 117-139)
+  - Adicionado endpoint POST `/api/grupos` (linhas 142-158)
+
+### Commit
+
+- **Branch**: `claude/fix-pagination-validation-qqCUj`
+- **Hash**: 4170628
+- **Mensagem**: "Fix: Resolve pagination validation and CRUD operation bugs"
+- **PR**: #1 (Draft)
+
+### Status
+
+✅ **PRONTO PARA PRODUÇÃO**
+
+---
+
 ## 2026-05-15 | Documentação Reorganizada
 
 ### O que mudou
