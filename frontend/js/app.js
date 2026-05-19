@@ -58,6 +58,32 @@ function dashboard() {
     grupoDetalhe: null,
     historicoChart: null,
 
+    // ── GERENCIADOR ─────────────────────────────────────
+    gerenciador: {
+      grupos: [],
+      gruposFiltrados: [],
+      paginaAtual: 1,
+      porPagina: 342,
+      totalGrupos: 0,
+      adms: [],
+      filtros: { adm: "", status: "", credito_min: "", credito_max: "", busca: "" },
+      ordenarPor: "adm",
+      ordenarDir: "asc",
+      formulario: { adm: "", grupo: "", tipo_bem: "", maior_credito: "", menor_credito: "", taxa_adm: "", fundo_rsv: "", investidor: "", conservador_24m: "", moderado_12m: "", dados_adicionais: "" },
+      modals: {
+        criarGrupo: false,
+        editarGrupo: false,
+        duplicarGrupo: false,
+        deletarGrupo: false,
+        auditoria: false
+      },
+      grupoSelecionado: null,
+      tipoDelete: "soft", // "soft" ou "hard"
+      sincronizando: false,
+      salvando: false,
+      auditoria: []
+    },
+
     // ── Computed ────────────────────────────────────────
     get formulario() { return this.oportunidade?.formulario || {}; },
 
@@ -116,9 +142,53 @@ function dashboard() {
       });
     },
 
+    get gruposGerenciadorFiltrados() {
+      let list = [...this.gerenciador.grupos];
+      const f = this.gerenciador.filtros;
+
+      if (f.adm) list = list.filter(g => g.adm === f.adm);
+      if (f.status) list = list.filter(g => (g.status || "ativo") === f.status);
+      if (f.credito_min) list = list.filter(g => g.maior_credito && g.maior_credito >= parseFloat(f.credito_min));
+      if (f.credito_max) list = list.filter(g => g.maior_credito && g.maior_credito <= parseFloat(f.credito_max));
+      if (f.busca) {
+        const b = f.busca.toLowerCase();
+        list = list.filter(g =>
+          String(g.grupo).toLowerCase().includes(b) ||
+          g.adm.toLowerCase().includes(b) ||
+          (g.tipo_bem || "").toLowerCase().includes(b)
+        );
+      }
+
+      // Sort
+      const dir = this.gerenciador.ordenarDir === "asc" ? 1 : -1;
+      list.sort((a, b) => {
+        let va = a[this.gerenciador.ordenarPor] ?? "";
+        let vb = b[this.gerenciador.ordenarPor] ?? "";
+        if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
+        return String(va).localeCompare(String(vb)) * dir;
+      });
+
+      return list;
+    },
+
+    get gruposGerenciadorPaginados() {
+      const s = (this.gerenciador.paginaAtual - 1) * this.gerenciador.porPagina;
+      return this.gruposGerenciadorFiltrados.slice(s, s + this.gerenciador.porPagina);
+    },
+
+    get totalGerenciadorFiltrado() { return this.gruposGerenciadorFiltrados.length; },
+    get totalGerenciadorPaginas() { return Math.max(1, Math.ceil(this.gruposGerenciadorFiltrados.length / this.gerenciador.porPagina)); },
+
     // ── Lifecycle ───────────────────────────────────────
     async init() {
       await Promise.all([this.loadStats(), this.loadGrupos()]);
+    },
+
+    mudarAba(aba) {
+      this.abaAtiva = aba;
+      if (aba === 'gerenciador' && this.gerenciador.grupos.length === 0) {
+        this.fetchGruposGerenciador();
+      }
     },
 
     async loadStats() {
@@ -644,6 +714,226 @@ function dashboard() {
 
     formatarDataBR(data) {
       return `${String(data.getDate()).padStart(2, '0')}/${String(data.getMonth() + 1).padStart(2, '0')}/${data.getFullYear()}`;
+    },
+
+    // ── GERENCIADOR MÉTODOS ────────────────────────────
+
+    async fetchGruposGerenciador() {
+      const p = new URLSearchParams();
+
+      // Adicionar apenas parâmetros não-vazios (string vazia é falsy)
+      if (this.gerenciador.filtros.adm && this.gerenciador.filtros.adm.trim())
+        p.append("adm", this.gerenciador.filtros.adm.trim());
+      if (this.gerenciador.filtros.status && this.gerenciador.filtros.status.trim())
+        p.append("status", this.gerenciador.filtros.status.trim());
+      if (this.gerenciador.filtros.credito_min && String(this.gerenciador.filtros.credito_min).trim())
+        p.append("credito_min", this.gerenciador.filtros.credito_min);
+      if (this.gerenciador.filtros.credito_max && String(this.gerenciador.filtros.credito_max).trim())
+        p.append("credito_max", this.gerenciador.filtros.credito_max);
+      if (this.gerenciador.filtros.busca && this.gerenciador.filtros.busca.trim())
+        p.append("busca", this.gerenciador.filtros.busca.trim());
+      p.append("ordenar_por", this.gerenciador.ordenarPor || "adm");
+      p.append("ordem", this.gerenciador.ordenarDir || "asc");
+      p.append("pagina", this.gerenciador.paginaAtual);
+      p.append("por_pagina", this.gerenciador.porPagina);
+
+      try {
+        const res = await fetch(`/api/grupos-gerenciador?${p}`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        }
+        const data = await res.json();
+        this.gerenciador.grupos = data.grupos || [];
+        this.gerenciador.totalGrupos = data.total || 0;
+        this.gerenciador.paginaAtual = data.pagina || 1;
+        this.gerenciador.totalPaginas = data.total_paginas || 0;
+
+        // Carregar todas as administradoras do dataset completo
+        const admsRes = await fetch("/api/administradoras");
+        if (admsRes.ok) {
+          const admsData = await admsRes.json();
+          this.gerenciador.adms = admsData.administradoras || [];
+        }
+
+        this.mostrarToast(`${data.total} grupos carregados`, "sucesso");
+      } catch (e) {
+        console.error("Erro ao carregar grupos", e);
+        this.mostrarToast("Erro ao carregar grupos: " + e.message, "erro");
+      }
+    },
+
+    abrirModalCriarGrupo() {
+      this.gerenciador.grupoSelecionado = null;
+      this.gerenciador.formulario = {
+        adm: "", grupo: "", tipo_bem: "", maior_credito: "", menor_credito: "",
+        taxa_adm: "", fundo_rsv: "", investidor: "", conservador_24m: "",
+        moderado_12m: "", dados_adicionais: ""
+      };
+      this.gerenciador.modals.criarGrupo = true;
+    },
+
+    abrirModalEditarGrupo(grupo) {
+      this.gerenciador.grupoSelecionado = grupo;
+      this.gerenciador.formulario = { ...grupo };
+      this.gerenciador.modals.editarGrupo = true;
+    },
+
+    abrirModalDuplicarGrupo(grupo) {
+      this.gerenciador.grupoSelecionado = grupo;
+      this.gerenciador.modals.duplicarGrupo = true;
+    },
+
+    abrirModalDeletarGrupo(grupo, tipo = "soft") {
+      this.gerenciador.grupoSelecionado = grupo;
+      this.gerenciador.tipoDelete = tipo;
+      this.gerenciador.modals.deletarGrupo = true;
+    },
+
+    abrirModalAuditoria(grupo) {
+      this.gerenciador.grupoSelecionado = grupo;
+      this.gerenciador.auditoria = [];
+      this.gerenciador.modals.auditoria = true;
+      this.obterAuditoria(grupo.grupo);
+    },
+
+    fecharModalGerenciador() {
+      this.gerenciador.modals.criarGrupo = false;
+      this.gerenciador.modals.editarGrupo = false;
+      this.gerenciador.modals.duplicarGrupo = false;
+      this.gerenciador.modals.deletarGrupo = false;
+      this.gerenciador.modals.auditoria = false;
+      this.gerenciador.grupoSelecionado = null;
+      this.gerenciador.auditoria = [];
+    },
+
+    async salvarGrupo() {
+      this.gerenciador.salvando = true;
+      try {
+        const url = this.gerenciador.grupoSelecionado
+          ? `/api/grupos/${this.gerenciador.grupoSelecionado.grupo}`
+          : "/api/grupos";
+
+        const method = this.gerenciador.grupoSelecionado ? "PUT" : "POST";
+        const body = JSON.stringify(this.gerenciador.formulario);
+
+        const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body });
+        const data = await res.json();
+
+        if (res.ok && data.status === "sucesso") {
+          const tipo = this.gerenciador.grupoSelecionado ? "atualizado" : "criado";
+          this.mostrarToast(`Grupo ${tipo} com sucesso!`, "sucesso");
+          this.fecharModalGerenciador();
+          await this.fetchGruposGerenciador();
+        } else {
+          this.mostrarToast(data.detail || "Erro ao salvar grupo", "erro");
+        }
+      } catch (e) {
+        console.error("Erro ao salvar", e);
+        this.mostrarToast("Erro ao salvar grupo", "erro");
+      } finally {
+        this.gerenciador.salvando = false;
+      }
+    },
+
+    async deletarGrupo() {
+      if (!this.gerenciador.grupoSelecionado) return;
+
+      this.gerenciador.salvando = true;
+      try {
+        const url = `/api/grupos/${this.gerenciador.grupoSelecionado.grupo}?soft=${this.gerenciador.tipoDelete === "soft"}`;
+        const res = await fetch(url, { method: "DELETE" });
+        const data = await res.json();
+
+        if (res.ok && data.status === "sucesso") {
+          const tipo = this.gerenciador.tipoDelete === "soft" ? "desativado" : "deletado";
+          this.mostrarToast(`Grupo ${tipo} com sucesso!`, "sucesso");
+          this.fecharModalGerenciador();
+          await this.fetchGruposGerenciador();
+        } else {
+          this.mostrarToast(data.detail || "Erro ao deletar grupo", "erro");
+        }
+      } catch (e) {
+        console.error("Erro ao deletar", e);
+        this.mostrarToast("Erro ao deletar grupo", "erro");
+      } finally {
+        this.gerenciador.salvando = false;
+      }
+    },
+
+    async duplicarGrupo() {
+      if (!this.gerenciador.grupoSelecionado) return;
+
+      this.gerenciador.salvando = true;
+      try {
+        const url = `/api/grupos/${this.gerenciador.grupoSelecionado.grupo}/duplicar`;
+        const res = await fetch(url, { method: "POST" });
+        const data = await res.json();
+
+        if (res.ok && data.status === "sucesso") {
+          this.mostrarToast(`Grupo duplicado com sucesso! ID: ${data.novo_grupo_id}`, "sucesso");
+          this.fecharModalGerenciador();
+          await this.fetchGruposGerenciador();
+        } else {
+          this.mostrarToast(data.detail || "Erro ao duplicar grupo", "erro");
+        }
+      } catch (e) {
+        console.error("Erro ao duplicar", e);
+        this.mostrarToast("Erro ao duplicar grupo", "erro");
+      } finally {
+        this.gerenciador.salvando = false;
+      }
+    },
+
+    async sincronizarComSheets() {
+      this.gerenciador.sincronizando = true;
+      try {
+        const res = await fetch("/api/sync-sheets", { method: "POST" });
+        const data = await res.json();
+
+        if (res.ok && data.status === "sucesso") {
+          this.mostrarToast(`Sincronização concluída! ${data.total_grupos} grupos.`, "sucesso");
+          await this.fetchGruposGerenciador();
+        } else {
+          this.mostrarToast("Erro ao sincronizar", "erro");
+        }
+      } catch (e) {
+        console.error("Erro ao sincronizar", e);
+        this.mostrarToast("Erro ao sincronizar", "erro");
+      } finally {
+        this.gerenciador.sincronizando = false;
+      }
+    },
+
+    async obterAuditoria(grupoId) {
+      try {
+        const res = await fetch(`/api/grupos/${grupoId}/auditoria`);
+        const data = await res.json();
+        this.gerenciador.auditoria = data.historico || [];
+      } catch (e) {
+        console.error("Erro ao obter auditoria", e);
+        this.mostrarToast("Erro ao obter auditoria", "erro");
+      }
+    },
+
+    ordenarGerenciador(coluna) {
+      if (this.gerenciador.ordenarPor === coluna) {
+        this.gerenciador.ordenarDir = this.gerenciador.ordenarDir === "asc" ? "desc" : "asc";
+      } else {
+        this.gerenciador.ordenarPor = coluna;
+        this.gerenciador.ordenarDir = "asc";
+      }
+      this.gerenciador.paginaAtual = 1;
+    },
+
+    limparFiltrosGerenciador() {
+      this.gerenciador.filtros = { adm: "", status: "", credito_min: "", credito_max: "", busca: "" };
+      this.gerenciador.paginaAtual = 1;
+    },
+
+    mostrarToast(mensagem, tipo = "info") {
+      // Toast simples usando alert por enquanto
+      // TODO: Implementar toast UI melhorado
+      console.log(`[${tipo.toUpperCase()}] ${mensagem}`);
     },
   };
 }

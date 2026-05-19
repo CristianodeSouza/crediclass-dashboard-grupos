@@ -61,6 +61,12 @@
     class="px-3 py-2.5 text-sm font-medium transition whitespace-nowrap">
     🧮 Calculadora Imóvel
   </button>
+  <button
+    @click="mudarAba('gerenciador')"
+    :class="abaAtiva === 'gerenciador' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
+    class="px-3 py-2.5 text-sm font-medium transition whitespace-nowrap">
+    🛠️ Gerenciador de Grupos
+  </button>
 </nav>
 
 <!-- ═══════════════════════════════ BODY ════════════════════════════════ -->
@@ -889,6 +895,421 @@
 
     </div>
   </template>
+
+  <!-- ════════════════════ ABA: GERENCIADOR DE GRUPOS ════════════════════ -->
+  <template x-if="abaAtiva === 'gerenciador'">
+    <div class="flex flex-1 min-h-0 min-w-0">
+
+      <!-- ─────────────────── SIDEBAR ESQUERDA: FILTROS ─────────────────── -->
+      <aside class="flex-none w-72 bg-slate-900 border-r border-slate-800 overflow-y-auto flex flex-col">
+
+        <!-- STATUS DE SINCRONIZAÇÃO -->
+        <div class="p-4 border-b border-slate-800">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Status de Sincronização</p>
+          <div class="bg-slate-800 rounded p-2 text-xs text-slate-300 mb-3">
+            <div>Grupos carregados: <span x-text="totalGerenciadorFiltrado" class="font-bold text-white"></span></div>
+            <div>Total: <span x-text="gerenciador.totalGrupos" class="font-bold text-white"></span></div>
+          </div>
+          <button @click="sincronizarComSheets()" :disabled="gerenciador.sincronizando"
+            class="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm rounded font-medium transition">
+            <span x-show="!gerenciador.sincronizando">🔄 Sincronizar Agora</span>
+            <span x-show="gerenciador.sincronizando">⏳ Sincronizando...</span>
+          </button>
+        </div>
+
+        <!-- FILTRO: ADMINISTRADORA -->
+        <div class="p-4 border-b border-slate-800">
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Administradora</label>
+          <select x-model="gerenciador.filtros.adm"
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:outline-none focus:border-blue-500">
+            <option value="">— Todas —</option>
+            <template x-for="adm in gerenciador.adms" :key="adm">
+              <option :value="adm" x-text="adm"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- FILTRO: STATUS -->
+        <div class="p-4 border-b border-slate-800">
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Status</label>
+          <select x-model="gerenciador.filtros.status"
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:outline-none focus:border-blue-500">
+            <option value="">— Todos —</option>
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+            <option value="deletado">Deletado</option>
+          </select>
+        </div>
+
+        <!-- FILTRO: CRÉDITO MÍNIMO -->
+        <div class="p-4 border-b border-slate-800">
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Crédito Mínimo (R$)</label>
+          <input type="number" x-model.number="gerenciador.filtros.creditoMin"
+            placeholder="Ex: 100000"
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <!-- FILTRO: CRÉDITO MÁXIMO -->
+        <div class="p-4 border-b border-slate-800">
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Crédito Máximo (R$)</label>
+          <input type="number" x-model.number="gerenciador.filtros.creditoMax"
+            placeholder="Ex: 500000"
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <!-- FILTRO: BUSCA -->
+        <div class="p-4 border-b border-slate-800">
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Buscar Grupo/ADM</label>
+          <input type="text" x-model="gerenciador.filtros.busca" placeholder="ID do grupo, ADM..."
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <!-- BOTÃO LIMPAR FILTROS -->
+        <div class="p-4">
+          <button @click="limparFiltrosGerenciador()"
+            class="w-full px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded font-medium transition">
+            🗑️ Limpar Filtros
+          </button>
+        </div>
+
+        <!-- BOTÃO CRIAR NOVO GRUPO -->
+        <div class="p-4 mt-auto">
+          <button @click="abrirModalCriarGrupo()"
+            class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white text-sm rounded font-bold transition">
+            ➕ Novo Grupo
+          </button>
+        </div>
+
+      </aside>
+
+      <!-- ─────────────────── CONTEÚDO PRINCIPAL ─────────────────── -->
+      <main class="flex-1 flex flex-col min-h-0 min-w-0">
+
+        <!-- HEADER COM PAGINAÇÃO -->
+        <div class="flex-none bg-slate-800 border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+          <div class="text-sm text-slate-300">
+            Exibindo <span x-text="(gerenciador.paginaAtual - 1) * gerenciador.porPagina + 1" class="font-bold"></span>
+            a
+            <span x-text="Math.min(gerenciador.paginaAtual * gerenciador.porPagina, totalGerenciadorFiltrado)" class="font-bold"></span>
+            de
+            <span x-text="totalGerenciadorFiltrado" class="font-bold"></span>
+          </div>
+        </div>
+
+        <!-- TABELA DE GRUPOS -->
+        <div class="flex-1 overflow-auto">
+          <table class="w-full border-collapse text-sm">
+            <thead class="sticky top-0 bg-slate-800">
+              <tr class="border-b border-slate-700">
+                <th class="px-4 py-3 text-left text-slate-300 font-semibold cursor-pointer hover:bg-slate-700" @click="ordenarGerenciador('adm')">
+                  ADM <span x-show="gerenciador.ordenarPor === 'adm'" x-text="gerenciador.ordenarDir === 'asc' ? '↑' : '↓'"></span>
+                </th>
+                <th class="px-4 py-3 text-left text-slate-300 font-semibold cursor-pointer hover:bg-slate-700" @click="ordenarGerenciador('grupo')">
+                  Grupo ID <span x-show="gerenciador.ordenarPor === 'grupo'" x-text="gerenciador.ordenarDir === 'asc' ? '↑' : '↓'"></span>
+                </th>
+                <th class="px-4 py-3 text-right text-slate-300 font-semibold cursor-pointer hover:bg-slate-700" @click="ordenarGerenciador('menor_credito')">
+                  Menor Crédito <span x-show="gerenciador.ordenarPor === 'menor_credito'" x-text="gerenciador.ordenarDir === 'asc' ? '↑' : '↓'"></span>
+                </th>
+                <th class="px-4 py-3 text-right text-slate-300 font-semibold cursor-pointer hover:bg-slate-700" @click="ordenarGerenciador('maior_credito')">
+                  Maior Crédito <span x-show="gerenciador.ordenarPor === 'maior_credito'" x-text="gerenciador.ordenarDir === 'asc' ? '↑' : '↓'"></span>
+                </th>
+                <th class="px-4 py-3 text-right text-slate-300 font-semibold">Taxa ADM</th>
+                <th class="px-4 py-3 text-center text-slate-300 font-semibold">Status</th>
+                <th class="px-4 py-3 text-center text-slate-300 font-semibold">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="grupo in gruposGerenciadorPaginados" :key="grupo.grupo">
+                <tr class="border-b border-slate-700 hover:bg-slate-800 transition">
+                  <td class="px-4 py-3 text-slate-300" x-text="grupo.adm"></td>
+                  <td class="px-4 py-3 text-slate-300 font-medium" x-text="grupo.grupo"></td>
+                  <td class="px-4 py-3 text-right text-slate-300" x-text="formatCurrency(grupo.menor_credito)"></td>
+                  <td class="px-4 py-3 text-right text-slate-300" x-text="formatCurrency(grupo.maior_credito)"></td>
+                  <td class="px-4 py-3 text-right text-slate-300" x-text="formatPct(grupo.taxa_adm)"></td>
+                  <td class="px-4 py-3 text-center">
+                    <span :class="grupo.status === 'ativo' ? 'bg-green-900 text-green-200' : grupo.status === 'inativo' ? 'bg-yellow-900 text-yellow-200' : 'bg-red-900 text-red-200'"
+                      class="px-2 py-1 rounded text-xs font-medium" x-text="grupo.status || 'ativo'"></span>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <div class="flex gap-1 justify-center">
+                      <button @click="abrirModalEditarGrupo(grupo)" class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded" title="Editar">✏️</button>
+                      <button @click="abrirModalDuplicarGrupo(grupo)" class="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded" title="Duplicar">📋</button>
+                      <button @click="abrirModalDeletarGrupo(grupo)" class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded" title="Deletar">🗑️</button>
+                      <button @click="abrirModalAuditoria(grupo)" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded" title="Auditoria">📜</button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <template x-if="gerenciador.gruposFiltrados.length === 0">
+                <tr>
+                  <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                    Nenhum grupo encontrado com os filtros aplicados
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+      </main>
+
+    </div>
+  </template>
+
+  <!-- ════════════════════ MODAL: CRIAR GRUPO ════════════════════ -->
+  <div x-show="gerenciador.modals.criarGrupo" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0"
+    x-transition:leave="transition ease-in duration-100" x-transition:leave-end="opacity-0"
+    @click="fecharModalGerenciador()" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <h2 class="text-lg font-bold text-white">➕ Novo Grupo</h2>
+        <button @click="fecharModalGerenciador()" class="text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+      <form @submit.prevent="salvarGrupo()" class="p-6 space-y-4">
+        <div>
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Administradora *</label>
+          <input type="text" x-model="gerenciador.formulario.adm" placeholder="Ex: ITAÚ" required
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Tipo de Bem *</label>
+          <input type="text" x-model="gerenciador.formulario.tipo_bem" placeholder="Ex: Imóvel" required
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Menor Crédito *</label>
+            <input type="number" x-model.number="gerenciador.formulario.menor_credito" placeholder="0" required
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Maior Crédito *</label>
+            <input type="number" x-model.number="gerenciador.formulario.maior_credito" placeholder="0" required
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Taxa ADM (%) *</label>
+            <input type="number" step="0.01" x-model.number="gerenciador.formulario.taxa_adm" placeholder="0" required
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Fundo Reserva (%) *</label>
+            <input type="number" step="0.01" x-model.number="gerenciador.formulario.fundo_rsv" placeholder="0" required
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Investidor (%) *</label>
+            <input type="number" step="0.01" x-model.number="gerenciador.formulario.investidor" placeholder="0" required
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Conservador 24m (%) *</label>
+            <input type="number" step="0.01" x-model.number="gerenciador.formulario.conservador_24m" placeholder="0" required
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Moderado 12m (%) *</label>
+          <input type="number" step="0.01" x-model.number="gerenciador.formulario.moderado_12m" placeholder="0" required
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+        </div>
+        <div class="flex gap-3 pt-4">
+          <button type="button" @click="fecharModalGerenciador()" class="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium">Cancelar</button>
+          <button type="submit" :disabled="gerenciador.salvando" class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded font-bold">
+            <span x-show="!gerenciador.salvando">💾 Salvar</span>
+            <span x-show="gerenciador.salvando">⏳ Salvando...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ════════════════════ MODAL: EDITAR GRUPO ════════════════════ -->
+  <div x-show="gerenciador.modals.editarGrupo" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0"
+    x-transition:leave="transition ease-in duration-100" x-transition:leave-end="opacity-0"
+    @click="fecharModalGerenciador()" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <h2 class="text-lg font-bold text-white">✏️ Editar Grupo <span x-text="gerenciador.grupoSelecionado?.grupo" class="text-blue-400"></span></h2>
+        <button @click="fecharModalGerenciador()" class="text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+      <form @submit.prevent="salvarGrupo()" class="p-6 space-y-4">
+        <div>
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Administradora</label>
+          <input type="text" x-model="gerenciador.formulario.adm" placeholder="Ex: ITAÚ"
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Tipo de Bem</label>
+          <input type="text" x-model="gerenciador.formulario.tipo_bem" placeholder="Ex: Imóvel"
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Menor Crédito</label>
+            <input type="number" x-model.number="gerenciador.formulario.menor_credito" placeholder="0"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Maior Crédito</label>
+            <input type="number" x-model.number="gerenciador.formulario.maior_credito" placeholder="0"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Taxa ADM (%)</label>
+            <input type="number" step="0.01" x-model.number="gerenciador.formulario.taxa_adm" placeholder="0"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Fundo Reserva (%)</label>
+            <input type="number" step="0.01" x-model.number="gerenciador.formulario.fundo_rsv" placeholder="0"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Investidor (%)</label>
+            <input type="number" step="0.01" x-model.number="gerenciador.formulario.investidor" placeholder="0"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Conservador 24m (%)</label>
+            <input type="number" step="0.01" x-model.number="gerenciador.formulario.conservador_24m" placeholder="0"
+              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Moderado 12m (%)</label>
+          <input type="number" step="0.01" x-model.number="gerenciador.formulario.moderado_12m" placeholder="0"
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Status</label>
+          <select x-model="gerenciador.formulario.status"
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500">
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+            <option value="deletado">Deletado</option>
+          </select>
+        </div>
+        <div class="flex gap-3 pt-4">
+          <button type="button" @click="fecharModalGerenciador()" class="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium">Cancelar</button>
+          <button type="submit" :disabled="gerenciador.salvando" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded font-bold">
+            <span x-show="!gerenciador.salvando">💾 Atualizar</span>
+            <span x-show="gerenciador.salvando">⏳ Atualizando...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ════════════════════ MODAL: DUPLICAR GRUPO ════════════════════ -->
+  <div x-show="gerenciador.modals.duplicarGrupo" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0"
+    x-transition:leave="transition ease-in duration-100" x-transition:leave-end="opacity-0"
+    @click="fecharModalGerenciador()" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-md">
+      <div class="bg-slate-900 border-b border-slate-800 px-6 py-4">
+        <h2 class="text-lg font-bold text-white">📋 Duplicar Grupo <span x-text="gerenciador.grupoSelecionado?.grupo" class="text-purple-400"></span></h2>
+      </div>
+      <div class="p-6">
+        <p class="text-slate-300 mb-6">Tem certeza que deseja duplicar este grupo? Um novo grupo será criado com os mesmos dados e um novo ID será gerado automaticamente.</p>
+        <div class="flex gap-3">
+          <button @click="fecharModalGerenciador()" class="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium">Cancelar</button>
+          <button @click="duplicarGrupo()" :disabled="gerenciador.salvando" class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded font-bold">
+            <span x-show="!gerenciador.salvando">📋 Duplicar</span>
+            <span x-show="gerenciador.salvando">⏳ Duplicando...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ MODAL: DELETAR GRUPO ════════════════════ -->
+  <div x-show="gerenciador.modals.deletarGrupo" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0"
+    x-transition:leave="transition ease-in duration-100" x-transition:leave-end="opacity-0"
+    @click="fecharModalGerenciador()" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-md">
+      <div class="bg-slate-900 border-b border-slate-800 px-6 py-4">
+        <h2 class="text-lg font-bold text-white">🗑️ Deletar Grupo <span x-text="gerenciador.grupoSelecionado?.grupo" class="text-red-400"></span></h2>
+      </div>
+      <div class="p-6">
+        <p class="text-slate-300 mb-4">Escolha o tipo de exclusão:</p>
+        <div class="space-y-3 mb-6">
+          <label class="flex items-center gap-3 p-3 bg-slate-800 rounded cursor-pointer hover:bg-slate-700">
+            <input type="radio" x-model="gerenciador.tipoDelete" value="soft" class="w-4 h-4" />
+            <div>
+              <div class="font-medium text-white">Desativar (Soft Delete)</div>
+              <div class="text-xs text-slate-400">Marca como inativo, mantém os dados</div>
+            </div>
+          </label>
+          <label class="flex items-center gap-3 p-3 bg-slate-800 rounded cursor-pointer hover:bg-slate-700">
+            <input type="radio" x-model="gerenciador.tipoDelete" value="hard" class="w-4 h-4" />
+            <div>
+              <div class="font-medium text-white">Deletar Permanentemente (Hard Delete)</div>
+              <div class="text-xs text-slate-400">Remove completamente, irreversível</div>
+            </div>
+          </label>
+        </div>
+        <div class="flex gap-3">
+          <button @click="fecharModalGerenciador()" class="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium">Cancelar</button>
+          <button @click="deletarGrupo()" :disabled="gerenciador.salvando" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded font-bold">
+            <span x-show="!gerenciador.salvando">🗑️ Deletar</span>
+            <span x-show="gerenciador.salvando">⏳ Deletando...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ MODAL: AUDITORIA ════════════════════ -->
+  <div x-show="gerenciador.modals.auditoria" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0"
+    x-transition:leave="transition ease-in duration-100" x-transition:leave-end="opacity-0"
+    @click="fecharModalGerenciador()" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+      <div class="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <h2 class="text-lg font-bold text-white">📜 Auditoria - Grupo <span x-text="gerenciador.grupoSelecionado?.grupo" class="text-slate-400"></span></h2>
+        <button @click="fecharModalGerenciador()" class="text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+      <div class="p-6">
+        <template x-if="gerenciador.auditoria.length === 0">
+          <p class="text-slate-400 text-center py-8">Nenhum registro de auditoria encontrado</p>
+        </template>
+        <template x-if="gerenciador.auditoria.length > 0">
+          <div class="space-y-4">
+            <template x-for="registro in gerenciador.auditoria" :key="registro.timestamp">
+              <div class="bg-slate-800 rounded p-4 border border-slate-700">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <div class="font-bold text-white" x-text="registro.acao"></div>
+                    <div class="text-xs text-slate-400" x-text="new Date(registro.timestamp).toLocaleString('pt-BR')"></div>
+                  </div>
+                  <div class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-200" x-text="registro.usuario"></div>
+                </div>
+                <template x-if="Object.keys(registro.mudancas).length > 0">
+                  <div class="text-sm text-slate-300 space-y-1">
+                    <template x-for="(mudanca, chave) in registro.mudancas" :key="chave">
+                      <div class="text-xs">
+                        <span class="text-slate-400" x-text="chave + ':'" class="font-medium"></span>
+                        <span class="text-red-400" x-text="' ' + mudanca.antes"></span>
+                        <span class="text-slate-500">→</span>
+                        <span class="text-green-400" x-text="mudanca.depois"></span>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
 
 </div>
 
