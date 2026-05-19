@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="description" content="Sistema de Login - Gerenciador de Grupos de Consórcio Crediclass">
+  <meta name="theme-color" content="#FF8C42">
+  <title>Login - Gerenciador de Grupos | Crediclass</title>
+
+  <style>
+    /* ======================== */
+    /* RESET E VARIÁVEIS        */
+    /* ======================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #FF8C42;
+      --secondary: #2A3E5A;
+      --dark-bg: #1a1f2e;
+      --dark-surface: #2d3448;
+      --text-primary: #ffffff;
+      --text-secondary: #d1d5db;
+      --border: #374151;
+      --error: #ef4444;
+      --success: #10b981;
+      --transition: all 0.2s ease;
+    }
+
+    /* ======================== */
+    /* BODY E BASE              */
+    /* ======================== */
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, var(--dark-bg) 0%, var(--secondary) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* ======================== */
+    /* CONTAINER DE LOGIN       */
+    /* ======================== */
+    .login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1;
+    }
+
+    .login-container {
+      background: var(--dark-surface);
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 400px;
+      padding: 40px 30px;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ======================== */
+    /* HEADER (LOGO + TÍTULO)  */
+    /* ======================== */
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      display: block;
+      background: white;
+      border-radius: 50%;
+      padding: 10px;
+      object-fit: contain;
+    }
+
+    .login-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* ======================== */
+    /* FORMULÁRIO               */
+    /* ======================== */
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      font-size: 16px;
+      font-family: inherit;
+      min-height: 48px;
+      transition: var(--transition);
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="email"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(255, 140, 66, 0.05);
+      box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.1);
+    }
+
+    input::placeholder {
+      color: rgba(209, 213, 219, 0.5);
+    }
+
+    /* ======================== */
+    /* CHECKBOX "LEMBRAR"       */
+    /* ======================== */
+    .form-group.checkbox {
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .form-group.checkbox input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--primary);
+      min-height: auto;
+      padding: 0;
+    }
+
+    .form-group.checkbox label {
+      text-transform: none;
+      letter-spacing: normal;
+      font-size: 13px;
+      cursor: pointer;
+      margin: 0;
+      flex: 1;
+    }
+
+    /* ======================== */
+    /* MENSAGEM DE ERRO         */
+    /* ======================== */
+    .error-message {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 6px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--error);
+      color: #fca5a5;
+      font-size: 13px;
+      animation: slideDown 0.2s ease;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ======================== */
+    /* BOTÃO ENTRAR             */
+    /* ======================== */
+    .btn-primary {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      background: var(--primary);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 48px;
+      transition: var(--transition);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary:hover {
+      background: #ff7a2a;
+      border-color: #ff7a2a;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 140, 66, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 10px rgba(255, 140, 66, 0.2);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ======================== */
+    /* LINKS RODAPÉ             */
+    /* ======================== */
+    .login-footer {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .forgot-password {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 13px;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .forgot-password:hover {
+      color: #ff7a2a;
+      text-decoration: underline;
+    }
+
+    /* ======================== */
+    /* LOADING STATE            */
+    /* ======================== */
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+    }
+
+    .btn-primary.loading .spinner {
+      display: inline-block;
+    }
+
+    .btn-primary.loading {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ======================== */
+    /* RESPONSIVE MOBILE        */
+    /* ======================== */
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 30px 20px;
+      }
+
+      .login-logo {
+        width: 70px;
+        height: 70px;
+      }
+
+      .login-title {
+        font-size: 22px;
+      }
+
+      label {
+        font-size: 12px;
+      }
+
+      input[type="text"],
+      input[type="password"],
+      input[type="email"] {
+        padding: 14px;
+        font-size: 16px;
+        min-height: 48px;
+      }
+
+      .btn-primary {
+        font-size: 15px;
+      }
+
+      /* SAFE AREA iOS */
+      @supports (padding: max(0px)) {
+        body {
+          padding-left: max(20px, env(safe-area-inset-left));
+          padding-right: max(20px, env(safe-area-inset-right));
+          padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+      }
+    }
+
+    /* ======================== */
+    /* RESPONSIVE TABLET        */
+    /* ======================== */
+    @media (min-width: 481px) and (max-width: 1024px) {
+      .login-container {
+        max-width: 450px;
+        padding: 45px 35px;
+      }
+
+      .login-logo {
+        width: 90px;
+        height: 90px;
+      }
+
+      .login-title {
+        font-size: 26px;
+      }
+    }
+
+    /* ======================== */
+    /* RESPONSIVE DESKTOP       */
+    /* ======================== */
+    @media (min-width: 1025px) {
+      .login-container {
+        max-width: 400px;
+        padding: 40px 30px;
+      }
+
+      .login-logo {
+        width: 100px;
+        height: 100px;
+      }
+
+      .login-title {
+        font-size: 28px;
+      }
+
+      .btn-primary:hover {
+        box-shadow: 0 10px 25px rgba(255, 140, 66, 0.4);
+      }
+    }
+
+    /* ======================== */
+    /* ACCESSIBILITY            */
+    /* ======================== */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* High contrast mode */
+    @media (prefers-contrast: more) {
+      input[type="text"],
+      input[type="password"],
+      input[type="email"] {
+        border-width: 2px;
+      }
+
+      label {
+        font-weight: 700;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-overlay">
+  <div class="login-container">
+
+    <!-- LOGO E TÍTULO -->
+    <div class="login-header">
+      <img
+        class="login-logo"
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect fill='%23FF8C42' width='200' height='200'/%3E%3Ctext x='50%' y='50%' font-size='80' font-weight='bold' fill='%23fff' text-anchor='middle' dominant-baseline='middle'%3EC%3C/text%3E%3C/svg%3E"
+        alt="Logo Crediclass"
+        role="img"
+        aria-label="Logo Crediclass"
+      >
+      <h1 class="login-title">Gerenciador de Grupos</h1>
+      <p class="login-subtitle">Crediclass — Estudo Financeiro</p>
+    </div>
+
+    <!-- FORMULÁRIO DE LOGIN -->
+    <form class="login-form" id="loginForm" method="POST" novalidate>
+
+      <!-- CAMPO USUÁRIO -->
+      <div class="form-group">
+        <label for="usuario">Usuário</label>
+        <input
+          type="text"
+          id="usuario"
+          name="usuario"
+          placeholder="Digite seu usuário"
+          required
+          autocomplete="username"
+          aria-label="Campo de usuário"
+          aria-required="true"
+        >
+      </div>
+
+      <!-- CAMPO SENHA -->
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input
+          type="password"
+          id="senha"
+          name="senha"
+          placeholder="Digite sua senha"
+          required
+          autocomplete="current-password"
+          aria-label="Campo de senha"
+          aria-required="true"
+        >
+      </div>
+
+      <!-- CHECKBOX LEMBRAR -->
+      <div class="form-group checkbox">
+        <input
+          type="checkbox"
+          id="lembrar"
+          name="lembrar"
+          aria-label="Lembrar meu usuário"
+        >
+        <label for="lembrar">Lembrar meu usuário</label>
+      </div>
+
+      <!-- MENSAGEM DE ERRO -->
+      <div class="error-message" id="errorMessage" role="alert" aria-live="assertive"></div>
+
+      <!-- BOTÃO ENTRAR -->
+      <button type="submit" class="btn-primary" id="submitBtn">
+        <span class="spinner"></span>
+        Entrar
+      </button>
+    </form>
+
+    <!-- LINKS RODAPÉ -->
+    <div class="login-footer">
+      <button
+        type="button"
+        class="forgot-password"
+        id="forgotPasswordBtn"
+        aria-label="Link para recuperar senha"
+      >
+        Esqueci a senha
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ==========================================
+  // CREDENCIAIS DE TESTE (HARDCODED)
+  // ==========================================
+  const VALID_USERS = {
+    'adm': 'cristiano',
+    'operador1': 'teste123',
+    'operador2': 'teste123',
+    'operador3': 'teste123',
+    'operador4': 'teste123',
+    'operador5': 'teste123'
+  };
+
+  // ==========================================
+  // ELEMENTOS DOM
+  // ==========================================
+  const loginForm = document.getElementById('loginForm');
+  const usuarioInput = document.getElementById('usuario');
+  const senhaInput = document.getElementById('senha');
+  const lembrarCheckbox = document.getElementById('lembrar');
+  const errorMessage = document.getElementById('errorMessage');
+  const submitBtn = document.getElementById('submitBtn');
+  const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+
+  // ==========================================
+  // INICIALIZAÇÃO
+  // ==========================================
+  document.addEventListener('DOMContentLoaded', function() {
+    // Restaurar usuário lembrado
+    const savedUser = localStorage.getItem('crediclass_saved_user');
+    if (savedUser) {
+      usuarioInput.value = savedUser;
+      lembrarCheckbox.checked = true;
+      senhaInput.focus();
+    } else {
+      usuarioInput.focus();
+    }
+
+    // Listener do formulário
+    loginForm.addEventListener('submit', handleLogin);
+
+    // Listener do botão "Esqueci a senha"
+    forgotPasswordBtn.addEventListener('click', handleForgotPassword);
+
+    // Limpar erro ao digitar
+    usuarioInput.addEventListener('input', clearError);
+    senhaInput.addEventListener('input', clearError);
+
+    // Enter em qualquer campo = submit
+    senhaInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        loginForm.dispatchEvent(new Event('submit'));
+      }
+    });
+  });
+
+  // ==========================================
+  // FUNÇÃO: FAZER LOGIN
+  // ==========================================
+  function handleLogin(e) {
+    e.preventDefault();
+
+    // Obter valores
+    const usuario = usuarioInput.value.trim();
+    const senha = senhaInput.value;
+
+    // Validação básica
+    if (!usuario || !senha) {
+      showError('Usuário e senha são obrigatórios');
+      return;
+    }
+
+    // Desabilitar botão durante processamento
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    clearError();
+
+    // Simular delay de processamento (para parecer real)
+    setTimeout(() => {
+      authenticateUser(usuario, senha);
+    }, 800);
+  }
+
+  // ==========================================
+  // FUNÇÃO: AUTENTICAR USUÁRIO
+  // ==========================================
+  function authenticateUser(usuario, senha) {
+    // Verificar se usuário existe e senha está correta
+    if (VALID_USERS.hasOwnProperty(usuario) && VALID_USERS[usuario] === senha) {
+      // Login bem-sucedido
+
+      // Salvar usuário se checkbox marcado
+      if (lembrarCheckbox.checked) {
+        localStorage.setItem('crediclass_saved_user', usuario);
+      } else {
+        localStorage.removeItem('crediclass_saved_user');
+      }
+
+      // Determinar tipo de usuário
+      const tipoUsuario = usuario === 'adm' ? 'Administrador' : 'Operador';
+
+      // Salvar no localStorage para o dashboard acessar
+      localStorage.setItem('crediclass_user_type', tipoUsuario);
+      localStorage.setItem('crediclass_usuario', usuario);
+
+      // Simular redirecionamento
+      showSuccess(`Login bem-sucedido! (${tipoUsuario}) Redirecionando...`);
+
+      // Aguardar 1.5s antes de redirecionar
+      setTimeout(() => {
+        // Redirecionar para dashboard
+        window.location.href = '/';
+      }, 1500);
+    } else {
+      // Login falhou
+      showError('Usuário ou senha inválidos');
+
+      // Re-habilitar botão
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+
+      // Limpar campo de senha
+      senhaInput.value = '';
+      senhaInput.focus();
+
+      // Log (apenas para debug)
+      console.warn('Tentativa de login falhou:', {
+        usuarioDigitado: usuario,
+        usuariosValidos: Object.keys(VALID_USERS),
+        usuarioExists: VALID_USERS.hasOwnProperty(usuario)
+      });
+    }
+  }
+
+  // ==========================================
+  // FUNÇÃO: ESQUECI A SENHA
+  // ==========================================
+  function handleForgotPassword() {
+    // Simular modal ou mensagem
+    const usuarios = Object.keys(VALID_USERS).join(', ');
+    alert(`Funcionalidade de recuperação de senha será implementada em breve.\n\nPara teste, use um dos usuários:\n${usuarios}\n\nSenha padrão para operadores: teste123\nSenha para admin: cristiano`);
+  }
+
+  // ==========================================
+  // FUNÇÃO: MOSTRAR ERRO
+  // ==========================================
+  function showError(message) {
+    errorMessage.textContent = '⚠️ ' + message;
+    errorMessage.classList.add('show');
+    // Auto-remover após 5s
+    setTimeout(clearError, 5000);
+  }
+
+  // ==========================================
+  // FUNÇÃO: MOSTRAR SUCESSO
+  // ==========================================
+  function showSuccess(message) {
+    errorMessage.textContent = '✓ ' + message;
+    errorMessage.style.borderColor = 'var(--success)';
+    errorMessage.style.background = 'rgba(16, 185, 129, 0.1)';
+    errorMessage.style.color = '#86efac';
+    errorMessage.classList.add('show');
+  }
+
+  // ==========================================
+  // FUNÇÃO: LIMPAR ERRO
+  // ==========================================
+  function clearError() {
+    errorMessage.textContent = '';
+    errorMessage.classList.remove('show');
+    errorMessage.style.borderColor = 'var(--error)';
+    errorMessage.style.background = 'rgba(239, 68, 68, 0.1)';
+    errorMessage.style.color = '#fca5a5';
+  }
+
+  // ==========================================
+  // SEGURANÇA: NÃO LOG SENHAS
+  // ==========================================
+  // Nunca logar senha em console em produção
+  Object.defineProperty(senhaInput, 'value', {
+    get() {
+      return this._value || '';
+    },
+    set(val) {
+      this._value = val;
+    }
+  });
+</script>
+
+</body>
+</html>

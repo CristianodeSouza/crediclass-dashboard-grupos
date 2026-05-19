@@ -6,6 +6,10 @@
   <title>Crediclass — Estudo Financeiro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    // Verificar autenticação antes de carregar dashboard
+    if (!localStorage.getItem('crediclass_usuario')) {
+      window.location.href = '/login';
+    }
     tailwind.config = {
       theme: {
         extend: {
@@ -44,6 +48,10 @@
       class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 border border-slate-700 rounded-md text-xs transition">
       <span x-show="!loading">↻ Atualizar</span>
       <span x-show="loading" class="animate-pulse">Carregando...</span>
+    </button>
+    <button @click="logout()"
+      class="px-3 py-1.5 bg-red-900/50 hover:bg-red-900 border border-red-800 rounded-md text-xs transition text-red-400">
+      🚪 Sair
     </button>
   </div>
 </header>
