@@ -505,7 +505,7 @@
   </style>
 </head>
 <body>
-  <div class="container" x-data="gerenciadorGrupos()" x-init="init()">
+  <div class="container" x-data="(() => { const obj = gerenciadorGrupos(); setTimeout(() => obj.init(), 0); return obj; })()">
     <!-- HEADER -->
     <div class="header">
       <h1>📊 Gerenciador de Grupos</h1>
