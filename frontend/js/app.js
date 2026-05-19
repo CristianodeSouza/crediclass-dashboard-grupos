@@ -1888,3 +1888,8 @@ function dashboard() {
     },
   };
 }
+
+// Reinicializar Alpine após carregamento completo do script
+if (typeof Alpine !== 'undefined') {
+  Alpine.initTree(document.body);
+}
