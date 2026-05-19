@@ -38,8 +38,15 @@ class DockerfileValidator:
 
     def validate(self):
         """Executa todas as validações."""
-        print("\nValidando Dockerfile...")
+        print("\nValidando Dockerfile ou render.yaml...")
 
+        # Se render.yaml existe, Dockerfile é opcional (usando Native Python no Render)
+        render_yaml_path = Path(__file__).parent.parent / "render.yaml"
+        if render_yaml_path.exists():
+            print("[OK] render.yaml encontrado — usando Native Python, Dockerfile é opcional")
+            return True
+
+        # Caso contrário, Dockerfile é obrigatório
         if not self._file_exists():
             return False
 
