@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, Query, HTTPException, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -7,6 +8,8 @@ from sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_gr
 from piperun import fetch_oportunidade
 from pydantic import BaseModel
 from typing import Optional, Any
+
+load_dotenv()
 
 app = FastAPI(title="Crediclass Dashboard Grupos")
 

@@ -1,8 +1,12 @@
+import os
 import re
 from html import unescape
 import httpx
+from dotenv import load_dotenv
 
-PIPERUN_TOKEN = "db120d1ef2e5c7dec30e8bacbfd307ae"
+load_dotenv()
+
+PIPERUN_TOKEN = os.getenv("PIPERUN_API_KEY", "db120d1ef2e5c7dec30e8bacbfd307ae")
 PIPERUN_BASE = "https://api.pipe.run/v1"
 
 FIELD_MAP = {
