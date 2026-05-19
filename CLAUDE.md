@@ -169,7 +169,88 @@ Isso garante: velocidade, rastreabilidade, reprodutibilidade, zero fricção.
 
 ---
 
+## 🛡️ VALIDAÇÃO FRONTEND AUTOMÁTICA (Pre-Commit Hook)
+
+**PROCESSO PERMANENTE desde 2026-05-19:**
+
+### ⚠️ PROBLEMA IDENTIFICADO
+Alpine.js não inicializava quando scripts faltavam atributo `defer`, causando:
+- Templates `{{ }}` não renderizados
+- Botões não funcionavam
+- Dashboard completamente não-funcional em produção
+- Erro console: "Alpine Warning: Unable to initialize"
+
+### ✅ SOLUÇÃO PERMANENTE
+**Pre-commit hook automático** que valida frontend ANTES de qualquer commit:
+
+```bash
+# Localização: .git/hooks/pre-commit
+# Executa automaticamente: python backend/frontend_validator.py
+# Bloqueia commit se validação falhar
+# Erro: deve adicionar 'defer' a scripts críticos
+```
+
+**Scripts validados:**
+- ✅ Alpine.js (cdn.jsdelivr.net/npm/alpinejs@3)
+- ✅ app.js (/static/js/app.js)
+
+### 📋 VALIDAÇÕES EXECUTADAS
+1. **Arquivos críticos existem** (index.html, app.js)
+2. **Scripts obrigatórios carregados** (Alpine, Chart.js, Tailwind)
+3. **Atributo `defer` presente** em scripts críticos ← NOVO
+4. **Script order correto** (Alpine ANTES de app.js)
+5. **Conteúdo app.js válido** (funções críticas presentes)
+6. **Alpine data bindings** (x-data="dashboard()", x-init="init()")
+
+### 🚀 FLUXO DE DESENVOLVIMENTO
+
+```
+1. Developer modifica código frontend
+   ↓
+2. git commit -m "mensagem"
+   ↓
+3. Pre-commit hook executa validador automaticamente
+   ↓
+   ✅ Se PASS: Commit prossegue, push para GitHub
+   ❌ Se FAIL: Commit bloqueado, mensagem de erro clara exibida
+   ↓
+4. Developer corrige erros (ex: adicionar defer)
+   ↓
+5. git commit -m "fix: adicionar defer" ← Commit agora passa
+```
+
+### 💡 IMPORTANTE
+- **Bypass NÃO é permitido sem motivo** (se tentar `git commit --no-verify`, hook exibe advertência clara)
+- **Zero falsos positivos** - validador foi testado em produção
+- **Rápido** - executa em < 1s, não atrasa development
+- **Automático** - sem ação manual necessária
+
+### 📚 Referência
+Veja: `backend/frontend_validator.py` (classe FrontendValidator, método _check_defer_attributes)
+Veja: `VALIDACAO_ALPINE_FIX.md` (documentação técnica completa)
+
+---
+
+## 🧪 CHECKLIST PRÉ-DEPLOY
+
+Antes de fazer deploy em produção (Render), sempre verificar:
+
+- [ ] **Pre-commit validado** ← Automático, mas confirmar no console
+- [ ] **Testes backend passam** (se houver)
+- [ ] **Sem erros em console do navegador** (F12 DevTools)
+- [ ] **Templates {{ }} renderizados** (dados visíveis na UI)
+- [ ] **Botões funcionam** (testar "Executar Cálculo" manualmente)
+- [ ] **API responde** (`curl https://crediclass.csrtecnologia.com.br/api/grupos-gerenciador?limit=1`)
+
+Se TODOS os itens passarem, é seguro fazer `git push origin main` → Render deploy automático.
+
+---
+
 ## 👤 Contato & Suporte
 
 Para dúvidas sobre o projeto, consulte `docs/ROADMAP.md` ou `docs/QUICK_START.md`.
+Para problemas de validação frontend, veja `backend/frontend_validator.py` ou execute:
+```bash
+python backend/frontend_validator.py
+```
 
