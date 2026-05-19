@@ -8,7 +8,7 @@
 ## ✅ O que foi feito (AUTOMÁTICO)
 
 - ✅ `backend/main.py` — CORS configurado para `crediclass.csrtecnologia.com.br`
-- ✅ `vercel.json` — Rewrites configurados para proxy de API
+- ✅ `render.yaml` — Configuração de deploy automático
 - ✅ `PRODUCTION_ARCHITECTURE.md` — Documentação completa
 - ✅ `DEPLOYMENT_SETUP.md` — Guia de checklist
 - ✅ Código commitado e pushado para GitHub (main branch)
@@ -43,138 +43,83 @@ crediclass.csrtecnologia.com.br → CNAME → cname.vercel.app (Proxied)
 
 ---
 
-### **FASE 2️⃣ — VERCEL (10 minutos)**
+### **FASE 2️⃣ — RENDER (AUTOMÁTICO)**
 
 ```
-🔗 Acesse: https://vercel.com/dashboard
+🔗 Acesse: https://dashboard.render.com
 ```
 
-#### **2.1 — Importar Projeto**
-1. Clique: **Add New** → **Project**
-2. Selecione: **Import an Existing Project**
-3. Cole a URL ou selecione: `https://github.com/CristianodeSouza/crediclass-dashboard-grupos`
-4. Clique: **Import**
+O Render está configurado para fazer **deploy automático** quando você faz push para GitHub.
 
-#### **2.2 — Configurar Build**
-```
-Framework Preset:     Other
-Root Directory:       frontend/
-Build Command:        (deixar em branco)
-Output Directory:     frontend/
-Install Command:      (deixar em branco)
-```
-
-5. Clique: **Deploy**
-6. Aguarde o deploy finalizar (2-3 minutos)
+#### **2.1 — Verificar Deploy**
+1. Acesse: https://dashboard.render.com
+2. Seu projeto **crediclass-dashboard** deve estar na lista
+3. Clique para ver **Logs** e confirmar que o build foi bem-sucedido
+4. URL do serviço será algo como: `crediclass-dashboard-xyz.onrender.com`
 
 ✅ **Resultado:**
 ```
-Deployment Complete! → https://seu-projeto.vercel.app
+Build successful + Service is live
 ```
 
-#### **2.3 — Adicionar Domínio Customizado**
-1. No dashboard Vercel, acesse seu projeto
-2. Vá para: **Settings** → **Domains**
-3. Clique: **Add Domain**
-4. Digite: `crediclass.csrtecnologia.com.br`
-5. Clique: **Add**
-6. Aguarde validação (5-10 minutos)
+#### **2.2 — Domínio Customizado**
+Já está configurado no Cloudflare! Basta validar que aponta para Render:
+
+1. No dashboard Cloudflare, vá para **DNS**
+2. Verifique CNAME: `crediclass` → `onrender.com`
+3. Proxy deve estar **Proxied** (laranja)
+4. Aguarde validação (5-10 minutos)
 
 ✅ **Esperado:** 
 ```
-✓ crediclass.csrtecnologia.com.br — Valid
+✓ crediclass.csrtecnologia.com.br aponta para Render
 ```
 
 ---
 
-### **FASE 3️⃣ — RAILWAY/HEROKU (15 minutos)**
-
-#### **Opção A: Railway (RECOMENDADO)**
+### **FASE 3️⃣ — BACKEND NO RENDER (AUTOMÁTICO)**
 
 ```
-🔗 Acesse: https://railway.app
+🔗 Acesse: https://dashboard.render.com
 ```
 
-1. Clique: **New Project**
-2. Selecione: **Deploy from GitHub**
-3. Selecione repo: `crediclass-dashboard-grupos`
-4. Clique: **Create**
-5. Configure:
-   ```
-   Root Directory:   backend/
-   Build Command:    pip install -r requirements.txt
-   Start Command:    uvicorn main:app --host 0.0.0.0 --port $PORT
-   ```
-6. Adicione **Variáveis de Ambiente:**
-   ```
-   GOOGLE_SHEETS_ID = 1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM
-   GOOGLE_API_KEY = sua-chave-aqui
-   PIPERUN_API_KEY = sua-chave-aqui
-   ENVIRONMENT = production
-   DEBUG = false
-   ```
-7. Clique: **Deploy**
+O Render já está configurado com `render.yaml` para fazer deploy automático do backend.
+
+#### **O que acontece automaticamente:**
+1. Push para GitHub → Render detecta
+2. Render executa: `pip install -r backend/requirements.txt`
+3. Render inicia: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+4. Frontend e Backend **já estão no mesmo serviço Render**
 
 ✅ **Resultado:**
 ```
-Deployment Successful! → https://seu-backend.railway.app
+Build successful → Backend servindo em https://crediclass-dashboard-xyz.onrender.com
 ```
 
-#### **Opção B: Heroku (ALTERNATIVA)**
+#### **Variáveis de Ambiente**
+Você precisa configurar no Render Dashboard:
+```
+GOOGLE_SHEETS_ID = 1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM
+GOOGLE_API_KEY = sua-chave-aqui
+PIPERUN_API_KEY = sua-chave-aqui
+ENVIRONMENT = production
+DEBUG = false
+```
 
-```
-🔗 Acesse: https://heroku.com → Dashboard
-```
-
-1. Clique: **Create New App**
-2. Nome: `crediclass-api`
-3. Clique: **Create**
-4. Abra: **Deploy** → **GitHub**
-5. Conecte: `crediclass-dashboard-grupos`
-6. Abra: **Settings** → **Config Vars**
-7. Adicione:
-   ```
-   GOOGLE_SHEETS_ID = 1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM
-   GOOGLE_API_KEY = sua-chave-aqui
-   PIPERUN_API_KEY = sua-chave-aqui
-   ```
-8. Clique: **Deploy Branch**
-
-✅ **Resultado:**
-```
-https://crediclass-api.herokuapp.com
-```
+Se não conseguir acessar o Dashboard, consulte `RENDER_SETUP.md`.
 
 ---
 
-### **FASE 4️⃣ — INTEGRAR FRONTEND + BACKEND (5 minutos)**
+### **FASE 4️⃣ — INTEGRAÇÃO AUTOMÁTICA (JÁ FEITA)**
 
-Após obter a URL do backend (Railway ou Heroku):
+✅ **Frontend e Backend já estão integrados no Render!**
 
-#### **4.1 — Atualizar vercel.json**
+O `render.yaml` define que:
+1. Frontend (arquivos estáticos) é servido de `/frontend`
+2. Backend (FastAPI) responde em `/api`
+3. Routing automático: `/api/*` → FastAPI, `/*` → Frontend
 
-1. Acesse repositório: https://github.com/CristianodeSouza/crediclass-dashboard-grupos
-2. Abra arquivo: `vercel.json`
-3. Procure por: `https://your-backend-railway.app`
-4. Substitua pela URL real, ex:
-   ```json
-   {
-     "rewrites": [
-       {
-         "source": "/api/:path*",
-         "destination": "https://seu-backend.railway.app/api/:path*"
-       }
-     ]
-   }
-   ```
-5. Commit e push:
-   ```bash
-   git add vercel.json
-   git commit -m "config: Update backend URL for production"
-   git push origin main
-   ```
-
-Vercel vai fazer redeploy automaticamente! (2-3 minutos)
+**Nada a fazer!** Tudo acontece automaticamente quando você faz push para GitHub.
 
 ---
 
@@ -236,32 +181,32 @@ fetch('/api/stats').then(r => r.json()).then(console.log)
 ## 📞 RESUMO DO PLANO
 
 ```
-1. Cloudflare       → CNAME crediclass → cname.vercel.app
+1. Cloudflare       → CNAME crediclass → onrender.com
                       (5 min)
                       ↓
-2. Vercel Frontend  → Deploy + Domínio customizado
-                      (10 min)
+2. Render Deploy    → Automático via GitHub (render.yaml)
+                      (2-3 min, automático)
                       ↓
-3. Railway Backend  → Deploy FastAPI + Variáveis ENV
-                      (15 min)
-                      ↓
-4. Integração       → Atualizar vercel.json com URL real
+3. Variáveis ENV    → Configurar em Render Dashboard
                       (5 min)
+                      ↓
+4. Verificar DNS    → CNAME validado e proxied
+                      (5-10 min, aguardar propagação)
                       ↓
 5. Testes           → Verificar tudo funcionando
                       (5 min)
 
-⏱️  TEMPO TOTAL: ~40 minutos
+⏱️  TEMPO TOTAL: ~22-28 minutos
 ```
 
 ---
 
 ## ✅ CHECKLIST FINAL
 
-- [ ] Cloudflare: CNAME criado e proxied (laranja)
-- [ ] Vercel: Frontend deployado e domínio validado
-- [ ] Railway/Heroku: Backend deployado com variáveis ENV
-- [ ] vercel.json: Atualizado com URL real do backend
+- [ ] Cloudflare: CNAME criado e proxied (laranja), apontando para `onrender.com`
+- [ ] Render: Deploy bem-sucedido com render.yaml
+- [ ] Render: Variáveis de ambiente configuradas
+- [ ] DNS: CNAME propagado e validado
 - [ ] Frontend carrega em https://crediclass.csrtecnologia.com.br
 - [ ] `/api/stats` retorna dados
 - [ ] Sem erros de CORS

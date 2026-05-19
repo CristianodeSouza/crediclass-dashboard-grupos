@@ -5,7 +5,7 @@
 Cloudflare é uma **plataforma de segurança e performance** que funciona como intermediária entre seus usuários e seu site.
 
 ```
-Usuário → Cloudflare (cache, proteção) → Seu Servidor (Vercel)
+Usuário → Cloudflare (cache, proteção) → Seu Servidor (Render)
 ```
 
 **Benefícios:**
@@ -19,7 +19,7 @@ Usuário → Cloudflare (cache, proteção) → Seu Servidor (Vercel)
 ## 3 Cenários
 
 ### Cenário 1: Só DNS (Recomendado para começar)
-- ✅ Aponta domínio para Vercel
+- ✅ Aponta domínio para Render
 - ✅ Cloudflare só gerencia DNS
 - ⏱️ Setup: 10 minutos
 - 💰 Grátis
@@ -87,7 +87,7 @@ Vá para seu registrador (onde comprou o domínio) e troque os nameservers:
 
 Após mudar, pode levar até 24 horas para ativar (geralmente ~10 min).
 
-### Passo 5: Apontar para Vercel
+### Passo 5: Apontar para Render
 
 De volta ao Cloudflare:
 
@@ -98,20 +98,20 @@ De volta ao Cloudflare:
    ```
    Type: CNAME
    Name: @ (raiz do domínio)
-   Target: cname.vercel-dns.com
+   Target: onrender.com (ou o CNAME fornecido pelo Render)
    TTL: Auto
    Proxy: Proxied (nuvem laranja)
    ```
 5. Clique "Save"
 
-Agora seu domínio aponta para Vercel! 🎉
+Agora seu domínio aponta para Render! 🎉
 
-### Passo 6: Validar no Vercel
+### Passo 6: Validar no Render
 
-1. Vá para Vercel Dashboard → seu projeto
-2. Clique "Settings" → "Domains"
+1. Vá para Render Dashboard → seu projeto
+2. Clique em "Settings" → "Custom Domain"
 3. Adicione seu domínio
-4. Vercel vai validar automaticamente (pode levar ~5 min)
+4. Render vai validar automaticamente (pode levar ~5 min)
 5. Quando estiver verde, seu site está online!
 
 ---
@@ -186,8 +186,8 @@ Espere 24 horas ou verifique:
 
 ### "Erro 502 Bad Gateway"
 ```
-Significa Vercel não respondeu.
-1. Vá para Vercel Dashboard → Deployments
+Significa Render não respondeu.
+1. Vá para Render Dashboard → seu serviço
 2. Verifique se deploy foi bem-sucedido
 3. Se falhar, veja build logs
 4. Corrija erro no código e faça git push novamente
@@ -201,8 +201,8 @@ Significa Vercel não respondeu.
 - [ ] Conta Cloudflare criada
 - [ ] Site adicionado ao Cloudflare
 - [ ] Nameservers alterados no registrador
-- [ ] CNAME apontando para Vercel
-- [ ] Domínio validado no Vercel (verde)
+- [ ] CNAME apontando para Render
+- [ ] Domínio validado no Render (verde)
 - [ ] Site carrega em seu domínio
 - [ ] WAF ativado (opcional, recomendado)
 - [ ] Analytics acessível
@@ -212,7 +212,7 @@ Significa Vercel não respondeu.
 ## 🎯 Resumo
 
 **Sem Cloudflare:**
-- IP do Vercel exposto
+- IP do Render exposto
 - Sem cache
 - Sem proteção contra ataques
 - Mais lento
@@ -228,7 +228,7 @@ Significa Vercel não respondeu.
 
 ## 📱 Próximos Passos
 
-1. **Agora:** Setup CI/CD (GitHub + Vercel) - esse é o mais importante
+1. **Agora:** Setup CI/CD (GitHub + Render) - esse é o mais importante
 2. **Depois:** Registre um domínio
 3. **Depois:** Configure Cloudflare (este guia)
 
