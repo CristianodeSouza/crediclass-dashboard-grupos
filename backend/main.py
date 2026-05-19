@@ -58,9 +58,21 @@ class GrupoCreate(BaseModel):
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 
+@app.get("/login")
+def login_page():
+    return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
+
+
 @app.get("/")
 def index():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+
+@app.get("/api/auth/check")
+def check_auth():
+    """Endpoint para frontend verificar autenticação (sempre retorna OK)
+    O frontend valida auth via localStorage"""
+    return {"authenticated": True, "message": "Use localStorage para validar sessão"}
 
 
 @app.get("/api/grupos")

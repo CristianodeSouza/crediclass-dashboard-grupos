@@ -284,6 +284,13 @@ function dashboard() {
       }
     },
 
+    logout() {
+      localStorage.removeItem('crediclass_usuario');
+      localStorage.removeItem('crediclass_user_type');
+      localStorage.removeItem('crediclass_saved_user');
+      window.location.href = '/login';
+    },
+
     // ── Piperun ─────────────────────────────────────────
     async buscarPiperun() {
       const id = this.piperunId.trim();
