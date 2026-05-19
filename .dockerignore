@@ -1,7 +1,8 @@
 # Python
-__pycache__/
-*.py[cod]
-*$py.class
+__pycache__
+*.pyc
+*.pyo
+*.pyd
 *.so
 .Python
 env/
@@ -23,10 +24,16 @@ wheels/
 .installed.cfg
 *.egg
 
-# FastAPI
-.uvicorn_reload/
+# Git
+.git
+.gitignore
+.gitattributes
 
-# Credentials (NUNCA commitar!)
+# FastAPI/Uvicorn
+.uvicorn_reload/
+*.reload
+
+# Credentials (NEVER commit!)
 credentials.json
 token.json
 .env
@@ -45,18 +52,15 @@ token.json
 *~
 .DS_Store
 
-# OS
-Thumbs.db
-.DS_Store
-
 # Node (se usar npm)
 node_modules/
 package-lock.json
 yarn.lock
 
-# Vercel
+# Vercel / Deployment
 .vercel/
 .next/
+.netlify/
 
 # Logs
 *.log
@@ -67,14 +71,20 @@ yarn-error.log*
 # Temp files
 *.tmp
 *.bak
-.vercel
+*.temp
 
-# Test files
-test_*.py
-*_test.py
-test_output.txt
-test_results/
+# OS
+Thumbs.db
+.DS_Store
 
-# Setup/Helper scripts
-setup_*.py
-analisa_*.py
+# Documentation (keep code, exclude docs)
+# NOTE: docs/ é copiado para referência, mas não afeta runtime
+
+# Large data files (use volumes em produção)
+# NOTE: data/grupos.json é local, ignorado em .gitignore
+
+# Test/coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/

@@ -93,6 +93,27 @@ grupo.maior_credito >= (creditoDesejado × 0.70)
 
 ---
 
+### ✅ CRUD de Grupos (Novo - 2026-05-18)
+**O que faz:** Operações completas de criar, ler, atualizar e deletar grupos.
+
+**Bugs Corrigidos:**
+- 🐛 **#1**: Paginação rejeitava `por_pagina > 100` → Agora aceita até 500
+- 🐛 **#2**: Import datetime faltando → Adicionado
+- 🐛 **#3**: Campo status faltando em GrupoUpdate → Adicionado
+- 🐛 **#4**: POST retornava 200 em vez de 201 → Corrigido
+
+**Endpoints Implementados:**
+1. `GET /api/grupos-gerenciador?pagina=1&por_pagina=100` — Listar com paginação
+2. `GET /api/grupos/{grupo_id}` — Obter detalhe
+3. `PUT /api/grupos/{grupo_id}` — Atualizar grupo
+4. `POST /api/grupos` — Criar novo grupo
+
+**Localização:** `backend/main.py` (linhas 25-158)
+
+**Testado:** ✅ Todos os endpoints respondendo corretamente
+
+---
+
 ## 🟡 Em Progresso / TODO
 
 ### 🔄 Gerar Estudo Financeiro em PDF
