@@ -1891,5 +1891,42 @@ function dashboard() {
 
 // Reinicializar Alpine após carregamento completo do script
 if (typeof Alpine !== 'undefined') {
-  Alpine.initTree(document.body);
+  console.log('[Alpine Init] ✓ Alpine detected, app.js fully loaded');
+  console.log('[Alpine Init] Globals available:', {
+    Alpine_version: Alpine.version,
+    dashboard_type: typeof dashboard,
+    document_ready: document.readyState,
+    body_x_data: document.body.getAttribute('x-data'),
+    timestamp: new Date().toISOString()
+  });
+
+  if (typeof dashboard === 'function') {
+    console.log('[Alpine Init] ✓ dashboard() function found, calling Alpine.initTree()...');
+    try {
+      Alpine.initTree(document.body);
+      console.log('[Alpine Init] ✅ Alpine.initTree() completed successfully');
+      console.log('[Alpine Init] Alpine is_initialized:', Alpine.__data !== undefined);
+    } catch (err) {
+      console.error('[Alpine Init] ❌ Alpine.initTree() threw error:', err);
+    }
+  } else {
+    console.error('[Alpine Init] ❌ dashboard() NOT found! Retrying in 500ms...');
+    setTimeout(() => {
+      console.log('[Alpine Init] [Retry 1] Checking again...');
+      if (typeof dashboard === 'function') {
+        console.log('[Alpine Init] ✓ dashboard() now available, initializing...');
+        try {
+          Alpine.initTree(document.body);
+          console.log('[Alpine Init] ✅ Alpine.initTree() succeeded on retry');
+        } catch (err) {
+          console.error('[Alpine Init] ❌ Alpine.initTree() error on retry:', err);
+        }
+      } else {
+        console.error('[Alpine Init] 🔴 CRITICAL: dashboard() still not available after 500ms delay');
+        console.log('[Alpine Init] Window contents:', Object.keys(window).filter(k => k.includes('dashboard') || k.includes('app')));
+      }
+    }, 500);
+  }
+} else {
+  console.error('[Alpine Init] 🔴 CRÍTICO: Alpine não foi carregado do CDN!');
 }
