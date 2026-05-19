@@ -1,11 +1,14 @@
 import os
 import json
 from datetime import datetime
+from dotenv import load_dotenv
 from googleapiclient.discovery import build
 
-SPREADSHEET_ID = "1MTud5XYTGxfCTaGy8y3HH0aEm-zUBr5MroykbKfv-NE"
+load_dotenv()
+
+SPREADSHEET_ID = os.getenv("GOOGLE_SHEETS_ID", "1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM")
 SHEET_RANGE = "Tabela de Grupos 3.0!A:EF"
-API_KEY = "AIzaSyBTQeZkVls2uwJT0XeNJS0ZrTLZUPWCESM"
+API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyBTQeZkVls2uwJT0XeNJS0ZrTLZUPWCESM")
 
 CACHE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "grupos.json")
 
