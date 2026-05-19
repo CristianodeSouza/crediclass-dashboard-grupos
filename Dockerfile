@@ -18,7 +18,7 @@ RUN if [ -d /app/frontend ]; then \
 EXPOSE 8000
 
 # Force rebuild timestamp
-# Built: 2025-05-18
+# Built: 2025-05-19
 
 # Run the application from backend directory with PORT env var support
 CMD ["sh", "-c", "cd backend && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
