@@ -1,17 +1,18 @@
 # 📊 STATUS DO DEPLOYMENT — Crediclass
 
-**Data:** 2026-05-18  
-**Status:** ✅ 70% PRONTO | ⏳ Aguardando execução manual
+**Data:** 2026-05-19  
+**Status:** ✅ 100% PRONTO | ⏳ Aguardando execução manual (Cloudflare + Render)
+
+**Stack:** Render (Deploy) + GitHub (Repositório) + Cloudflare (DNS/CDN) + Claude (Development)
 
 ---
 
 ## ✅ FASE 1 — CÓDIGO (COMPLETO)
 
-- ✅ `backend/main.py` — CORS configurado para produção
-- ✅ `backend/requirements.txt` — Dependências definidas
-- ✅ `backend/Procfile` — Pronto para Heroku/Railway
+- ✅ `backend/main.py` — CORS configurado para produção (crediclass.csrtecnologia.com.br)
+- ✅ `backend/requirements.txt` — Dependências definidas (FastAPI, Uvicorn, Google Sheets, etc)
+- ✅ `render.yaml` — Configuração de deploy automático no Render
 - ✅ `backend/.env.example` — Variáveis de ambiente documentadas
-- ✅ `vercel.json` — Rewrites configurados (placeholder)
 - ✅ `frontend/` — HTML/CSS/JS pronto
 - ✅ Todos os endpoints testados e funcionando
 - ✅ Fallback com dados de teste inclusos
@@ -21,114 +22,126 @@
 
 ---
 
-## ⏳ FASE 2 — CLOUDFLARE (PARCIAL)
+## ⏳ FASE 2 — CLOUDFLARE (PRONTO, AGUARDA EXECUÇÃO)
 
-- ✅ CNAME record criado: `crediclass` → `cname.vercel.app`
-- ✅ Proxy ativado (Proxied/Laranja)
-- ⏳ DNS propagando (aguarde 15-30 minutos)
+**Preparado:**
+- ✅ Domínio registrado: `csrtecnologia.com.br`
+- ✅ Documentação atualizada: `CLOUDFLARE_SETUP.md`
+- ✅ CNAME target correto: `onrender.com` (não mais Vercel)
 
-**Status:** ✅ FEITO | ⏳ Aguardando propagação
+**O que falta:** Você executar manualmente
+```
+1. Acesse: https://dash.cloudflare.com
+2. Domínio: csrtecnologia.com.br
+3. DNS → Add Record
+4. Type: CNAME
+5. Name: crediclass
+6. Content: onrender.com
+7. Proxy: Proxied (laranja)
+8. Save
+```
 
-**O que você fez:** Manualmente criar CNAME no Cloudflare  
-**Próximo:** Vercel validar domínio automaticamente
+**Status:** ⏳ PRONTO PARA VOCÊ EXECUTAR (5 min)
 
 ---
 
-## ⏳ FASE 3 — VERCEL (PARCIAL)
+## ⏳ FASE 3 — RENDER (AUTOMÁTICO VIA GITHUB)
 
-- ✅ Projeto criado e deployado
-- ✅ Build successful (READY)
-- ✅ URL provisória: `crediclass-dashboard-grupos-5nbhkzfp2-crediclass-projects.vercel.app`
-- ⏳ Domínio customizado ainda NÃO adicionado
-- ⏳ DNS validação aguardando
+**Preparado:**
+- ✅ `render.yaml` — Configuração de build e start command
+- ✅ GitHub integrado com Render
+- ✅ Python 3.11 runtime configurado
 
-**Status:** ⏳ AGUARDANDO AÇÃO MANUAL (2 min)
-
-**O que falta:** Você adicionar domínio customizado no painel Vercel  
+**O que acontece automaticamente:**
 ```
-Settings → Domains → + Add → crediclass.csrtecnologia.com.br
+GitHub push (main) 
+  ↓
+Render detecta mudança
+  ↓
+Build: pip install -r backend/requirements.txt
+  ↓
+Start: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+  ↓
+Frontend servido de /frontend
+  ↓
+API disponível em /api/*
+  ↓
+URL: crediclass-dashboard-xyz.onrender.com
 ```
+
+**Status:** ✅ AUTOMÁTICO (não requer ação manual)
+
+**Observação:** O build começará automaticamente quando você fizer push para GitHub. Render fornecerá URL provisória (ex: crediclass-dashboard-abc123.onrender.com).
 
 ---
 
-## ⏳ FASE 4 — RAILWAY/HEROKU (NÃO INICIADO)
-
-**Arquivos preparados:**
-- ✅ `backend/Procfile` — Pronto
-- ✅ `backend/requirements.txt` — Pronto
-- ✅ `backend/.env.example` — Referência pronta
-- ✅ `RAILWAY_DEPLOYMENT.md` — Guia passo-a-passo
-
-**O que falta:** Você fazer deploy no Railway  
-```
-1. railway.app → + New Project → Deploy from GitHub
-2. Selecionar: crediclass-dashboard-grupos
-3. Adicionar variáveis ENV
-4. Deploy
-5. Obter URL: https://seu-app.railway.app
-```
-
-**Status:** ⏳ PRONTO PARA VOCÊ EXECUTAR
-
----
-
-## ⏳ FASE 5 — INTEGRAÇÃO (AGUARDANDO URLS)
+## ⏳ FASE 4 — VARIÁVEIS DE AMBIENTE (PRONTO, PRECISA CONFIGURAÇÃO)
 
 **Arquivo preparado:**
-- ✅ `FINAL_INTEGRATION.md` — Guia de integração
+- ✅ `DEPLOYMENT_EXECUTION.md` — Seção "Variáveis ENV"
+- ✅ `.env.example` — Referência de variáveis
 
-**O que falta:**
-1. URL do Railway (após deploy)
-2. Atualizar `vercel.json` com URL real
-3. Commit e push
-4. Vercel faz redeploy automático
+**O que falta:** Você configurar no Render Dashboard
+```
+GOOGLE_SHEETS_ID = 1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM
+GOOGLE_API_KEY = sua-chave-aqui
+PIPERUN_API_KEY = sua-chave-aqui
+ENVIRONMENT = production
+DEBUG = false
+```
 
-**Status:** ⏳ AGUARDANDO URL DO RAILWAY
+**Status:** ⏳ PRONTO PARA VOCÊ EXECUTAR (5 min)
 
 ---
 
 ## 📋 PRÓXIMOS PASSOS (PARA VOCÊ)
 
-### **AGORA — Vercel (2 minutos)**
+### **AGORA — Cloudflare (5 minutos)**
 ```
-1. Acesse: https://vercel.com/crediclass-projects/crediclass-dashboard-grupos
-2. Settings → Domains
-3. + Add → crediclass.csrtecnologia.com.br
-4. Aguarde validação
-```
-
-### **DEPOIS — Railway (10 minutos)**
-Siga: `RAILWAY_DEPLOYMENT.md`
-```
-1. railway.app → New Project
-2. Deploy from GitHub: crediclass-dashboard-grupos
-3. Adicionar 5 variáveis ENV
-4. Deploy
-5. Copiar URL do backend
+1. Acesse: https://dash.cloudflare.com
+2. Domínio: csrtecnologia.com.br → DNS
+3. + Add Record → CNAME
+4. Name: crediclass
+5. Content: onrender.com
+6. Proxy: Proxied (laranja)
+7. Save
+8. Aguarde 5-10 min pela propagação
 ```
 
-### **DEPOIS — Integração (5 minutos)**
-Siga: `FINAL_INTEGRATION.md`
+### **DEPOIS — Render Dashboard (5 minutos)**
 ```
-1. Obter URL do Railway
-2. Atualizar vercel.json
-3. Commit e push
-4. Vercel redeploy automático
-5. Testar tudo
+1. Acesse: https://dashboard.render.com
+2. Seu projeto: crediclass-dashboard
+3. Environment → Adicionar variáveis:
+   - GOOGLE_SHEETS_ID
+   - GOOGLE_API_KEY
+   - PIPERUN_API_KEY
+   - ENVIRONMENT = production
+   - DEBUG = false
+4. Deploy automático iniciará
+```
+
+### **DEPOIS — Validação (5 minutos)**
+```
+1. Verificar em https://crediclass.csrtecnologia.com.br
+2. Testar endpoints: /api/stats
+3. Testar filtros e calculadora
+4. Verificar CORS funcionando
 ```
 
 ---
 
 ## 🎯 TEMPO TOTAL
 
-| Fase | Tempo | Quem |
-|------|-------|------|
+| Fase | Tempo | Status |
+|------|-------|--------|
 | Código | ✅ FEITO | Claude |
-| Cloudflare | ✅ FEITO | Você (manual) |
-| Vercel | ⏳ 2 min | Você (manual) |
-| Railway | ⏳ 10 min | Você (manual) |
-| Integração | ⏳ 5 min | Você (manual) |
-| **TOTAL** | **~17 minutos** | **Você** |
+| Render.yaml | ✅ FEITO | Claude |
+| CORS | ✅ FEITO | Claude |
+| Cloudflare | ⏳ 5 min | Você (manual) |
+| Render Env | ⏳ 5 min | Você (manual) |
+| Testes | ⏳ 5 min | Você (manual) |
+| **TOTAL** | **~15 minutos** | **Você** |
 
 ---
 
@@ -136,27 +149,33 @@ Siga: `FINAL_INTEGRATION.md`
 
 | Arquivo | Usar quando |
 |---------|-----------|
-| `DEPLOY_QUICK_START.txt` | Referência rápida |
-| `DEPLOYMENT_EXECUTION.md` | Instruções detalhadas (Cloudflare, Vercel, Railway) |
-| `RAILWAY_DEPLOYMENT.md` | Para fazer deploy no Railway |
-| `FINAL_INTEGRATION.md` | Após ter URLs de Vercel e Railway |
-| `DEPLOYMENT_SETUP.md` | Referência de arquitetura |
+| `DEPLOYMENT_SETUP.md` | Referência de arquitetura (Render unified) |
+| `DEPLOYMENT_EXECUTION.md` | Instruções detalhadas (Cloudflare, Render, testes) |
+| `CLOUDFLARE_SETUP.md` | Para configurar DNS no Cloudflare |
 | `PRODUCTION_ARCHITECTURE.md` | Documentação técnica completa |
+| `RENDER_SETUP.md` | Detalhes técnicos do Render |
+| `DEPLOY_QUICK_START.txt` | Referência rápida de comandos |
 
 ---
 
 ## 🚀 CONCLUSÃO
 
 **Status Final:**
-- ✅ 70% automático (código + configurações)
-- ⏳ 30% manual (UI dos painéis web — é rápido!)
+- ✅ 100% código automático (Render.yaml, CORS, endpoints)
+- ⏳ 15 minutos manual (Cloudflare + Render Dashboard)
 
-**Próximo passo:** Você adicionar domínio no Vercel (2 min)
+**Infraestrutura:**
+- ✅ Frontend + Backend: Render (unified)
+- ✅ Repositório: GitHub (com auto-deploy via render.yaml)
+- ✅ DNS/CDN: Cloudflare (CNAME → onrender.com)
+- ✅ Development: Claude Code
 
-**Depois:** Deploy no Railway (10 min)
+**Próximo passo:** Configurar CNAME no Cloudflare (5 min)
 
-**Depois:** Integração final (5 min)
+**Depois:** Adicionar variáveis ENV no Render (5 min)
+
+**Depois:** Testar em produção (5 min)
 
 ---
 
-**Tudo pronto! Bora finalizar! 🎉**
+**Tudo pronto! Deploy Render is ready! 🚀**

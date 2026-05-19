@@ -1,19 +1,21 @@
 ═══════════════════════════════════════════════════════════════
-🚀 CREDICLASS — DEPLOY RÁPIDO
+🚀 CREDICLASS — DEPLOY RÁPIDO (RENDER UNIFICADO)
 ═══════════════════════════════════════════════════════════════
 
 ✅ CÓDIGO PRONTO PARA DEPLOY EM PRODUÇÃO
 
 Arquitetura:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  crediclass.csrtecnologia.com.br
-  ├── Frontend (Vercel)
+  crediclass.csrtecnologia.com.br (Cloudflare DNS)
+  ↓
+  RENDER (Unified Service)
+  ├── Frontend (Static Files)
   │   ├── / → index.html
-  │   ├── /static → assets
-  │   └── /api/* → proxy para backend
+  │   ├── /static → assets (CSS, JS, imagens)
+  │   └── /* → SPA routing
   │
-  └── Backend (Railway/Heroku)
-      └── /api/* → FastAPI
+  └── Backend (FastAPI + Uvicorn — Mesmo Serviço)
+      └── /api/* → endpoints
 
 ═══════════════════════════════════════════════════════════════
 
@@ -22,96 +24,103 @@ Arquitetura:
 
 ✅ backend/main.py
    • CORS configurado para crediclass.csrtecnologia.com.br
-   • Fallback com dados de teste incluídos
+   • FastAPI rotas: /api/stats, /api/grupos, /api/piperun
    • Todos os endpoints testados e funcionando
 
-✅ vercel.json
-   • Rewrites para proxy de API
-   • Routing para SPA (index.html)
-   • Cache headers configurados
-
-✅ backend/Procfile
-   • Pronto para Heroku deploy
-   • Uvicorn configurado: --host 0.0.0.0 --port $PORT
+✅ render.yaml
+   • Configuração de build (pip install -r backend/requirements.txt)
+   • Configuração de start (uvicorn backend.main:app)
+   • Static files path: frontend/
+   • Routes: /api/* → backend, /* → frontend SPA
 
 ✅ backend/.env.example
    • Referência para variáveis de ambiente
-   • Pronto para copiar em Railway/Heroku
+   • Pronto para copiar em Render Dashboard
 
 ✅ Documentação
-   • DEPLOYMENT_SETUP.md — Arquitetura completa
-   • DEPLOYMENT_EXECUTION.md — Passo a passo manual
-   • PRODUCTION_ARCHITECTURE.md — Guia detalhado
+   • PRODUCTION_ARCHITECTURE.md — Arquitetura completa
+   • FINAL_INTEGRATION.md — Guia de integração
+   • RENDER_SETUP.md — Setup técnico Render
 
 ✅ GitHub
    • Código commitado e pushado (main branch)
-   • Pronto para deploy automático em Vercel
+   • Pronto para deploy automático com render.yaml
 
 ═══════════════════════════════════════════════════════════════
 
 ⏳ O QUE VOCÊ PRECISA FAZER (MANUAL):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-FASE 1 — CLOUDFLARE (5 min)
-  → DNS → Records → + Add Record
-  → Type: CNAME | Name: crediclass | Content: cname.vercel.app
-  → Proxy: Proxied (laranja) | TTL: Auto
-  → Save
+FASE 1 — RENDER (10 min)
+  1. Acesse: https://dashboard.render.com
+  2. Clique "New +"
+  3. Selecione "Web Service"
+  4. Conecte repositório GitHub: crediclass-dashboard-grupos
+  5. Configure:
+     • Name: crediclass-dashboard
+     • Runtime: Python 3
+     • Build Command: pip install -r backend/requirements.txt
+     • Start Command: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+     • Plan: Standard ($12/mês)
+  6. Clique "Create Web Service"
+  7. Aguarde build (2-3 minutos)
+  8. Vá para: Environment
+  9. Adicione variáveis (veja backend/.env.example):
+     • GOOGLE_SHEETS_ID
+     • GOOGLE_API_KEY
+     • PIPERUN_API_KEY
+     • ENVIRONMENT=production
+     • DEBUG=false
+  10. Render faz redeploy automático
 
-FASE 2 — VERCEL (10 min)
-  → Add New → Project → Import GitHub
-  → Select: crediclass-dashboard-grupos
-  → Root Directory: frontend/
-  → Deploy
-  → Settings → Domains → Add: crediclass.csrtecnologia.com.br
-  → Aguarde validação (5-10 min)
-
-FASE 3 — RAILWAY/HEROKU (15 min)
-  Option A (Recomendado): railway.app
-    → New Project → Deploy from GitHub
-    → Root: backend/
-    → Variáveis ENV (veja backend/.env.example)
-    → Deploy
-
-  Option B: heroku.com
-    → Create New App
-    → Connect GitHub
-    → Config Vars (veja backend/.env.example)
-    → Deploy Branch
-
-FASE 4 — INTEGRAÇÃO (5 min)
-  → Após obter URL do backend (ex: seu-app.railway.app)
-  → Editar vercel.json → substituir "your-backend-railway.app"
-  → Commit e push
-  → Vercel faz redeploy automático
+FASE 2 — CLOUDFLARE (5 min)
+  1. Acesse: https://dash.cloudflare.com
+  2. Selecione domínio: csrtecnologia.com.br
+  3. Vá para: DNS → Records
+  4. Crie CNAME:
+     • Name: crediclass
+     • Type: CNAME
+     • Content: onrender.com
+     • Proxy: Proxied (laranja)
+     • TTL: Auto
+  5. Save
 
 ═══════════════════════════════════════════════════════════════
 
 ✅ TESTES APÓS DEPLOY:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. Acess the frontend
+1. Acessar frontend
    → https://crediclass.csrtecnologia.com.br
-   ✓ Deve carregar a página com calculadora
+   ✓ Deve carregar página com calculadora + tabela
 
-2. Test API
+2. Testar API
    → curl https://crediclass.csrtecnologia.com.br/api/stats
    ✓ Deve retornar JSON com estatísticas
 
-3. Test CORS
+3. Testar CORS
    → Abrir console (F12) e executar:
    → fetch('/api/stats').then(r => r.json()).then(console.log)
    ✓ Não deve ter erro de CORS
 
+4. Testar Filtros
+   → fetch('/api/grupos?adm=ITAU').then(r => r.json()).then(console.log)
+   ✓ Deve retornar grupos da ITAU
+
+5. Testar Calculadora
+   → Preencher valores na calculadora
+   → Clicar "Simular"
+   ✓ Deve aparecer resultado com comparativo
+
 ═══════════════════════════════════════════════════════════════
 
-⏱️ TEMPO TOTAL: ~40 minutos
+⏱️ TEMPO TOTAL: ~15-20 minutos
 
 📞 Dúvidas? Veja:
-   • DEPLOYMENT_EXECUTION.md — Guia detalhado com print-screens
-   • DEPLOYMENT_SETUP.md — Arquitetura e checklist
-   • PRODUCTION_ARCHITECTURE.md — Documentação técnica
+   • PRODUCTION_ARCHITECTURE.md — Arquitetura e troubleshooting
+   • FINAL_INTEGRATION.md — Verificação de integração
+   • RENDER_SETUP.md — Detalhes técnicos Render
 
 ═══════════════════════════════════════════════════════════════
 
-🎯 Bora deployar! 🚀
+🎯 Unified Render Service — Deploy com um clique! 🚀

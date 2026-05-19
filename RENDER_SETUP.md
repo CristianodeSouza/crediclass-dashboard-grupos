@@ -77,12 +77,24 @@ curl https://crediclass-backend.onrender.com/api/stats
 
 ---
 
-## 📝 Passo 6: Atualizar Vercel (Opcional)
+## 📝 Passo 6: Domínio Customizado (Cloudflare)
 
-Se usar domínio customizado, atualize o proxy no Vercel:
+Após o backend estar rodando no Render, configure o domínio customizado:
 
-1. Atualize `api/[...path].js` para apontar para novo URL do Render
-2. Ou configure DNS CNAME para `crediclass-backend.onrender.com`
+1. Acesse Cloudflare Dashboard
+2. DNS → Add Record
+3. Type: CNAME
+4. Name: `crediclass`
+5. Content: `onrender.com`
+6. Proxy: Proxied (laranja)
+7. Save
+
+**Resultado esperado:**
+```
+crediclass.csrtecnologia.com.br → CNAME → onrender.com (Proxied)
+```
+
+Aguarde 5-10 minutos pela propagação DNS.
 
 ---
 
@@ -93,15 +105,17 @@ Se usar domínio customizado, atualize o proxy no Vercel:
 | **"Application failed to respond"** | Verifique se `/health` endpoint está respondendo |
 | **"Build failed"** | Verificar `requirements.txt` — alguma dependência pode estar faltando |
 | **"Health check failing"** | Certificar que `@app.get("/health")` existe em `backend/main.py` |
-| **"500 Internal Server Error"** | Verificar se `GOOGLE_SHEETS_CREDENTIALS_JSON` está correto |
+| **"500 Internal Server Error"** | Verificar se variáveis de ambiente estão configuradas corretamente |
+| **CNAME não valida** | Aguarde 15-30 minutos. DNS se propaga devagar. Verifique se aponta para `onrender.com` |
 
 ---
 
 ## 💡 Dicas
 
-- **Free Plan:** Serviço dorme após 15 min sem requisições. Para produção, use **Starter** ($7/mês)
-- **Auto-redeploy:** Render redeploy automático quando você faz push para `claude/migrate-render`
+- **Free Plan:** Serviço dorme após 15 min sem requisições. Para produção, use **Standard** ($12/mês)
+- **Auto-redeploy:** Render redeploy automático quando você faz push para `main` branch
 - **Logs:** Acesse em **Logs** do serviço no dashboard para debugging
+- **Unified Service:** Frontend e Backend rodam no mesmo serviço Render
 
 ---
 

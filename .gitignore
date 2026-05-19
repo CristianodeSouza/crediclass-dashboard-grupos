@@ -54,9 +54,8 @@ node_modules/
 package-lock.json
 yarn.lock
 
-# Vercel
-.vercel/
-.next/
+# Render
+.vercel_old/
 
 # Logs
 *.log
@@ -67,7 +66,6 @@ yarn-error.log*
 # Temp files
 *.tmp
 *.bak
-.vercel
 
 # Test files
 test_*.py

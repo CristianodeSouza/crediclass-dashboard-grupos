@@ -1,63 +1,58 @@
 # 🏗️ ARQUITETURA DE PRODUÇÃO — Crediclass v0.4.1
 
-**Data:** 2026-05-18  
+**Data:** 2026-05-19  
 **Domínio:** `crediclass.csrtecnologia.com.br`  
-**Status:** 📋 Planejado e documentado
+**Status:** ✅ Pronto para produção (Render unificado)
 
 ---
 
 ## 🌐 ARQUITETURA GERAL
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│         crediclass.csrtecnologia.com.br                     │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────────────┐        ┌──────────────────────┐  │
-│  │   FRONTEND (Vercel) │        │  CLOUDFLARE (DNS)    │  │
-│  ├─────────────────────┤        ├──────────────────────┤  │
-│  │ • / → index.html    │◄───────┤ • CNAME Record       │  │
-│  │ • /static → assets  │        │ • Proxy Rules        │  │
-│  │ • /api/* → Proxy    │        │ • SSL/TLS            │  │
-│  └─────────────────────┘        └──────────────────────┘  │
-│           │                                                  │
-│           │ (rewrite /api/*)                                │
-│           ▼                                                  │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │      BACKEND (Railway/Heroku)                       │   │
-│  ├─────────────────────────────────────────────────────┤   │
-│  │ • FastAPI + Uvicorn                                │   │
-│  │ • Python 3.11+                                     │   │
-│  │ • Endpoints: /api/grupos, /api/stats, etc.        │   │
-│  │ • Database: PostgreSQL (futuro)                    │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│    crediclass.csrtecnologia.com.br (Cloudflare DNS)     │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│     RENDER (Unified Service — Frontend + Backend)       │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │                                                    │ │
+│  │  Frontend (Static Files)                          │ │
+│  │  • / → index.html                                 │ │
+│  │  • /static/ → assets (CSS, JS, imagens)           │ │
+│  │  • /* → SPA routing                               │ │
+│  │                                                    │ │
+│  │  ┌────────────────────────────────────────────┐   │ │
+│  │  │  Backend (FastAPI + Uvicorn — Same Service)│   │ │
+│  │  │  • /api/grupos   — Lista grupos            │   │ │
+│  │  │  • /api/stats    — Estatísticas            │   │ │
+│  │  │  • /api/piperun  — Integração CRM          │   │ │
+│  │  │  • /api/*        — Outros endpoints         │   │ │
+│  │  │  • Python 3.11+                            │   │ │
+│  │  │  • Uvicorn server                          │   │ │
+│  │  └────────────────────────────────────────────┘   │ │
+│  │                                                    │ │
+│  └────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 📦 COMPONENTES
 
-### **Frontend (Vercel)**
+### **Render (Unified Service)**
 | Componente | Detalhes |
 |-----------|----------|
-| **Plataforma** | Vercel |
-| **Código** | `frontend/` (HTML/CSS/JS + Alpine.js) |
-| **Assets** | `frontend/static/` (imagens, CSS, JS) |
+| **Plataforma** | Render.com |
+| **Código** | `frontend/` (HTML/CSS/JS + Alpine.js) + `backend/` (FastAPI) |
+| **Runtime** | Python 3.11 |
+| **Build Command** | `pip install -r backend/requirements.txt` |
+| **Start Command** | `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` |
+| **Static Files** | `/frontend` → Servidos como root (/) |
+| **API Routing** | `/api/*` → FastAPI backend (mesmo serviço) |
 | **URL** | `crediclass.csrtecnologia.com.br` |
-| **Deploy** | Automático via git (main branch) |
-| **Rewrite de API** | `/api/*` → Backend Railway |
-
-### **Backend (Railway/Heroku)**
-| Componente | Detalhes |
-|-----------|----------|
-| **Plataforma** | Railway (ou Heroku) |
-| **Código** | `backend/main.py` (FastAPI) |
-| **Language** | Python 3.11+ |
-| **Port** | 8000 (Railway expõe na porta padrão) |
-| **Endpoints** | `/api/grupos`, `/api/stats`, `/api/piperun`, etc. |
+| **Deploy** | Automático via GitHub (render.yaml) |
 | **Database** | Em memória (v0.4.1) → PostgreSQL (futuro) |
-| **Variáveis de Ambiente** | `.env` com Google Sheets credentials |
+| **Variáveis de Ambiente** | GOOGLE_SHEETS_ID, GOOGLE_API_KEY, PIPERUN_API_KEY, etc. |
 
 ### **DNS & Proxy (Cloudflare)**
 | Componente | Detalhes |
@@ -66,9 +61,9 @@
 | **Domínio** | `csrtecnologia.com.br` (registro.br) |
 | **Subdomínio** | `crediclass` |
 | **Tipo Record** | CNAME |
-| **Valor** | `cname.vercel.app` (fornecido por Vercel) |
+| **Valor** | `onrender.com` (fornecido por Render) |
 | **Proxy** | Ativado (laranja no Cloudflare) |
-| **SSL/TLS** | Full (Vercel + Cloudflare) |
+| **SSL/TLS** | Full (Render + Cloudflare) |
 
 ---
 
@@ -77,15 +72,15 @@
 ```
 1. Usuário acessa crediclass.csrtecnologia.com.br
    ↓
-2. Cloudflare resolve DNS → Vercel
+2. Cloudflare resolve DNS → Render (onrender.com)
    ↓
-3. Vercel serve frontend (index.html)
+3. Render serve frontend (index.html)
    ↓
 4. Frontend (JS) faz requisição para /api/grupos
    ↓
-5. Vercel rewrite: /api/grupos → https://seu-backend.railway.app/api/grupos
+5. Render routing automático: /api/* → FastAPI backend (mesmo serviço)
    ↓
-6. Railway responde com dados
+6. FastAPI responde com dados (em memória ou Google Sheets)
    ↓
 7. Frontend recebe e renderiza
 ```
@@ -94,225 +89,121 @@
 
 ## 📋 PASSO A PASSO DE SETUP
 
-### **Fase 1: Cloudflare (DNS)**
+### **Fase 1: GitHub + Render**
 
-#### 1.1 Acessar Cloudflare
+#### 1.1 Preparar Repositório
+```bash
+# 1. Commitar todas as mudanças
+cd crediclass-dashboard-grupos
+git add -A
+git commit -m "feat: Prepare for Render deployment"
+git push origin main
+
+# 2. Verificar que render.yaml existe
+cat render.yaml
+```
+
+**Conteúdo esperado de render.yaml:**
+```yaml
+services:
+  - type: web
+    name: crediclass-dashboard
+    runtime: python
+    pythonVersion: 3.11
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    staticPublicPath: frontend
+    routes:
+      - path: /api/*
+        destination: http://0.0.0.0:$PORT/api/$1
+      - path: /*
+        destination: http://0.0.0.0:$PORT/$1
+```
+
+#### 1.2 Deploy Automático no Render
+```bash
+# 1. Acesse: https://dashboard.render.com
+# 2. Sign in com GitHub
+# 3. Clique "New +"
+# 4. Selecione "Web Service"
+# 5. Conecte repositório: crediclass-dashboard-grupos
+# 6. Configure:
+#    - Name: crediclass-dashboard
+#    - Runtime: Python 3
+#    - Build Command: pip install -r backend/requirements.txt
+#    - Start Command: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+#    - Plan: Standard ($12/mês recomendado)
+# 7. Clique "Create Web Service"
+```
+
+#### 1.3 Adicionar Variáveis de Ambiente no Render
+```bash
+# No Render Dashboard → seu serviço → Environment:
+# 1. Adicione cada variável:
+```
+
+| Chave | Valor |
+|-------|-------|
+| `GOOGLE_SHEETS_ID` | `1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM` |
+| `GOOGLE_API_KEY` | sua-chave-api-google |
+| `PIPERUN_API_KEY` | sua-chave-piperun |
+| `ENVIRONMENT` | `production` |
+| `DEBUG` | `false` |
+
+```bash
+# Render redeploy automático após salvar variáveis
+```
+
+#### 1.4 Obter URL do Serviço Render
+```
+Após o deploy (2-3 minutos):
+1. Vá para Render Dashboard
+2. Seu serviço: crediclass-dashboard
+3. Procure por "On-render URL"
+4. Exemplo: https://crediclass-dashboard-xyz.onrender.com
+```
+
+---
+
+### **Fase 2: Cloudflare (DNS)**
+
+#### 2.1 Acessar Cloudflare
 ```
 1. Acesse: https://dash.cloudflare.com
 2. Selecione domínio: csrtecnologia.com.br
 3. Vá para: DNS → Records
 ```
 
-#### 1.2 Criar CNAME para Vercel
+#### 2.2 Criar CNAME para Render
 ```
 Nome:        crediclass
 Tipo:        CNAME
-Valor:       cname.vercel.app (será fornecido por Vercel)
-Proxy:       Proxied (deve estar laranja)
+Valor:       onrender.com
+Proxy:       Proxied (deve estar LARANJA)
 TTL:         Auto
 ```
 
 **Resultado esperado:**
 ```
-crediclass.csrtecnologia.com.br CNAME → cname.vercel.app
+crediclass.csrtecnologia.com.br CNAME → onrender.com (Proxied)
 ```
 
----
-
-### **Fase 2: Vercel (Frontend)**
-
-#### 2.1 Preparar Projeto
+#### 2.3 Validação de DNS
 ```bash
-# 1. Committar todas as mudanças
-cd /home/user/crediclass-dashboard-grupos
-git add -A
-git commit -m "feat: Prepare for production deployment to Vercel"
-git push origin main
-
-# 2. Garantir que vercel.json existe
-cat vercel.json
-```
-
-**Conteúdo esperado de vercel.json:**
-```json
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "^/api/(.*)",
-      "dest": "https://seu-backend-railway.app/api/$1"
-    },
-    {
-      "src": "^/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "^/(?!static|api).*",
-      "dest": "/index.html"
-    }
-  ]
-}
-```
-
-#### 2.2 Fazer Deploy no Vercel
-```bash
-# 1. Acesse: https://vercel.com
-# 2. Sign in com GitHub
-# 3. Clique "New Project"
-# 4. Selecione repositório: crediclass-dashboard-grupos
-# 5. Configure:
-#    - Framework: Other (Static)
-#    - Root Directory: frontend/
-#    - Build Command: (deixar vazio)
-#    - Output Directory: frontend/
-# 6. Deploy
-```
-
-#### 2.3 Adicionar Domínio Customizado
-```bash
-# No dashboard Vercel:
-# 1. Vá para: Project → Settings → Domains
-# 2. Adicione: crediclass.csrtecnologia.com.br
-# 3. Vercel vai validar CNAME automaticamente com Cloudflare
-# 4. Aguarde validação (pode levar 5-10 minutos)
-```
-
----
-
-### **Fase 3: Railway/Heroku (Backend)**
-
-#### 3.1 Preparar Backend para Deploy
-```bash
-# 1. Verificar backend/requirements.txt
-cat backend/requirements.txt
-
-# Esperado:
-# fastapi==0.115.0
-# uvicorn==0.30.6
-# google-api-python-client==2.139.0
-# google-auth-httplib2==0.2.0
-# google-auth-oauthlib==1.2.1
-# python-dotenv==1.0.1
-# httpx==0.27.2
-
-# 2. Criar arquivo Procfile (Heroku)
-cat > backend/Procfile << 'EOF'
-web: uvicorn main:app --host 0.0.0.0 --port $PORT
-EOF
-
-# 3. Criar .env.example (para Railway/Heroku)
-cat > backend/.env.example << 'EOF'
-GOOGLE_SHEETS_ID=seu-id-aqui
-GOOGLE_API_KEY=sua-chave-aqui
-PIPERUN_API_KEY=sua-chave-piperun
-EOF
-```
-
-#### 3.2 Deploy em Railway (Recomendado)
-```bash
-# 1. Acesse: https://railway.app
-# 2. Sign in com GitHub
-# 3. Clique "New Project"
-# 4. Selecione repositório: crediclass-dashboard-grupos
-# 5. Configure:
-#    - Root Directory: backend/
-#    - Build Command: pip install -r requirements.txt
-#    - Start Command: uvicorn main:app --host 0.0.0.0 --port 8000
-# 6. Adicione Variáveis de Ambiente:
-#    - GOOGLE_SHEETS_ID
-#    - GOOGLE_API_KEY
-#    - PIPERUN_API_KEY
-# 7. Deploy
-```
-
-**Ou Deploy em Heroku:**
-```bash
-# 1. Instale Heroku CLI
-curl https://cli-assets.heroku.com/install.sh | sh
-
-# 2. Login
-heroku login
-
-# 3. Crie app
-heroku create crediclass-api
-
-# 4. Faça deploy
-git push heroku main
-
-# 5. Configure variáveis
-heroku config:set GOOGLE_SHEETS_ID=seu-id
-heroku config:set GOOGLE_API_KEY=sua-chave
-
-# 6. Obtenha URL
-heroku open
-```
-
----
-
-### **Fase 4: Conectar Frontend ao Backend**
-
-#### 4.1 Atualizar vercel.json com URL do Backend
-```bash
-# Após o deploy do backend, você terá uma URL como:
-# Railway: seu-app.railway.app
-# Heroku: crediclass-api.herokuapp.com
-
-# Atualize vercel.json:
-cat > vercel.json << 'EOF'
-{
-  "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://seu-backend-railway.app/api/:path*"
-    }
-  ]
-}
-EOF
-
-# Commit e push
-git add vercel.json
-git commit -m "config: Update backend URL in vercel.json"
-git push origin main
-```
-
-#### 4.2 Configurar CORS no Backend
-```bash
-# Editar backend/main.py
-# Linha ~14 (CORSMiddleware)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://crediclass.csrtecnologia.com.br",
-        "http://localhost:8000",
-        "http://localhost:3000"
-    ],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Commit
-git add backend/main.py
-git commit -m "config: Configure CORS for production domain"
-git push origin main
+# Aguarde 5-10 minutos pela propagação
+# Teste:
+curl https://crediclass.csrtecnologia.com.br/api/stats
 ```
 
 ---
 
 ## 🔐 VARIÁVEIS DE AMBIENTE
 
-### **Backend (.env no Railway/Heroku)**
+### **Backend (Render Environment Variables)**
 ```bash
 # Google Sheets
 GOOGLE_SHEETS_ID=1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM
-GOOGLE_API_KEY=seu-api-key-aqui
+GOOGLE_API_KEY=sua-chave-aqui
 
 # Piperun (CRM)
 PIPERUN_API_KEY=sua-chave-piperun
@@ -338,36 +229,28 @@ Mode: Full (Strict recomendado)
 ## ✅ CHECKLIST DE DEPLOYMENT
 
 - [ ] **Cloudflare**
-  - [ ] CNAME record criado: `crediclass` → `cname.vercel.app`
+  - [ ] CNAME record criado: `crediclass` → `onrender.com`
   - [ ] Proxy ativado (laranja)
   - [ ] SSL/TLS em Full
 
-- [ ] **Vercel**
-  - [ ] Repositório conectado
-  - [ ] Build configurado
-  - [ ] Domínio customizado adicionado
-  - [ ] CNAME validado
-  - [ ] Deploy bem-sucedido
-
-- [ ] **Railway/Heroku**
-  - [ ] Repositório conectado
-  - [ ] Requirements.txt instalados
-  - [ ] Variáveis de ambiente configuradas
-  - [ ] Deploy bem-sucedido
-  - [ ] URL obtida (e.g., `seu-app.railway.app`)
+- [ ] **GitHub + Render**
+  - [ ] Repositório conectado ao Render
+  - [ ] render.yaml presente na raiz
+  - [ ] Código pushado para branch main
+  - [ ] Build bem-sucedido no Render
+  - [ ] Variáveis de ambiente configuradas no Render Dashboard
 
 - [ ] **Integração**
-  - [ ] vercel.json atualizado com URL do backend
-  - [ ] CORS configurado no backend
+  - [ ] CORS configurado em backend/main.py para crediclass.csrtecnologia.com.br
   - [ ] Testes de API funcionando
-  - [ ] Frontend carregando dados via API
+  - [ ] Frontend carregando dados via /api/*
 
 - [ ] **Testes de Produção**
   - [ ] Acesse `crediclass.csrtecnologia.com.br`
   - [ ] Frontend carrega
   - [ ] Endpoints `/api/*` respondendo
   - [ ] Calculadora funciona
-  - [ ] Google Sheets integração (se configurada)
+  - [ ] Google Sheets integração funcionando
 
 ---
 
@@ -410,21 +293,21 @@ curl "https://crediclass.csrtecnologia.com.br/api/stats"
 
 | Problema | Causa | Solução |
 |----------|-------|---------|
-| **CNAME não valida** | DNS não propagou | Aguarde 15-30 min, limpe cache |
-| **404 no frontend** | Build incorreto | Verifique root directory em Vercel |
-| **API retorna 503** | Backend offline | Verifique logs em Railway/Heroku |
-| **CORS error** | CORS não configurado | Atualize backend/main.py com domínio |
-| **Imagens não carregam** | Path incorreto | Verifique `/static/` em vercel.json |
+| **CNAME não valida** | DNS não propagou | Aguarde 15-30 min, limpe cache, verifique se aponta para `onrender.com` |
+| **404 no frontend** | Build incorreto no Render | Verifique `staticPublicPath: frontend` em render.yaml |
+| **API retorna 503** | Backend offline | Verifique logs em Render Dashboard |
+| **CORS error** | CORS não configurado | Atualize CORSMiddleware em backend/main.py com domínio crediclass.csrtecnologia.com.br |
+| **Imagens não carregam** | Path incorreto | Verifique `/static/` está sendo servido corretamente |
 
 ---
 
 ## 📞 PRÓXIMAS FASES
 
 ### **Curto Prazo (2-4 semanas)**
-- [ ] SSL/TLS configurado (automático Vercel + Cloudflare)
-- [ ] Monitoramento e alertas (Vercel Analytics + Cloudflare)
-- [ ] CI/CD pipeline (.github/workflows)
-- [ ] Backup automático de dados
+- [ ] SSL/TLS configurado (automático Render + Cloudflare)
+- [ ] Monitoramento e alertas (Render + Cloudflare Analytics)
+- [ ] CI/CD pipeline avançado (.github/workflows)
+- [ ] Backup automático de dados (Google Sheets sync)
 
 ### **Médio Prazo (1-3 meses)**
 - [ ] Database PostgreSQL
@@ -442,8 +325,8 @@ curl "https://crediclass.csrtecnologia.com.br/api/stats"
 
 ## 📚 REFERÊNCIAS
 
-- [Vercel Documentation](https://vercel.com/docs)
-- [Railway Documentation](https://docs.railway.app)
+- [Render Documentation](https://render.com/docs)
+- [Render Python Deployment](https://render.com/docs/deploy-python)
 - [Cloudflare DNS Setup](https://developers.cloudflare.com/dns/)
 - [FastAPI Deployment](https://fastapi.tiangolo.com/deployment/)
 - [CORS in FastAPI](https://fastapi.tiangolo.com/tutorial/cors/)
@@ -453,11 +336,11 @@ curl "https://crediclass.csrtecnologia.com.br/api/stats"
 ## 👤 Responsável
 
 **Documento criado:** 2026-05-18  
-**Última atualização:** 2026-05-18  
-**Status:** 📋 Planejado — Aguardando execução
+**Última atualização:** 2026-05-19  
+**Status:** ✅ Render Unified Setup — Pronto para Execução
 
 ---
 
 **🟢 PRONTO PARA DEPLOYMENT**
 
-Siga as 4 fases e seu projeto estará online em `crediclass.csrtecnologia.com.br`!
+Stack Render unificado (Frontend + Backend no mesmo serviço). Siga as 2 fases e seu projeto estará online em `crediclass.csrtecnologia.com.br`!
