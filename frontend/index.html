@@ -698,15 +698,16 @@
 
         <!-- PASSO 1: COMPARATIVO DE ADMs -->
         <template x-if="!admSelecionada">
-          <!-- Header -->
-          <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3">
-            <h2 class="text-sm font-bold text-white">2. Comparativo de Administradoras</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Clique em uma ADM para ver grupos compatíveis</p>
-          </div>
+          <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Header -->
+            <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3">
+              <h2 class="text-sm font-bold text-white">2. Comparativo de Administradoras</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Clique em uma ADM para ver grupos compatíveis</p>
+            </div>
 
-          <!-- Tabela de Resultado -->
-          <div class="flex-1 overflow-auto">
-            <table class="w-full text-xs border-collapse">
+            <!-- Tabela de Resultado -->
+            <div class="flex-1 overflow-auto">
+              <table class="w-full text-xs border-collapse">
               <thead class="sticky top-0 z-10 bg-slate-900">
                 <tr class="border-b border-slate-800 text-slate-500 uppercase tracking-wider">
                   <th class="px-3 py-3 text-left">Administradora</th>
@@ -749,25 +750,27 @@
                 </template>
               </tbody>
             </table>
+            </div>
           </div>
         </template>
 
         <!-- PASSO 2: SELEÇÃO DE GRUPOS -->
         <template x-if="admSelecionada && !grupoSelecionado">
-          <!-- Header -->
-          <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-            <div>
-              <h2 class="text-sm font-bold text-white">3. Grupos Compatíveis: <span x-text="admSelecionada" class="text-blue-400"></span></h2>
-              <p class="text-xs text-slate-500 mt-0.5"><span x-text="gruposAdmFiltrados.length"></span> grupos encontrados</p>
+          <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Header -->
+            <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+              <div>
+                <h2 class="text-sm font-bold text-white">3. Grupos Compatíveis: <span x-text="admSelecionada" class="text-blue-400"></span></h2>
+                <p class="text-xs text-slate-500 mt-0.5"><span x-text="gruposAdmFiltrados.length"></span> grupos encontrados</p>
+              </div>
+              <button @click="admSelecionada = null; gruposAdmFiltrados = []; grupoSelecionado = null; simulacoesEstudo = []"
+                class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs transition">
+                ← Voltar para ADMs
+              </button>
             </div>
-            <button @click="admSelecionada = null; gruposAdmFiltrados = []; grupoSelecionado = null; simulacoesEstudo = []"
-              class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs transition">
-              ← Voltar para ADMs
-            </button>
-          </div>
 
-          <!-- Lista de Grupos -->
-          <div class="flex-1 overflow-auto">
+            <!-- Lista de Grupos -->
+            <div class="flex-1 overflow-auto">
             <div class="p-4 grid gap-3 auto-rows-max">
               <template x-for="grupo in gruposAdmFiltrados" :key="grupo.grupo">
                 <div @click="selecionarGrupo(grupo)"
@@ -807,25 +810,27 @@
                 </div>
               </template>
             </div>
+            </div>
           </div>
         </template>
 
         <!-- PASSO 3: PREVIEW DO ESTUDO -->
         <template x-if="grupoSelecionado">
-          <!-- Header -->
-          <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-            <div>
-              <h2 class="text-sm font-bold text-white">4. Preview do Estudo Financeiro</h2>
-              <p class="text-xs text-slate-500 mt-0.5"><span x-text="admSelecionada"></span> - Grupo <span x-text="grupoSelecionado.grupo"></span></p>
+          <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Header -->
+            <div class="flex-none bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+              <div>
+                <h2 class="text-sm font-bold text-white">4. Preview do Estudo Financeiro</h2>
+                <p class="text-xs text-slate-500 mt-0.5"><span x-text="admSelecionada"></span> - Grupo <span x-text="grupoSelecionado.grupo"></span></p>
+              </div>
+              <button @click="grupoSelecionado = null; simulacoesEstudo = []"
+                class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs transition">
+                ← Voltar para Grupos
+              </button>
             </div>
-            <button @click="grupoSelecionado = null; simulacoesEstudo = []"
-              class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs transition">
-              ← Voltar para Grupos
-            </button>
-          </div>
 
-          <!-- Conteúdo Preview -->
-          <div class="flex-1 overflow-auto">
+            <!-- Conteúdo Preview -->
+            <div class="flex-1 overflow-auto">
             <div class="p-6 max-w-4xl">
               <!-- Cards Resumo -->
               <div class="grid grid-cols-5 gap-3 mb-6">
@@ -900,6 +905,7 @@
                 class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-semibold transition">
                 ✓ Gerar Estudo Financeiro Final
               </button>
+            </div>
             </div>
           </div>
         </template>
