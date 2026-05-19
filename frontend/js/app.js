@@ -63,7 +63,7 @@ function dashboard() {
       grupos: [],
       gruposFiltrados: [],
       paginaAtual: 1,
-      porPagina: 20,
+      porPagina: 500,
       totalGrupos: 0,
       adms: [],
       filtros: { adm: "", status: "", credito_min: "", credito_max: "", busca: "" },
