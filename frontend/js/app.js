@@ -1902,10 +1902,29 @@ if (typeof Alpine !== 'undefined') {
 
   if (typeof dashboard === 'function') {
     console.log('[Alpine Init] ✓ dashboard() function found, calling Alpine.initTree()...');
+
+    // Test object before initialization
+    const testInstance = dashboard();
+    console.log('[Alpine Init] Test instance methods:', Object.keys(testInstance).filter(k => typeof testInstance[k] === 'function'));
+    console.log('[Alpine Init] refresh available?', typeof testInstance.refresh);
+
     try {
-      Alpine.initTree(document.body);
-      console.log('[Alpine Init] ✅ Alpine.initTree() completed successfully');
-      console.log('[Alpine Init] Alpine is_initialized:', Alpine.__data !== undefined);
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        Alpine.initTree(document.body);
+        console.log('[Alpine Init] ✅ Alpine.initTree() completed successfully');
+
+        // Verify binding
+        setTimeout(() => {
+          const bodyEl = document.body;
+          const alpineData = Alpine.$data(bodyEl);
+          if (alpineData) {
+            console.log('[Alpine Init] Alpine data keys:', Object.keys(alpineData).slice(0, 20));
+            console.log('[Alpine Init] refresh in Alpine data?', 'refresh' in alpineData);
+            console.log('[Alpine Init] typeof refresh in Alpine:', typeof alpineData.refresh);
+          }
+        }, 100);
+      }, 100);
     } catch (err) {
       console.error('[Alpine Init] ❌ Alpine.initTree() threw error:', err);
     }
