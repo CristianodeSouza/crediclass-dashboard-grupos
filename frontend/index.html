@@ -67,6 +67,18 @@
     class="px-3 py-2.5 text-sm font-medium transition whitespace-nowrap">
     🛠️ Gerenciador de Grupos
   </button>
+  <button
+    @click="abaAtiva = 'importacao'"
+    :class="abaAtiva === 'importacao' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
+    class="px-3 py-2.5 text-sm font-medium transition whitespace-nowrap">
+    📥 Importação/Exportação
+  </button>
+  <button
+    @click="mudarAba('analytics')"
+    :class="abaAtiva === 'analytics' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
+    class="px-3 py-2.5 text-sm font-medium transition whitespace-nowrap">
+    📈 Dashboard Analítico
+  </button>
 </nav>
 
 <!-- ═══════════════════════════════ BODY ════════════════════════════════ -->
@@ -1138,6 +1150,392 @@
 
       </main>
 
+    </div>
+  </template>
+
+  <!-- ════════════════════ ABA: IMPORTAÇÃO/EXPORTAÇÃO ════════════════════ -->
+  <template x-if="abaAtiva === 'importacao'">
+    <div class="p-6">
+      <h1 class="text-3xl font-bold text-white mb-6">📥 Importação/Exportação</h1>
+
+      <!-- Seção de Importação -->
+      <div class="bg-slate-900 border border-slate-800 rounded-lg p-6 mb-6">
+        <h2 class="text-xl font-bold text-white mb-4">📤 Importar Arquivo</h2>
+
+        <!-- Drop Zone -->
+        <div
+          @dragover.prevent="importacao.dragOver = true"
+          @dragleave.prevent="importacao.dragOver = false"
+          @drop.prevent="soltarArquivo($event)"
+          :class="importacao.dragOver ? 'bg-blue-900 border-blue-600' : 'bg-slate-800 border-slate-700'"
+          class="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition">
+          <p class="text-slate-300 mb-2">📁 Arraste um arquivo Excel aqui ou</p>
+          <button type="button" @click="$refs.fileInput.click()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+            Selecionar Arquivo
+          </button>
+          <input type="file" x-ref="fileInput" @change="selecionarArquivo($event)" accept=".xlsx,.xls" style="display: none;">
+          <template x-if="importacao.nomeArquivo">
+            <p class="text-green-400 mt-2 text-sm">✓ {{importacao.nomeArquivo}}</p>
+          </template>
+        </div>
+
+        <!-- Modo de Importação -->
+        <div class="mt-4">
+          <label class="block text-slate-300 font-semibold mb-2">Modo de Importação:</label>
+          <select x-model="importacao.modo" class="w-full bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded">
+            <option value="insert_update">Inserir e Atualizar (Recomendado)</option>
+            <option value="insert">Apenas Inserir (Novo)</option>
+            <option value="update">Apenas Atualizar (Existente)</option>
+          </select>
+          <p class="text-slate-400 text-xs mt-1">
+            <template x-if="importacao.modo === 'insert_update'">
+              Insere grupos novos e atualiza existentes baseado em ADM + Grupo
+            </template>
+            <template x-if="importacao.modo === 'insert'">
+              Insere apenas novos grupos, ignora duplicatas
+            </template>
+            <template x-if="importacao.modo === 'update'">
+              Atualiza apenas grupos existentes, ignora novos
+            </template>
+          </p>
+        </div>
+
+        <!-- Preview -->
+        <div class="mt-4" x-show="importacao.preview.preview.length > 0">
+          <button type="button" @click="importacao.mostrarPreview = !importacao.mostrarPreview" class="text-blue-400 hover:text-blue-300 underline text-sm">
+            <template x-if="importacao.mostrarPreview">▼ Ocultar</template>
+            <template x-if="!importacao.mostrarPreview">▶ Mostrar</template>
+            Preview ({{importacao.preview.total}} linhas)
+          </button>
+          <div x-show="importacao.mostrarPreview" class="mt-2 overflow-x-auto bg-slate-800 rounded p-3 border border-slate-700">
+            <table class="text-xs text-slate-300 w-full">
+              <thead>
+                <tr class="border-b border-slate-600">
+                  <template x-for="col in importacao.preview.colunas" :key="col">
+                    <th class="px-2 py-1 text-left text-slate-400">{{col}}</th>
+                  </template>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="row in importacao.preview.preview" :key="row.grupo">
+                  <tr class="border-b border-slate-700 hover:bg-slate-700/50">
+                    <template x-for="col in importacao.preview.colunas" :key="col">
+                      <td class="px-2 py-1">{{row[col]}}</td>
+                    </template>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+            <template x-if="importacao.preview.tem_mais">
+              <p class="text-slate-400 text-xs mt-2">... + {{importacao.preview.total - importacao.preview.limite_preview}} linhas</p>
+            </template>
+          </div>
+        </div>
+
+        <!-- Erros de Validação -->
+        <template x-if="importacao.errosValidacao.length > 0">
+          <div class="mt-4 bg-red-900/30 border border-red-700 rounded p-3">
+            <p class="text-red-400 font-semibold mb-2">⚠️ Erros Encontrados:</p>
+            <ul class="text-red-300 text-sm space-y-1 max-h-40 overflow-y-auto">
+              <template x-for="erro in importacao.errosValidacao" :key="erro">
+                <li>• {{erro}}</li>
+              </template>
+            </ul>
+          </div>
+        </template>
+
+        <!-- Botões de Ação -->
+        <div class="mt-4 flex gap-2">
+          <button type="button" @click="previewImportacao()" :disabled="!importacao.arquivo || importacao.carregando"
+            :class="!importacao.arquivo || importacao.carregando ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'"
+            class="bg-blue-600 text-white px-4 py-2 rounded font-semibold transition">
+            <template x-if="importacao.carregando">🔄 Carregando...</template>
+            <template x-if="!importacao.carregando">👁️ Preview</template>
+          </button>
+          <button type="button" @click="processarImportacao()" :disabled="!importacao.arquivo || importacao.carregando || importacao.errosValidacao.length > 0"
+            :class="!importacao.arquivo || importacao.carregando || importacao.errosValidacao.length > 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700'"
+            class="bg-green-600 text-white px-4 py-2 rounded font-semibold transition">
+            <template x-if="importacao.carregando">🔄 Processando...</template>
+            <template x-if="!importacao.carregando">✓ Importar</template>
+          </button>
+          <button type="button" @click="limparArquivoImportacao()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded transition">
+            Limpar
+          </button>
+        </div>
+
+        <!-- Resultado da Importação -->
+        <template x-if="importacao.resultado">
+          <div :class="importacao.resultado.sucesso ? 'bg-green-900/30 border-green-700' : 'bg-red-900/30 border-red-700'" class="mt-4 border rounded p-4">
+            <template x-if="importacao.resultado.sucesso">
+              <p class="text-green-400 font-semibold">✓ Importação Concluída com Sucesso</p>
+            </template>
+            <template x-if="!importacao.resultado.sucesso">
+              <p class="text-red-400 font-semibold">✗ Erros Durante Importação</p>
+            </template>
+            <p class="text-slate-300 text-sm mt-2">
+              Inseridos: {{importacao.resultado.inseridos}} | Atualizados: {{importacao.resultado.atualizados}}
+            </p>
+            <template x-if="importacao.resultado.erros.length > 0">
+              <p class="text-red-300 text-xs mt-2">Erros: {{importacao.resultado.erros.length}}</p>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- Seção de Exportação -->
+      <div class="bg-slate-900 border border-slate-800 rounded-lg p-6">
+        <h2 class="text-xl font-bold text-white mb-4">📥 Exportar Dados</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Exportar Tudo -->
+          <button @click="exportarTudo()" :disabled="exportacao.carregando" class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-3 rounded font-semibold transition text-left">
+            <template x-if="exportacao.carregando && exportacao.tipo === 'completo'">
+              🔄 Gerando...
+            </template>
+            <template x-if="!exportacao.carregando || exportacao.tipo !== 'completo'">
+              📊 Exportar Tudo
+              <p class="text-xs text-blue-100">Todos os grupos em Excel</p>
+            </template>
+          </button>
+
+          <!-- Exportar por ADM -->
+          <div>
+            <label class="block text-slate-300 text-sm mb-1">Exportar por Administradora:</label>
+            <div class="flex gap-2">
+              <select x-model="exportacao.adm" class="flex-1 bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded text-sm">
+                <option value="">Selecione uma ADM...</option>
+                <template x-for="adm in ['CNP', 'ITAÚ', 'CAOA', 'PORTO', 'EMBRACON', 'RODOBENS']" :key="adm">
+                  <option :value="adm">{{adm}}</option>
+                </template>
+              </select>
+              <button @click="exportarPorAdm()" :disabled="!exportacao.adm || exportacao.carregando" class="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-3 py-2 rounded transition">
+                <template x-if="exportacao.carregando && exportacao.tipo === 'adm'">🔄</template>
+                <template x-if="!exportacao.carregando || exportacao.tipo !== 'adm'">💾</template>
+              </button>
+            </div>
+          </div>
+
+          <!-- Relatório de ADMs -->
+          <button @click="exportarRelatorioAdms()" :disabled="exportacao.carregando" class="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white px-4 py-3 rounded font-semibold transition text-left">
+            <template x-if="exportacao.carregando && exportacao.tipo === 'relatorio'">
+              🔄 Gerando...
+            </template>
+            <template x-if="!exportacao.carregando || exportacao.tipo !== 'relatorio'">
+              📈 Relatório ADMs
+              <p class="text-xs text-amber-100">Comparativo entre administradoras</p>
+            </template>
+          </button>
+
+          <!-- Exportar Grupo Específico -->
+          <div>
+            <label class="block text-slate-300 text-sm mb-1">Exportar Grupo Específico:</label>
+            <div class="flex gap-2">
+              <input type="text" x-model="exportacao.grupoId" placeholder="ID do grupo" class="flex-1 bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded text-sm placeholder-slate-500">
+              <button @click="exportarGrupo()" :disabled="!exportacao.grupoId || exportacao.carregando" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-3 py-2 rounded transition">
+                <template x-if="exportacao.carregando && exportacao.tipo === 'grupo'">🔄</template>
+                <template x-if="!exportacao.carregando || exportacao.tipo !== 'grupo'">💾</template>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status de Sincronização -->
+        <div class="mt-4 p-3 bg-slate-800 rounded border border-slate-700">
+          <div class="flex items-center justify-between">
+            <p class="text-slate-300 text-sm">
+              📅 Última sincronização: <span x-text="sincronizacao.ultimaSinc || 'Nunca'"></span>
+            </p>
+            <button @click="sincronizarAgora()" :disabled="sincronizacao.carregando" class="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white px-3 py-1 rounded text-sm transition">
+              <template x-if="sincronizacao.carregando">🔄 Sincronizando...</template>
+              <template x-if="!sincronizacao.carregando">🔄 Sincronizar</template>
+            </button>
+          </div>
+          <template x-if="sincronizacao.mensagem">
+            <p :class="sincronizacao.erro ? 'text-red-400' : 'text-green-400'" class="text-xs mt-2">{{sincronizacao.mensagem}}</p>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ════════════════════════ ABA: ANALYTICS DASHBOARD ════════════════════════ -->
+  <template x-if="abaAtiva === 'analytics'">
+    <div class="space-y-6">
+      <!-- Header com Loading -->
+      <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-white">📈 Dashboard Analítico</h1>
+        <template x-if="analytics.carregando">
+          <div class="text-slate-400 text-sm flex items-center gap-2">
+            <div class="w-4 h-4 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin"></div>
+            Carregando dados...
+          </div>
+        </template>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total de Grupos -->
+        <div class="bg-gradient-to-br from-blue-900/30 to-blue-800/10 border border-blue-700/30 rounded-lg p-6">
+          <p class="text-slate-400 text-sm font-medium uppercase tracking-wide">Total de Grupos</p>
+          <p class="text-3xl font-bold text-blue-300 mt-3">
+            <span x-text="analytics.dados.summary?.total_grupos || '—'"></span>
+          </p>
+          <p class="text-xs text-slate-500 mt-2">Grupos ativos no sistema</p>
+        </div>
+
+        <!-- Total de Crédito -->
+        <div class="bg-gradient-to-br from-emerald-900/30 to-emerald-800/10 border border-emerald-700/30 rounded-lg p-6">
+          <p class="text-slate-400 text-sm font-medium uppercase tracking-wide">Total de Crédito</p>
+          <p class="text-3xl font-bold text-emerald-300 mt-3">
+            R$ <span x-text="(analytics.dados.summary?.total_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></span>
+          </p>
+          <p class="text-xs text-slate-500 mt-2">Soma de todos os créditos</p>
+        </div>
+
+        <!-- Crédito Médio -->
+        <div class="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border border-purple-700/30 rounded-lg p-6">
+          <p class="text-slate-400 text-sm font-medium uppercase tracking-wide">Crédito Médio</p>
+          <p class="text-3xl font-bold text-purple-300 mt-3">
+            R$ <span x-text="(analytics.dados.summary?.credito_medio || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></span>
+          </p>
+          <p class="text-xs text-slate-500 mt-2">Média por grupo</p>
+        </div>
+
+        <!-- Taxa ADM Média -->
+        <div class="bg-gradient-to-br from-amber-900/30 to-amber-800/10 border border-amber-700/30 rounded-lg p-6">
+          <p class="text-slate-400 text-sm font-medium uppercase tracking-wide">Taxa ADM Média</p>
+          <p class="text-3xl font-bold text-amber-300 mt-3">
+            <span x-text="(analytics.dados.summary?.taxa_adm_media || 0).toFixed(2)"></span>%
+          </p>
+          <p class="text-xs text-slate-500 mt-2">Taxa média de administração</p>
+        </div>
+      </div>
+
+      <!-- Top 3 Administradoras -->
+      <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+        <h2 class="text-lg font-bold text-white mb-4">🏆 Top 3 Administradoras</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <template x-for="(adm, idx) in (analytics.dados.summary?.principais_adms || []).slice(0, 3)" :key="idx">
+            <div class="bg-slate-800/50 border border-slate-700 rounded p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xl font-bold text-yellow-400">
+                  <template x-if="idx === 0">🥇</template>
+                  <template x-if="idx === 1">🥈</template>
+                  <template x-if="idx === 2">🥉</template>
+                </span>
+                <p class="text-sm text-slate-400">#<span x-text="idx + 1"></span></p>
+              </div>
+              <p class="font-semibold text-white truncate" x-text="adm.adm"></p>
+              <p class="text-2xl font-bold text-blue-400 mt-2" x-text="adm.total + ' grupos'"></p>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Gráficos Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Gráfico 1: Distribuição entre ADMs (Donut) -->
+        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+          <h3 class="text-lg font-bold text-white mb-4">Distribuição de Crédito por ADM</h3>
+          <div class="relative h-64">
+            <canvas id="chartDistribuicaoAdm"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico 2: Comparativo ADMs (Bar) -->
+        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+          <h3 class="text-lg font-bold text-white mb-4">Comparativo de Grupos por ADM</h3>
+          <div class="relative h-64">
+            <canvas id="chartComparativoAdm"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico 3: Tendências Mensais (Line) -->
+        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6 lg:col-span-2">
+          <h3 class="text-lg font-bold text-white mb-4">Tendências de Lances - Últimos 12 Meses</h3>
+          <div class="relative h-80">
+            <canvas id="chartTendencias"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico 4: Distribuição por Faixa de Crédito (Bar) -->
+        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6 lg:col-span-2">
+          <h3 class="text-lg font-bold text-white mb-4">Distribuição de Grupos por Faixa de Crédito</h3>
+          <div class="relative h-80">
+            <canvas id="chartDistribuicaoFaixa"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estatísticas Detalhadas -->
+      <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+        <h2 class="text-lg font-bold text-white mb-4">📊 Estatísticas Detalhadas</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <p class="text-slate-400 text-xs uppercase tracking-wide">Crédito Mínimo</p>
+            <p class="text-2xl font-bold text-white mt-2">
+              R$ <span x-text="(analytics.dados.estatisticas?.credito_minimo || 0).toLocaleString('pt-BR', {maximumFractionDigits: 0})"></span>
+            </p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs uppercase tracking-wide">Crédito Máximo</p>
+            <p class="text-2xl font-bold text-white mt-2">
+              R$ <span x-text="(analytics.dados.estatisticas?.credito_maximo || 0).toLocaleString('pt-BR', {maximumFractionDigits: 0})"></span>
+            </p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs uppercase tracking-wide">Crédito Mediana</p>
+            <p class="text-2xl font-bold text-white mt-2">
+              R$ <span x-text="(analytics.dados.estatisticas?.credito_mediana || 0).toLocaleString('pt-BR', {maximumFractionDigits: 0})"></span>
+            </p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs uppercase tracking-wide">Taxa Máxima</p>
+            <p class="text-2xl font-bold text-white mt-2">
+              <span x-text="(analytics.dados.estatisticas?.taxa_adm_maxima || 0).toFixed(2)"></span>%
+            </p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs uppercase tracking-wide">Taxa Mínima</p>
+            <p class="text-2xl font-bold text-white mt-2">
+              <span x-text="(analytics.dados.estatisticas?.taxa_adm_minima || 0).toFixed(2)"></span>%
+            </p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs uppercase tracking-wide">Vida Máxima %</p>
+            <p class="text-2xl font-bold text-white mt-2">
+              <span x-text="(analytics.dados.estatisticas?.vida_maxima || 0).toFixed(2)"></span>%
+            </p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs uppercase tracking-wide">Vida Mínima %</p>
+            <p class="text-2xl font-bold text-white mt-2">
+              <span x-text="(analytics.dados.estatisticas?.vida_minima || 0).toFixed(2)"></span>%
+            </p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs uppercase tracking-wide">Tipos de Bem</p>
+            <p class="text-2xl font-bold text-white mt-2">
+              <span x-text="Object.keys(analytics.dados.estatisticas?.grupos_por_tipo_bem || {}).length || 0"></span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensagem de Erro -->
+      <template x-if="analytics.erro">
+        <div class="bg-red-900/20 border border-red-700 rounded-lg p-4 flex items-start gap-3">
+          <span class="text-2xl">⚠️</span>
+          <div>
+            <p class="font-semibold text-red-300">Erro ao carregar dados</p>
+            <p class="text-red-200 text-sm mt-1" x-text="analytics.erro"></p>
+            <button @click="carregarAnalytics()" class="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition">
+              🔄 Tentar Novamente
+            </button>
+          </div>
+        </div>
+      </template>
     </div>
   </template>
 

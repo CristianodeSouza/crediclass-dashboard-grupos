@@ -193,6 +193,52 @@ function dashboard() {
     get totalGerenciadorFiltrado() { return this.gruposGerenciadorFiltrados.length; },
     get totalGerenciadorPaginas() { return Math.max(1, Math.ceil(this.gruposGerenciadorFiltrados.length / this.gerenciador.porPagina)); },
 
+    // ── IMPORTAÇÃO/EXPORTAÇÃO ─────────────────────────────
+    importacao: {
+      arquivo: null,
+      nomeArquivo: "",
+      dragOver: false,
+      modo: "insert_update",
+      carregando: false,
+      preview: { preview: [], total: 0, colunas: [], limite_preview: 10, tem_mais: false },
+      mostrarPreview: false,
+      errosValidacao: [],
+      resultado: null
+    },
+
+    exportacao: {
+      carregando: false,
+      tipo: "", // "completo", "adm", "relatorio", "grupo"
+      adm: "",
+      grupoId: ""
+    },
+
+    sincronizacao: {
+      carregando: false,
+      ultimaSinc: "",
+      mensagem: "",
+      erro: false
+    },
+
+    // ── ANALYTICS DASHBOARD ─────────────────────────────
+    analytics: {
+      carregando: false,
+      erro: null,
+      dados: {
+        summary: null,
+        comparativo: null,
+        tendencias: null,
+        distribuicao: null,
+        estatisticas: null
+      },
+      charts: {
+        distribuicaoAdm: null,
+        comparativoAdm: null,
+        tendencias: null,
+        distribuicaoFaixa: null
+      }
+    },
+
     // ── Lifecycle ───────────────────────────────────────
     async init() {
       await Promise.all([this.loadStats(), this.loadGrupos()]);
@@ -202,6 +248,9 @@ function dashboard() {
       this.abaAtiva = aba;
       if (aba === 'gerenciador' && this.gerenciador.grupos.length === 0) {
         this.fetchGruposGerenciador();
+      }
+      if (aba === 'analytics' && !this.analytics.dados.summary) {
+        this.carregarAnalytics();
       }
     },
 
@@ -1362,6 +1411,474 @@ function dashboard() {
       });
 
       return `${completos}/${mesesEsperados} meses completos`;
+    },
+
+    // ── IMPORTAÇÃO/EXPORTAÇÃO (P3.1) ─
+    soltarArquivo(event) {
+      this.importacao.dragOver = false;
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        this.importacao.arquivo = files[0];
+        this.importacao.nomeArquivo = files[0].name;
+        this.importacao.errosValidacao = [];
+      }
+    },
+
+    selecionarArquivo(event) {
+      const files = event.target.files;
+      if (files.length > 0) {
+        this.importacao.arquivo = files[0];
+        this.importacao.nomeArquivo = files[0].name;
+        this.importacao.errosValidacao = [];
+      }
+    },
+
+    async previewImportacao() {
+      if (!this.importacao.arquivo) {
+        this.mostrarToast("Selecione um arquivo", "erro");
+        return;
+      }
+
+      this.importacao.carregando = true;
+      const formData = new FormData();
+      formData.append("arquivo", this.importacao.arquivo);
+
+      try {
+        const res = await fetch("/api/importar/preview", {
+          method: "POST",
+          body: formData
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          this.importacao.preview = data.preview;
+          this.importacao.errosValidacao = data.erros || [];
+          this.importacao.mostrarPreview = true;
+          if (data.erros && data.erros.length > 0) {
+            this.mostrarToast(`${data.erros.length} erros encontrados`, "aviso");
+          } else {
+            this.mostrarToast(`Preview carregado: ${data.preview.total} linhas`, "sucesso");
+          }
+        } else {
+          this.importacao.errosValidacao = [data.detail || "Erro ao processar arquivo"];
+          this.mostrarToast("Erro no preview: " + (data.detail || "Desconhecido"), "erro");
+        }
+      } catch (e) {
+        console.error("Erro ao fazer preview", e);
+        this.importacao.errosValidacao = [e.message];
+        this.mostrarToast("Erro ao fazer preview: " + e.message, "erro");
+      } finally {
+        this.importacao.carregando = false;
+      }
+    },
+
+    async processarImportacao() {
+      if (!this.importacao.arquivo || this.importacao.errosValidacao.length > 0) {
+        this.mostrarToast("Corrija os erros antes de importar", "erro");
+        return;
+      }
+
+      this.importacao.carregando = true;
+      const formData = new FormData();
+      formData.append("arquivo", this.importacao.arquivo);
+      formData.append("modo", this.importacao.modo);
+
+      try {
+        const res = await fetch("/api/importar/processar", {
+          method: "POST",
+          body: formData
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          this.importacao.resultado = data;
+          this.mostrarToast(
+            `✓ Importação concluída!\nInseridos: ${data.inseridos} | Atualizados: ${data.atualizados}`,
+            "sucesso"
+          );
+          await this.fetchGruposGerenciador();
+        } else {
+          this.mostrarToast("Erro na importação: " + (data.detail || "Desconhecido"), "erro");
+        }
+      } catch (e) {
+        console.error("Erro ao processar importação", e);
+        this.mostrarToast("Erro ao importar: " + e.message, "erro");
+      } finally {
+        this.importacao.carregando = false;
+      }
+    },
+
+    limparArquivoImportacao() {
+      this.importacao.arquivo = null;
+      this.importacao.nomeArquivo = "";
+      this.importacao.preview = { preview: [], total: 0, colunas: [], limite_preview: 10, tem_mais: false };
+      this.importacao.mostrarPreview = false;
+      this.importacao.errosValidacao = [];
+      this.importacao.resultado = null;
+    },
+
+    async exportarTudo() {
+      this.exportacao.carregando = true;
+      this.exportacao.tipo = "completo";
+
+      try {
+        const res = await fetch("/api/exportar/completo");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `grupos_completo_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        this.mostrarToast("✓ Arquivo exportado com sucesso", "sucesso");
+      } catch (e) {
+        console.error("Erro ao exportar", e);
+        this.mostrarToast("Erro ao exportar: " + e.message, "erro");
+      } finally {
+        this.exportacao.carregando = false;
+      }
+    },
+
+    async exportarPorAdm() {
+      if (!this.exportacao.adm) {
+        this.mostrarToast("Selecione uma administradora", "erro");
+        return;
+      }
+
+      this.exportacao.carregando = true;
+      this.exportacao.tipo = "adm";
+
+      try {
+        const res = await fetch(`/api/exportar/por-adm/${this.exportacao.adm}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `grupos_${this.exportacao.adm}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        this.mostrarToast(`✓ Arquivo de ${this.exportacao.adm} exportado`, "sucesso");
+      } catch (e) {
+        console.error("Erro ao exportar por ADM", e);
+        this.mostrarToast("Erro ao exportar: " + e.message, "erro");
+      } finally {
+        this.exportacao.carregando = false;
+      }
+    },
+
+    async exportarRelatorioAdms() {
+      this.exportacao.carregando = true;
+      this.exportacao.tipo = "relatorio";
+
+      try {
+        const res = await fetch("/api/exportar/relatorio-adms");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `relatorio_adms_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        this.mostrarToast("✓ Relatório ADMs exportado", "sucesso");
+      } catch (e) {
+        console.error("Erro ao exportar relatório", e);
+        this.mostrarToast("Erro ao exportar: " + e.message, "erro");
+      } finally {
+        this.exportacao.carregando = false;
+      }
+    },
+
+    async exportarGrupo() {
+      if (!this.exportacao.grupoId) {
+        this.mostrarToast("Digite o ID do grupo", "erro");
+        return;
+      }
+
+      this.exportacao.carregando = true;
+      this.exportacao.tipo = "grupo";
+
+      try {
+        const res = await fetch(`/api/exportar/grupo/${this.exportacao.grupoId}`);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.detail || `HTTP ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `grupo_${this.exportacao.grupoId}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        this.mostrarToast("✓ Grupo exportado com sucesso", "sucesso");
+      } catch (e) {
+        console.error("Erro ao exportar grupo", e);
+        this.mostrarToast("Erro ao exportar: " + e.message, "erro");
+      } finally {
+        this.exportacao.carregando = false;
+        this.exportacao.grupoId = "";
+      }
+    },
+
+    async sincronizarAgora() {
+      this.sincronizacao.carregando = true;
+      this.sincronizacao.mensagem = "";
+      this.sincronizacao.erro = false;
+
+      try {
+        const inicioSync = Date.now();
+        const res = await fetch("/api/sync-sheets", { method: "POST" });
+        const data = await res.json();
+
+        if (res.ok && data.status === "sucesso") {
+          const tempoTotal = ((Date.now() - inicioSync) / 1000).toFixed(1);
+          const now = new Date();
+          this.sincronizacao.ultimaSinc = now.toLocaleString("pt-BR");
+          this.sincronizacao.mensagem = `✓ ${data.total_grupos} grupos carregados em ${tempoTotal}s`;
+          this.mostrarToast(this.sincronizacao.mensagem, "sucesso");
+          await this.fetchGruposGerenciador();
+        } else {
+          throw new Error(data.detail || "Falha na sincronização");
+        }
+      } catch (e) {
+        console.error("Erro ao sincronizar", e);
+        this.sincronizacao.mensagem = `✗ Erro: ${e.message}`;
+        this.sincronizacao.erro = true;
+        this.mostrarToast("Erro ao sincronizar: " + e.message, "erro");
+      } finally {
+        this.sincronizacao.carregando = false;
+      }
+    },
+
+    // ── ANALYTICS ───────────────────────────────────────
+    async carregarAnalytics() {
+      this.analytics.carregando = true;
+      this.analytics.erro = null;
+
+      try {
+        const [sumRes, admRes, tendRes, distRes, statRes] = await Promise.all([
+          fetch("/api/analytics/summary"),
+          fetch("/api/analytics/adm-comparison"),
+          fetch("/api/analytics/trends"),
+          fetch("/api/analytics/distribution"),
+          fetch("/api/analytics/statistics")
+        ]);
+
+        if (!sumRes.ok || !admRes.ok || !tendRes.ok || !distRes.ok || !statRes.ok) {
+          throw new Error("Falha ao carregar dados analíticos");
+        }
+
+        const [sum, adm, tend, dist, stat] = await Promise.all([
+          sumRes.json(),
+          admRes.json(),
+          tendRes.json(),
+          distRes.json(),
+          statRes.json()
+        ]);
+
+        this.analytics.dados.summary = sum.dados;
+        this.analytics.dados.comparativo = adm.dados.comparativo;
+        this.analytics.dados.tendencias = tend.dados;
+        this.analytics.dados.distribuicao = dist.dados;
+        this.analytics.dados.estatisticas = stat.dados;
+
+        // Aguardar DOM atualizar antes de inicializar gráficos
+        await this.$nextTick?.() || new Promise(r => setTimeout(r, 100));
+        this.inicializarGraficos();
+
+      } catch (e) {
+        console.error("Erro ao carregar analytics", e);
+        this.analytics.erro = e.message;
+        this.mostrarToast("Erro ao carregar dashboard analítico: " + e.message, "erro");
+      } finally {
+        this.analytics.carregando = false;
+      }
+    },
+
+    inicializarGraficos() {
+      // Destruir gráficos antigos
+      Object.values(this.analytics.charts).forEach(chart => {
+        if (chart && chart.destroy) chart.destroy();
+      });
+      this.analytics.charts = {};
+
+      // 1. Distribuição de Crédito por ADM (Donut)
+      const ctxAdm = document.getElementById("chartDistribuicaoAdm");
+      if (ctxAdm && this.analytics.dados.summary?.principais_adms) {
+        const principais = this.analytics.dados.summary.principais_adms.slice(0, 6);
+        this.analytics.charts.distribuicaoAdm = new Chart(ctxAdm, {
+          type: "doughnut",
+          data: {
+            labels: principais.map(a => a.adm),
+            datasets: [{
+              data: principais.map(a => a.total),
+              backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"],
+              borderColor: "#0f172a",
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom", labels: { color: "#cbd5e1" } },
+              tooltip: { backgroundColor: "#1e293b", titleColor: "#fff", bodyColor: "#cbd5e1" }
+            }
+          }
+        });
+      }
+
+      // 2. Comparativo de Grupos por ADM (Bar)
+      const ctxComp = document.getElementById("chartComparativoAdm");
+      if (ctxComp && this.analytics.dados.comparativo) {
+        this.analytics.charts.comparativoAdm = new Chart(ctxComp, {
+          type: "bar",
+          data: {
+            labels: this.analytics.dados.comparativo.map(a => a.administradora),
+            datasets: [{
+              label: "Quantidade de Grupos",
+              data: this.analytics.dados.comparativo.map(a => a.total_grupos),
+              backgroundColor: "#3b82f6",
+              borderColor: "#1e40af",
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: "#cbd5e1" } },
+              tooltip: { backgroundColor: "#1e293b", titleColor: "#fff", bodyColor: "#cbd5e1" }
+            },
+            scales: {
+              x: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
+              y: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } }
+            }
+          }
+        });
+      }
+
+      // 3. Tendências de Lances (Line)
+      const ctxTend = document.getElementById("chartTendencias");
+      if (ctxTend && this.analytics.dados.tendencias?.meses) {
+        this.analytics.charts.tendencias = new Chart(ctxTend, {
+          type: "line",
+          data: {
+            labels: this.analytics.dados.tendencias.meses,
+            datasets: [
+              {
+                label: "Maior Lance Médio (%)",
+                data: this.analytics.dados.tendencias.maior_lance_media,
+                borderColor: "#10b981",
+                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                tension: 0.3,
+                borderWidth: 2,
+                fill: true
+              },
+              {
+                label: "Menor Lance Médio (%)",
+                data: this.analytics.dados.tendencias.menor_lance_media,
+                borderColor: "#f59e0b",
+                backgroundColor: "rgba(245, 158, 11, 0.1)",
+                tension: 0.3,
+                borderWidth: 2,
+                fill: true
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: "#cbd5e1" } },
+              tooltip: { backgroundColor: "#1e293b", titleColor: "#fff", bodyColor: "#cbd5e1" }
+            },
+            scales: {
+              x: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
+              y: {
+                ticks: { color: "#cbd5e1" },
+                grid: { color: "#334155" },
+                min: 0,
+                max: 100
+              }
+            }
+          }
+        });
+      }
+
+      // 4. Distribuição por Faixa de Crédito (Bar)
+      const ctxFaixa = document.getElementById("chartDistribuicaoFaixa");
+      if (ctxFaixa && this.analytics.dados.distribuicao?.faixas) {
+        this.analytics.charts.distribuicaoFaixa = new Chart(ctxFaixa, {
+          type: "bar",
+          data: {
+            labels: this.analytics.dados.distribuicao.faixas,
+            datasets: [
+              {
+                label: "Quantidade de Grupos",
+                data: this.analytics.dados.distribuicao.contagem,
+                backgroundColor: "#8b5cf6",
+                borderColor: "#6d28d9",
+                borderWidth: 1
+              },
+              {
+                label: "Percentual (%)",
+                data: this.analytics.dados.distribuicao.percentual,
+                backgroundColor: "#ec4899",
+                borderColor: "#be185d",
+                borderWidth: 1,
+                yAxisID: "y1"
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: "#cbd5e1" } },
+              tooltip: { backgroundColor: "#1e293b", titleColor: "#fff", bodyColor: "#cbd5e1" }
+            },
+            scales: {
+              x: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
+              y: {
+                type: "linear",
+                display: true,
+                position: "left",
+                ticks: { color: "#cbd5e1" },
+                grid: { color: "#334155" }
+              },
+              y1: {
+                type: "linear",
+                display: true,
+                position: "right",
+                ticks: { color: "#cbd5e1" },
+                grid: { color: "#334155" },
+                max: 100
+              }
+            }
+          }
+        });
+      }
     },
 
     mostrarToast(mensagem, tipo = "info") {
