@@ -4,7 +4,7 @@ Responsável por: KPIs, comparativos ADMs, tendências, distribuição de crédi
 """
 
 from typing import List, Dict, Any
-from sheets import fetch_grupos
+from .sheets import fetch_grupos
 
 
 def calcular_summary_analytics() -> Dict[str, Any]:
