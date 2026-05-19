@@ -152,6 +152,68 @@ async def buscar_oportunidade(deal_id: str):
         raise HTTPException(status_code=400, detail=f"Erro ao buscar oportunidade: {str(e)}")
 
 
+@app.get("/api/teste-calculadora/{deal_id}")
+async def testar_calculadora_com_piperun(deal_id: str):
+    """Teste completo: busca Piperun + executa calculadora com dados reais"""
+    try:
+        # 1. Buscar oportunidade
+        oportunidade = await fetch_oportunidade(deal_id)
+        form = oportunidade.get("formulario", {})
+
+        # 2. Mapear dados do Piperun para a calculadora
+        crédito_desejado = form.get("valor_imovel_num") or 450000
+        lance_máximo = form.get("lance_maximo_num") or 150000
+        parcela_máxima = form.get("mensalidade_maxima_num") or 6000
+        renda = form.get("renda_mensal_num") or 3500
+
+        # 3. Simular cálculo para as 6 ADMs
+        administradoras = [
+            {"nome": "CNP", "taxaAdm": 0.15, "fundoRsv": 0.05, "pctLanceEmbutido": 0.5},
+            {"nome": "ITAÚ", "taxaAdm": 0.2, "fundoRsv": 0.03, "pctLanceEmbutido": 0.3},
+            {"nome": "CAOA", "taxaAdm": 0.2, "fundoRsv": 0.01, "pctLanceEmbutido": 0.3},
+            {"nome": "PORTO", "taxaAdm": 0.15, "fundoRsv": 0.005, "pctLanceEmbutido": 0.3},
+            {"nome": "EMBRACON", "taxaAdm": 0.15, "fundoRsv": 0.02, "pctLanceEmbutido": 0.25},
+            {"nome": "RODOBENS", "taxaAdm": 0.18, "fundoRsv": 0.05, "pctLanceEmbutido": 0.3},
+        ]
+
+        resultados = []
+        for adm in administradoras:
+            creditoContratar = crédito_desejado / (1 - adm["pctLanceEmbutido"])
+            numerador = (creditoContratar * adm["pctLanceEmbutido"]) + lance_máximo
+            denominador = creditoContratar * (1 + adm["taxaAdm"] + adm["fundoRsv"])
+            lanceMaximo = numerador / denominador if denominador > 0 else 0
+
+            creditoComTaxas = creditoContratar * (1 + adm["taxaAdm"] + adm["fundoRsv"])
+            lanceComFGTS = (creditoContratar * adm["pctLanceEmbutido"]) + lance_máximo
+            prazoMinimo = (creditoComTaxas - lanceComFGTS) / parcela_máxima if parcela_máxima > 0 else 0
+
+            resultados.append({
+                "nome": adm["nome"],
+                "taxaAdm": f"{adm['taxaAdm']*100:.1f}%",
+                "fundoRsv": f"{adm['fundoRsv']*100:.1f}%",
+                "creditoContratar": f"R$ {creditoContratar:,.0f}",
+                "lanceMaximo": f"{min(max(lanceMaximo, 0), 1)*100:.1f}%",
+                "prazoMinimo": f"{max(0, prazoMinimo):.1f} meses",
+            })
+
+        return {
+            "status": "sucesso",
+            "deal_id": deal_id,
+            "dados_piperun": {
+                "credito_desejado": f"R$ {crédito_desejado:,.0f}",
+                "lance_maximo": f"R$ {lance_máximo:,.0f}",
+                "parcela_desejada": f"R$ {parcela_máxima:,.0f}",
+                "renda_mensal": f"R$ {renda:,.0f}",
+                "cliente": form.get("nome", "Sem nome"),
+                "email": form.get("email", "Sem email"),
+            },
+            "resultados_calculadora": resultados,
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao testar calculadora: {str(e)}")
+
+
 # ===== GERENCIADOR DE GRUPOS =====
 
 @app.get("/api/grupos-gerenciador")
@@ -631,6 +693,43 @@ def analytics_statistics():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao calcular estatísticas: {str(e)}")
+
+
+@app.get("/api/health/frontend")
+def health_frontend():
+    """
+    Health check para validar integridade do frontend.
+    Verifica:
+    - Se app.js está acessível
+    - Se index.html existe
+    - Se scripts críticos estão presentes
+    """
+    from .frontend_validator import FrontendValidator
+    import json
+
+    validator = FrontendValidator(FRONTEND_DIR)
+    success, errors, warnings = validator.validate()
+
+    # Verifica se app.js está acessível
+    app_js_path = os.path.join(FRONTEND_DIR, "js", "app.js")
+    app_js_accessible = os.path.exists(app_js_path) and os.path.getsize(app_js_path) > 0
+
+    return {
+        "status": "healthy" if success and app_js_accessible else "degraded",
+        "timestamp": datetime.now().isoformat(),
+        "checks": {
+            "app_js_accessible": app_js_accessible,
+            "scripts_valid": len(errors) == 0,
+            "html_structure_valid": len([e for e in errors if "HTML" in e]) == 0,
+        },
+        "errors": errors,
+        "warnings": warnings,
+        "details": {
+            "app_js_size_bytes": os.path.getsize(app_js_path) if app_js_accessible else 0,
+            "frontend_dir": FRONTEND_DIR,
+            "validation_passed": success,
+        }
+    }
 
 
 if __name__ == "__main__":

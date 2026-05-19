@@ -103,7 +103,7 @@ Veja `docs/ROADMAP.md` para lista completa e datas.
 | Frontend | Alpine.js 3.14.1 + Chart.js |
 | API Sheets | Google Sheets API v4 |
 | CRM | Piperun (integração JSON) |
-| **Deploy** | **Render.com (Docker)** |
+| **Deploy** | **Render.com (Native Python)** |
 | **DNS/CDN** | **Cloudflare** |
 | **Repositório** | **GitHub** (CristianodeSouza/crediclass-dashboard-grupos) |
 | **Domínio** | crediclass.csrtecnologia.com.br |
@@ -117,6 +117,37 @@ Veja `docs/ROADMAP.md` para lista completa e datas.
 - **[QUICK_START.md](docs/QUICK_START.md)** — Setup detalhado, troubleshooting, credenciais
 - **[FEATURES.md](docs/FEATURES.md)** — Cada feature com uso, fórmulas, estado
 - **[HISTORICO.md](docs/HISTORICO.md)** — Log de mudanças, PRs, testes
+- **[RENDER_SETUP.md](RENDER_SETUP.md)** — Configuração Render + troubleshooting (⚠️ CRÍTICO)
+
+---
+
+## ⚠️ RENDER DEPLOYMENT — CRÍTICO
+
+**Problema Identificado (2026-05-19):**
+
+Render ignora `render.yaml` se a UI estiver configurada para "Docker". Isso causa deploy loops com erro: `"failed to read dockerfile: open Dockerfile: no such file or directory"`
+
+**Solução Permanente:** Veja `RENDER_SETUP.md` completo com:
+1. Sincronizar Render UI de Docker → Native Python
+2. Configuração correta de render.yaml
+3. Checklist pre-deployment
+4. Troubleshooting
+
+**Quick Fix para Deploy Imediato:**
+
+```bash
+# 1. Ir a https://dashboard.render.com
+# 2. Serviço: crediclass-dashboard → Settings → Build & Deploy
+# 3. Build Method: Docker → Native (Python 3.11)
+# 4. Salvar
+# 5. git push origin main → Render refaz build automaticamente
+```
+
+**Verificação Pós-Deploy:**
+```bash
+curl https://crediclass.csrtecnologia.com.br/api/grupos-gerenciador?limit=1
+# Esperado: JSON com dados, HTTP 200
+```
 
 ---
 
