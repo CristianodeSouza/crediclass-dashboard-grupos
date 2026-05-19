@@ -10,7 +10,6 @@ services:
         value: 3.11
       - key: PYTHONUNBUFFERED
         value: "1"
-    staticPublicPath: frontend
     routes:
       - path: /api/*
         destination: http://0.0.0.0:$PORT/api/$1
