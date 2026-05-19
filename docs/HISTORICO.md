@@ -4,6 +4,43 @@ Log de atualizações, features implementadas e correções. Mais recentes prime
 
 ---
 
+## 2026-05-19 | Alpine.js Defer + Correção de Inicialização
+
+### ✅ Correção Crítica: Alpine.js Initialization Failure
+
+1. **Problema**: Alpine.js não inicializava, templates `{{ }}` não renderizados
+   - Aviso no console: "Unable to initialize. Trying to load Alpine before <body> is available"
+   - Botão "Executar Cálculo" não funcionava
+   - **Impacto**: Dashboard completamente não-funcional em produção
+
+2. **Solução**: Adicionado atributo `defer` aos scripts Alpine.js e app.js
+   ```html
+   <!-- ANTES (Errado) -->
+   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+   
+   <!-- DEPOIS (Correto) -->
+   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+   <script defer src="/static/js/app.js"></script>
+   ```
+
+3. **Por Quê**: O atributo `defer` garante que:
+   - Script carrega de forma assíncrona (não bloqueia HTML parsing)
+   - DOM é completamente carregado antes da execução
+   - Alpine.js inicializa após a página estar pronta
+   - x-data="dashboard()" é processado corretamente
+
+4. **Validação**:
+   - ✅ Templates renderizam: `{{ }}` agora exibem valores
+   - ✅ Botão funciona: "Executar Cálculo" executa sem erros
+   - ✅ Console limpo: nenhum aviso Alpine
+
+### 🚀 Deployment
+- Commit: 6c8326b
+- Branch: main
+- Trigger: Auto-deploy via GitHub → Render
+
+---
+
 ## 2026-05-19 | Validador Frontend Corrigido + Teste com Dados Reais Piperun
 
 ### ✅ Correção Crítica: Validador Frontend
