@@ -705,11 +705,11 @@ function dashboard() {
     },
 
     async editarGrupo(grupo) {
-      const novoAdm = prompt("Nova ADM (CNP, ITAÚ, CAOA, PORTO, EMBRACON, RODOBENS):", grupo.adm);
+      const novoAdm = prompt("Nova ADM (AUTO-CAIXA, AUTO-CAOA, AUTO-ITAÚ, CAIXA, CANOPUS, CAOA, ITAÚ, PORTO, RODOBENS):", grupo.adm);
       if (novoAdm === null) return;
-      const admValidas = ["CNP", "ITAÚ", "CAOA", "PORTO", "EMBRACON", "RODOBENS"];
+      const admValidas = ["AUTO-CAIXA", "AUTO-CAOA", "AUTO-ITAÚ", "CAIXA", "CANOPUS", "CAOA", "ITAÚ", "PORTO", "RODOBENS"];
       if (!admValidas.includes(novoAdm.toUpperCase())) {
-        alert("ADM inválida. Use uma das opções: " + admValidas.join(", "));
+        alert("ADM inválida. Use uma das 9 opções: " + admValidas.join(", "));
         return;
       }
       try {
