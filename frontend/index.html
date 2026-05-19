@@ -1187,7 +1187,12 @@
 </div>
 
   <!-- ════════════════════ ABA: GERENCIADOR DE GRUPOS ════════════════════ -->
-  <div x-show="abaAtiva === 'gerenciador'" class="flex flex-col lg:flex-row flex-1 min-h-0 min-w-0 bg-slate-950 relative">
+  <div x-show="abaAtiva === 'gerenciador'" class="flex flex-col flex-1 min-h-0 min-w-0 bg-slate-950">
+    <iframe src="/gerenciador-grupos-melhorado.html" class="flex-1 border-none w-full"></iframe>
+  </div>
+
+  <!-- ════════════════════ ABA: GERENCIADOR DE GRUPOS (ANTIGO) ════════════════════ -->
+  <div style="display:none;" class="flex flex-col lg:flex-row flex-1 min-h-0 min-w-0 bg-slate-950 relative">
       <!-- OVERLAY MOBILE (quando filtros estão abertos) -->
       <div x-show="mostrarFiltrosMobile" class="fixed inset-0 z-30 lg:hidden bg-black/40 backdrop-blur-sm" @click="mostrarFiltrosMobile = false"></div>
       <!-- FILTRO TOGGLE (Mobile) -->
