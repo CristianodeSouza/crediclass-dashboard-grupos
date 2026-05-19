@@ -503,191 +503,6 @@
       }
     }
   </style>
-</head>
-<body>
-  <div class="container" x-data="(() => { const obj = gerenciadorGrupos(); setTimeout(() => obj.init(), 0); return obj; })()">
-    <!-- HEADER -->
-    <div class="header">
-      <h1>📊 Gerenciador de Grupos</h1>
-      <div class="header-stats">
-        <div class="stat">
-          <span class="stat-label">Grupos</span>
-          <span class="stat-value" x-text="grupos.length">0</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Exibindo</span>
-          <span class="stat-value" x-text="filteredGrupos.length">0</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- CONTROLS -->
-    <div class="controls">
-      <button class="btn btn-primary" @click="openModal('create')">➕ Novo Grupo</button>
-      <button class="btn btn-secondary" @click="exportCSV()">📥 Exportar CSV</button>
-      <button class="btn btn-secondary" @click="clearFilters()" x-show="hasActiveFilters()">🔄 Limpar Filtros</button>
-    </div>
-
-    <!-- FILTERS -->
-    <div class="filters-section">
-      <div class="filter-group">
-        <label>Buscar</label>
-        <input type="text" placeholder="Grupo, ADM..." x-model="filters.search" @input="applyFilters()">
-      </div>
-      <div class="filter-group">
-        <label>Administradora</label>
-        <select x-model="filters.adm" @change="applyFilters()">
-          <option value="">Todas</option>
-          <option value="CAIXA">CAIXA</option>
-          <option value="ITAÚ">ITAÚ</option>
-          <option value="CAOA">CAOA</option>
-          <option value="PORTO">PORTO</option>
-          <option value="EMBRACON">EMBRACON</option>
-          <option value="RODOBENS">RODOBENS</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label>Crédito Min (R$)</label>
-        <input type="number" placeholder="0" x-model.number="filters.creditMin" @input="applyFilters()">
-      </div>
-      <div class="filter-group">
-        <label>Crédito Max (R$)</label>
-        <input type="number" placeholder="∞" x-model.number="filters.creditMax" @input="applyFilters()">
-      </div>
-    </div>
-
-    <!-- TABLE -->
-    <div class="table-wrapper" x-show="filteredGrupos.length > 0">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 40px;">
-              <input type="checkbox" class="checkbox" @change="selectAll($event)">
-            </th>
-            <th @click="toggleSort('adm')" style="cursor: pointer;">ADM</th>
-            <th @click="toggleSort('grupo')" style="cursor: pointer;">Grupo ID</th>
-            <th @click="toggleSort('tipo')" style="cursor: pointer;">Tipo</th>
-            <th style="text-align: right;">Crédito Mín.</th>
-            <th style="text-align: right;">Crédito Máx.</th>
-            <th style="text-align: right;">Taxa ADM</th>
-            <th style="width: 80px; text-align: center;">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <template x-for="grupo in paginatedGrupos" :key="grupo.id">
-            <tr>
-              <td>
-                <input type="checkbox" class="checkbox" :value="grupo.id" @change="toggleSelectGrupo($event, grupo.id)">
-              </td>
-              <td><strong x-text="grupo.adm"></strong></td>
-              <td x-text="grupo.grupo"></td>
-              <td>
-                <span class="badge" :class="grupo.tipo === 'Imóvel' ? 'badge-active' : 'badge-inactive'" x-text="grupo.tipo"></span>
-              </td>
-              <td style="text-align: right;" class="currency" x-text="formatCurrency(grupo.creditMin)"></td>
-              <td style="text-align: right;" class="currency" x-text="formatCurrency(grupo.creditMax)"></td>
-              <td style="text-align: right;" class="percentage" x-text="(grupo.taxaAdm * 100).toFixed(1) + '%'"></td>
-              <td style="text-align: center;">
-                <button class="btn btn-sm btn-secondary" @click="editGrupo(grupo)">✏️</button>
-                <button class="btn btn-sm btn-secondary" @click="deleteGrupo(grupo.id)" style="background-color: var(--error); color: white; border: none;">🗑️</button>
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- EMPTY STATE -->
-    <div class="empty-state" x-show="filteredGrupos.length === 0">
-      <div class="empty-icon">📭</div>
-      <h3>Nenhum grupo encontrado</h3>
-      <p>Tente ajustar seus filtros</p>
-    </div>
-
-    <!-- PAGINATION -->
-    <div class="pagination" x-show="filteredGrupos.length > 0">
-      <button @click="previousPage()" :disabled="currentPage === 1">← Anterior</button>
-      <template x-for="page in totalPages" :key="page">
-        <button :class="page === currentPage ? 'active' : ''" @click="goToPage(page)" x-text="page"></button>
-      </template>
-      <button @click="nextPage()" :disabled="currentPage === totalPages">Próxima →</button>
-      <div style="margin-left: 20px; color: var(--text-secondary); font-size: 12px;">
-        <span x-text="`Página ${currentPage} de ${totalPages}`"></span>
-      </div>
-    </div>
-
-    <!-- MODAL CREATE/EDIT -->
-    <div class="modal" :class="{ active: showModal === 'form' }">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2 x-text="isEditing ? 'Editar Grupo' : 'Novo Grupo'"></h2>
-          <button class="modal-close" @click="closeModal()">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Administradora</label>
-            <select x-model="formData.adm">
-              <option value="">Selecione...</option>
-              <option value="CAIXA">CAIXA</option>
-              <option value="ITAÚ">ITAÚ</option>
-              <option value="CAOA">CAOA</option>
-              <option value="PORTO">PORTO</option>
-              <option value="EMBRACON">EMBRACON</option>
-              <option value="RODOBENS">RODOBENS</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Grupo ID</label>
-            <input type="text" x-model="formData.grupo" placeholder="Ex: 1001">
-          </div>
-          <div class="form-group">
-            <label>Tipo</label>
-            <select x-model="formData.tipo">
-              <option value="">Selecione...</option>
-              <option value="Imóvel">Imóvel</option>
-              <option value="Veículo">Veículo</option>
-              <option value="Outro">Outro</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Crédito Mínimo (R$)</label>
-            <input type="number" x-model.number="formData.creditMin" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label>Crédito Máximo (R$)</label>
-            <input type="number" x-model.number="formData.creditMax" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label>Taxa ADM (%)</label>
-            <input type="number" x-model.number="formData.taxaAdm" step="0.1" placeholder="0">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" @click="saveGrupo()">Salvar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL DELETE -->
-    <div class="modal" :class="{ active: showModal === 'delete' }">
-      <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header">
-          <h2>Confirmar Deleção</h2>
-          <button class="modal-close" @click="closeModal()">✕</button>
-        </div>
-        <div class="modal-body">
-          <p>Tem certeza que deseja deletar este grupo? Esta ação não pode ser desfeita.</p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" @click="confirmDelete()" style="background-color: var(--error);">Deletar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
   <script>
     function gerenciadorGrupos() {
       return {
@@ -929,5 +744,190 @@
       };
     }
   </script>
+</head>
+<body>
+  <div class="container" x-data="(() => { const obj = gerenciadorGrupos(); setTimeout(() => obj.init(), 0); return obj; })()">
+    <!-- HEADER -->
+    <div class="header">
+      <h1>📊 Gerenciador de Grupos</h1>
+      <div class="header-stats">
+        <div class="stat">
+          <span class="stat-label">Grupos</span>
+          <span class="stat-value" x-text="grupos.length">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Exibindo</span>
+          <span class="stat-value" x-text="filteredGrupos.length">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+      <button class="btn btn-primary" @click="openModal('create')">➕ Novo Grupo</button>
+      <button class="btn btn-secondary" @click="exportCSV()">📥 Exportar CSV</button>
+      <button class="btn btn-secondary" @click="clearFilters()" x-show="hasActiveFilters()">🔄 Limpar Filtros</button>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Buscar</label>
+        <input type="text" placeholder="Grupo, ADM..." x-model="filters.search" @input="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <label>Administradora</label>
+        <select x-model="filters.adm" @change="applyFilters()">
+          <option value="">Todas</option>
+          <option value="CAIXA">CAIXA</option>
+          <option value="ITAÚ">ITAÚ</option>
+          <option value="CAOA">CAOA</option>
+          <option value="PORTO">PORTO</option>
+          <option value="EMBRACON">EMBRACON</option>
+          <option value="RODOBENS">RODOBENS</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Crédito Min (R$)</label>
+        <input type="number" placeholder="0" x-model.number="filters.creditMin" @input="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <label>Crédito Max (R$)</label>
+        <input type="number" placeholder="∞" x-model.number="filters.creditMax" @input="applyFilters()">
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper" x-show="filteredGrupos.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px;">
+              <input type="checkbox" class="checkbox" @change="selectAll($event)">
+            </th>
+            <th @click="toggleSort('adm')" style="cursor: pointer;">ADM</th>
+            <th @click="toggleSort('grupo')" style="cursor: pointer;">Grupo ID</th>
+            <th @click="toggleSort('tipo')" style="cursor: pointer;">Tipo</th>
+            <th style="text-align: right;">Crédito Mín.</th>
+            <th style="text-align: right;">Crédito Máx.</th>
+            <th style="text-align: right;">Taxa ADM</th>
+            <th style="width: 80px; text-align: center;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="grupo in paginatedGrupos" :key="grupo.id">
+            <tr>
+              <td>
+                <input type="checkbox" class="checkbox" :value="grupo.id" @change="toggleSelectGrupo($event, grupo.id)">
+              </td>
+              <td><strong x-text="grupo.adm"></strong></td>
+              <td x-text="grupo.grupo"></td>
+              <td>
+                <span class="badge" :class="grupo.tipo === 'Imóvel' ? 'badge-active' : 'badge-inactive'" x-text="grupo.tipo"></span>
+              </td>
+              <td style="text-align: right;" class="currency" x-text="formatCurrency(grupo.creditMin)"></td>
+              <td style="text-align: right;" class="currency" x-text="formatCurrency(grupo.creditMax)"></td>
+              <td style="text-align: right;" class="percentage" x-text="(grupo.taxaAdm * 100).toFixed(1) + '%'"></td>
+              <td style="text-align: center;">
+                <button class="btn btn-sm btn-secondary" @click="editGrupo(grupo)">✏️</button>
+                <button class="btn btn-sm btn-secondary" @click="deleteGrupo(grupo.id)" style="background-color: var(--error); color: white; border: none;">🗑️</button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty-state" x-show="filteredGrupos.length === 0">
+      <div class="empty-icon">📭</div>
+      <h3>Nenhum grupo encontrado</h3>
+      <p>Tente ajustar seus filtros</p>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination" x-show="filteredGrupos.length > 0">
+      <button @click="previousPage()" :disabled="currentPage === 1">← Anterior</button>
+      <template x-for="page in totalPages" :key="page">
+        <button :class="page === currentPage ? 'active' : ''" @click="goToPage(page)" x-text="page"></button>
+      </template>
+      <button @click="nextPage()" :disabled="currentPage === totalPages">Próxima →</button>
+      <div style="margin-left: 20px; color: var(--text-secondary); font-size: 12px;">
+        <span x-text="`Página ${currentPage} de ${totalPages}`"></span>
+      </div>
+    </div>
+
+    <!-- MODAL CREATE/EDIT -->
+    <div class="modal" :class="{ active: showModal === 'form' }">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 x-text="isEditing ? 'Editar Grupo' : 'Novo Grupo'"></h2>
+          <button class="modal-close" @click="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Administradora</label>
+            <select x-model="formData.adm">
+              <option value="">Selecione...</option>
+              <option value="CAIXA">CAIXA</option>
+              <option value="ITAÚ">ITAÚ</option>
+              <option value="CAOA">CAOA</option>
+              <option value="PORTO">PORTO</option>
+              <option value="EMBRACON">EMBRACON</option>
+              <option value="RODOBENS">RODOBENS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Grupo ID</label>
+            <input type="text" x-model="formData.grupo" placeholder="Ex: 1001">
+          </div>
+          <div class="form-group">
+            <label>Tipo</label>
+            <select x-model="formData.tipo">
+              <option value="">Selecione...</option>
+              <option value="Imóvel">Imóvel</option>
+              <option value="Veículo">Veículo</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Crédito Mínimo (R$)</label>
+            <input type="number" x-model.number="formData.creditMin" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Crédito Máximo (R$)</label>
+            <input type="number" x-model.number="formData.creditMax" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Taxa ADM (%)</label>
+            <input type="number" x-model.number="formData.taxaAdm" step="0.1" placeholder="0">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" @click="saveGrupo()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DELETE -->
+    <div class="modal" :class="{ active: showModal === 'delete' }">
+      <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+          <h2>Confirmar Deleção</h2>
+          <button class="modal-close" @click="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <p>Tem certeza que deseja deletar este grupo? Esta ação não pode ser desfeita.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" @click="confirmDelete()" style="background-color: var(--error);">Deletar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
 </body>
 </html>
