@@ -63,13 +63,17 @@ function dashboard() {
       grupos: [],
       gruposFiltrados: [],
       paginaAtual: 1,
-      porPagina: 342,
+      porPagina: 20,
       totalGrupos: 0,
       adms: [],
       filtros: { adm: "", status: "", credito_min: "", credito_max: "", busca: "" },
+      buscaTemporal: "", // Para debounce
+      timeoutBusca: null, // ID do timeout
       ordenarPor: "adm",
       ordenarDir: "asc",
       formulario: { adm: "", grupo: "", tipo_bem: "", maior_credito: "", menor_credito: "", taxa_adm: "", fundo_rsv: "", investidor: "", conservador_24m: "", moderado_12m: "", dados_adicionais: "" },
+      erros: {}, // { campo: "mensagem de erro" }
+      camposComErro: [], // Array de campos com erro
       modals: {
         criarGrupo: false,
         editarGrupo: false,
@@ -81,7 +85,9 @@ function dashboard() {
       tipoDelete: "soft", // "soft" ou "hard"
       sincronizando: false,
       salvando: false,
-      auditoria: []
+      auditoria: [],
+      abaEditarGrupo: 1, // Tab ativa (1-5)
+      abaHistoricoAno: 2024, // Ano ativo no histórico mensal
     },
 
     // ── Computed ────────────────────────────────────────
@@ -807,6 +813,12 @@ function dashboard() {
     },
 
     async salvarGrupo() {
+      // Validar antes de salvar (P1.3)
+      if (!this.validarFormulario()) {
+        this.mostrarToast("Corrija os erros indicados", "aviso");
+        return;
+      }
+
       this.gerenciador.salvando = true;
       try {
         const url = this.gerenciador.grupoSelecionado
@@ -822,6 +834,7 @@ function dashboard() {
         if (res.ok && data.status === "sucesso") {
           const tipo = this.gerenciador.grupoSelecionado ? "atualizado" : "criado";
           this.mostrarToast(`Grupo ${tipo} com sucesso!`, "sucesso");
+          this.limparErros();
           this.fecharModalGerenciador();
           await this.fetchGruposGerenciador();
         } else {
@@ -927,7 +940,235 @@ function dashboard() {
 
     limparFiltrosGerenciador() {
       this.gerenciador.filtros = { adm: "", status: "", credito_min: "", credito_max: "", busca: "" };
+      this.gerenciador.buscaTemporal = "";
+      if (this.gerenciador.timeoutBusca) {
+        clearTimeout(this.gerenciador.timeoutBusca);
+      }
       this.gerenciador.paginaAtual = 1;
+    },
+
+    mudarPaginaGerenciador(direcao) {
+      const maxPaginas = this.totalGerenciadorPaginas;
+      if (direcao === "anterior" && this.gerenciador.paginaAtual > 1) {
+        this.gerenciador.paginaAtual--;
+      } else if (direcao === "proxima" && this.gerenciador.paginaAtual < maxPaginas) {
+        this.gerenciador.paginaAtual++;
+      }
+    },
+
+    atualizarBuscaGerenciador() {
+      if (this.gerenciador.timeoutBusca) {
+        clearTimeout(this.gerenciador.timeoutBusca);
+      }
+      this.gerenciador.timeoutBusca = setTimeout(() => {
+        this.gerenciador.filtros.busca = this.gerenciador.buscaTemporal;
+        this.gerenciador.paginaAtual = 1;
+      }, 300);
+    },
+
+    // ── HISTÓRICO MENSAL HELPERS (P1.2.2, P1.2.3, P1.2.4) ─
+    getMesesAno(ano) {
+      const meses = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+      const anoSufixo = ano.toString().slice(-2);
+      return meses.map(m => `${m}-${anoSufixo}`);
+    },
+
+    getHistoricoField(mes, campo) {
+      const grupo = this.gerenciador.grupoSelecionado;
+      if (!grupo) return null;
+
+      if (!grupo.historico) {
+        grupo.historico = [];
+      }
+
+      let registro = grupo.historico.find(h => h.mes === mes);
+      if (!registro) {
+        registro = { mes: mes, maior: null, menor: null, qtd: null };
+        grupo.historico.push(registro);
+      }
+
+      if (campo === 'maior') return registro.maior;
+      if (campo === 'menor') return registro.menor;
+      if (campo === 'qtd') return registro.qtd;
+      return null;
+    },
+
+    setHistoricoField(mes, campo, valor) {
+      const grupo = this.gerenciador.grupoSelecionado;
+      if (!grupo) return;
+
+      if (!grupo.historico) {
+        grupo.historico = [];
+      }
+
+      let registro = grupo.historico.find(h => h.mes === mes);
+      if (!registro) {
+        registro = { mes: mes, maior: null, menor: null, qtd: null };
+        grupo.historico.push(registro);
+      }
+
+      if (campo === 'maior') {
+        registro.maior = valor ? parseFloat(valor) : null;
+      } else if (campo === 'menor') {
+        registro.menor = valor ? parseFloat(valor) : null;
+      } else if (campo === 'qtd') {
+        registro.qtd = valor ? parseInt(valor) : null;
+      }
+    },
+
+    // ── VALIDAÇÕES DE CAMPOS (P1.3) ─
+    validarCampo(campo, valor) {
+      const erros = {};
+
+      // Campos obrigatórios
+      if (['adm', 'grupo', 'tipo_bem'].includes(campo)) {
+        if (!valor || String(valor).trim() === '') {
+          erros[campo] = `${this.obterLabelCampo(campo)} é obrigatório`;
+        }
+      }
+
+      // Crédito
+      if (campo === 'menor_credito') {
+        if (valor && isNaN(valor)) erros[campo] = 'Deve ser um número';
+        else if (valor && parseFloat(valor) < 0) erros[campo] = 'Deve ser positivo';
+      }
+      if (campo === 'maior_credito') {
+        if (valor && isNaN(valor)) erros[campo] = 'Deve ser um número';
+        else if (valor && parseFloat(valor) < 0) erros[campo] = 'Deve ser positivo';
+        else if (valor && this.gerenciador.formulario.menor_credito) {
+          const menor = parseFloat(this.gerenciador.formulario.menor_credito);
+          const maior = parseFloat(valor);
+          if (maior < menor) erros[campo] = 'Deve ser >= Menor Crédito';
+        }
+      }
+
+      // Percentuais (0-100%)
+      const camposPercentual = ['taxa_adm', 'fundo_rsv', 'investidor', 'conservador_24m', 'moderado_12m', 'agressivo_6m', 'super_agressivo_3m'];
+      if (camposPercentual.includes(campo)) {
+        if (valor && isNaN(valor)) erros[campo] = 'Deve ser um número';
+        else if (valor && (parseFloat(valor) < 0 || parseFloat(valor) > 100)) {
+          erros[campo] = 'Deve estar entre 0-100%';
+        }
+      }
+
+      // Histórico mensal - apenas se houver valor
+      if (campo.startsWith('historico_')) {
+        const [_, mes, tipo] = campo.split('_');
+        if (valor && isNaN(valor)) {
+          erros[campo] = 'Deve ser um número';
+        } else if (tipo !== 'qtd' && valor && (parseFloat(valor) < 0 || parseFloat(valor) > 100)) {
+          erros[campo] = 'Lance deve estar entre 0-100%';
+        } else if (tipo === 'qtd' && valor && parseFloat(valor) < 0) {
+          erros[campo] = 'Quantidade não pode ser negativa';
+        }
+      }
+
+      return erros;
+    },
+
+    obterLabelCampo(campo) {
+      const labels = {
+        'adm': 'Administradora',
+        'grupo': 'Grupo ID',
+        'tipo_bem': 'Tipo de Bem',
+        'maior_credito': 'Maior Crédito',
+        'menor_credito': 'Menor Crédito',
+        'taxa_adm': 'Taxa de Administração',
+        'fundo_rsv': 'Fundo de Reserva',
+      };
+      return labels[campo] || campo;
+    },
+
+    validarFormulario() {
+      this.gerenciador.erros = {};
+      this.gerenciador.camposComErro = [];
+
+      // Validações obrigatórias
+      const obrigatorios = ['adm', 'grupo', 'tipo_bem'];
+      obrigatorios.forEach(campo => {
+        const val = this.gerenciador.formulario[campo];
+        if (!val || String(val).trim() === '') {
+          this.gerenciador.erros[campo] = `${this.obterLabelCampo(campo)} é obrigatório`;
+          this.gerenciador.camposComErro.push(campo);
+        }
+      });
+
+      // Validações de crédito
+      if (this.gerenciador.formulario.menor_credito) {
+        const menor = parseFloat(this.gerenciador.formulario.menor_credito);
+        if (isNaN(menor) || menor < 0) {
+          this.gerenciador.erros.menor_credito = 'Menor Crédito deve ser um número positivo';
+          this.gerenciador.camposComErro.push('menor_credito');
+        }
+      }
+
+      if (this.gerenciador.formulario.maior_credito) {
+        const maior = parseFloat(this.gerenciador.formulario.maior_credito);
+        if (isNaN(maior) || maior < 0) {
+          this.gerenciador.erros.maior_credito = 'Maior Crédito deve ser um número positivo';
+          this.gerenciador.camposComErro.push('maior_credito');
+        } else if (this.gerenciador.formulario.menor_credito) {
+          const menor = parseFloat(this.gerenciador.formulario.menor_credito);
+          if (maior < menor) {
+            this.gerenciador.erros.maior_credito = 'Maior Crédito deve ser >= Menor Crédito';
+            this.gerenciador.camposComErro.push('maior_credito');
+          }
+        }
+      }
+
+      // Validações de percentual
+      const camposPercentual = ['taxa_adm', 'fundo_rsv', 'investidor', 'conservador_24m', 'moderado_12m', 'agressivo_6m', 'super_agressivo_3m'];
+      camposPercentual.forEach(campo => {
+        const val = this.gerenciador.formulario[campo];
+        if (val && !isNaN(val)) {
+          const num = parseFloat(val);
+          if (num < 0 || num > 100) {
+            this.gerenciador.erros[campo] = `${this.obterLabelCampo(campo)} deve estar entre 0-100%`;
+            this.gerenciador.camposComErro.push(campo);
+          }
+        }
+      });
+
+      return this.gerenciador.camposComErro.length === 0;
+    },
+
+    limparErros() {
+      this.gerenciador.erros = {};
+      this.gerenciador.camposComErro = [];
+    },
+
+    temErro(campo) {
+      return !!this.gerenciador.erros[campo];
+    },
+
+    obterErro(campo) {
+      return this.gerenciador.erros[campo] || '';
+    },
+
+    // ── INDICADOR DE MESES PENDENTES (P1.5) ─
+    obterMesPendente(mes) {
+      const historico = this.gerenciador.formulario.historico || [];
+      const registro = historico.find(h => h.mes === mes);
+      if (!registro) return true; // Mês sem registro é pendente
+      // Mês é pendente se faltam TODOS os campos (maior, menor e qtd)
+      return !registro.maior && !registro.menor && !registro.qtd;
+    },
+
+    obterResumoMesesCompletos() {
+      const historico = this.gerenciador.formulario.historico || [];
+      let completos = 0;
+      const mesesEsperados = 36; // JAN-24 até DEC-26
+
+      // Conta quantos meses têm TODOS os campos preenchidos
+      historico.forEach(reg => {
+        if (reg.maior !== null && reg.maior !== undefined &&
+            reg.menor !== null && reg.menor !== undefined &&
+            reg.qtd !== null && reg.qtd !== undefined) {
+          completos++;
+        }
+      });
+
+      return `${completos}/${mesesEsperados} meses completos`;
     },
 
     mostrarToast(mensagem, tipo = "info") {

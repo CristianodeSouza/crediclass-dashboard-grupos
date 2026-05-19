@@ -1,0 +1,41 @@
+Posição,Coluna Excel,Campo Backend,Tipo Dado,Descrição,Seção,Uso Primário
+1,A,adm,Text,Administradora,Identificação,Filtro + Card Header
+2,B,grupo,Text,ID do Grupo,Identificação,Primary Key
+3,C,tipo_bem,Text,Tipo de Bem (Imóvel/Auto),Identificação,Filtro + Segmentação
+4,D,primeira_assembleia,Date,Data da primeira assembleia,Cronograma,Timeline
+5,E,prazo_grupo,Integer,Prazo total em meses,Cronograma,Cálculo de vida
+6,F,prazo_restante,Integer,Meses até encerramento,Cronograma,Status + Urgência
+7,G,meses_corridos,Integer,Quantos meses já passaram,Cronograma,Progressão visual
+8,H,data_termino,Date,Data de encerramento,Cronograma,Previsão
+9,I,vida_grupo_pct,Percentage,Percentual de conclusão,Cronograma,Barra progresso
+-,J,-,-,NÃO MAPEADO,-,-
+10,K,venc,Text,Dia do vencimento,Crédito,Referência parcela
+11,L,menor_credito,Currency,Crédito mínimo,Crédito,Filtro + Simulador
+12,M,maior_credito,Currency,Crédito máximo,Crédito,Filtro + Simulador
+13,N,taxa_adm,Percentage,Taxa administração,Taxas,Comparativo
+-,O,-,-,NÃO MAPEADO,-,-
+-,P,-,-,NÃO MAPEADO,-,-
+14,Q,taxa_promocao,Percentage,Taxa promoção,Taxas,Custo adicional
+-,R,-,-,NÃO MAPEADO,-,-
+-,S,-,-,NÃO MAPEADO,-,-
+15,T,fundo_rsv,Percentage,Fundo de reserva,Taxas,Custo operacional
+16,U,prestacao_integral,Currency,Prestação integral,Parcelas,Comparativo
+17,V,meia_reduzida,Currency,Meia reduzida,Parcelas,Opção alternativa
+-,W,-,-,NÃO MAPEADO,-,-
+-,X,-,-,NÃO MAPEADO,-,-
+-,Y,-,-,NÃO MAPEADO,-,-
+-,Z,-,-,NÃO MAPEADO,-,-
+18,AA,investidor,Percentage,Modalidade Investidor,Simulações,Modalidade
+19,AB,conservador_24m,Percentage,Conservador 24 meses,Simulações,Modalidade
+20,AC,moderado_12m,Percentage,Moderado 12 meses,Simulações,Modalidade
+21,AD,agressivo_6m,Percentage,Agressivo 6 meses,Simulações,Modalidade
+22,AE,super_agressivo_3m,Percentage,Super Agressivo 3 meses,Simulações,Modalidade
+23,AF,lance_quitacao,Percentage,Lance de quitação,Estatísticas,Benefício
+24,AG,media_lance,Percentage,Média de lance,Estatísticas,Comparação
+25,AH,media_contemp,Percentage,Média de contemplação,Estatísticas,Previsão
+-,AI,-,-,NÃO MAPEADO,-,-
+-,AJ,-,-,NÃO MAPEADO,-,-
+-,AK,-,-,NÃO MAPEADO,-,-
+26,AL,categoria,Text,Categoria adicional,Categorização,Segmentação avançada
+27,AM,parcela_inicial,Currency,Primeira parcela,Parcelas,Simulador
+-,AN:EF,-,-,NÃO MAPEADO (colunas 40-156),-,-

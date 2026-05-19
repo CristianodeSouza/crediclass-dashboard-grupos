@@ -960,7 +960,8 @@
         <!-- FILTRO: BUSCA -->
         <div class="p-4 border-b border-slate-800">
           <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Buscar Grupo/ADM</label>
-          <input type="text" x-model="gerenciador.filtros.busca" placeholder="ID do grupo, ADM..."
+          <input type="text" x-model="gerenciador.buscaTemporal" @input="atualizarBuscaGerenciador()"
+            placeholder="ID do grupo, ADM..."
             class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:outline-none focus:border-blue-500" />
         </div>
 
@@ -986,13 +987,51 @@
       <main class="flex-1 flex flex-col min-h-0 min-w-0">
 
         <!-- HEADER COM PAGINAÇÃO -->
-        <div class="flex-none bg-slate-800 border-b border-slate-700 px-6 py-3 flex items-center justify-between">
+        <div class="flex-none bg-slate-800 border-b border-slate-700 px-6 py-3 flex items-center justify-between gap-4">
+          <!-- Info de Paginação -->
           <div class="text-sm text-slate-300">
             Exibindo <span x-text="(gerenciador.paginaAtual - 1) * gerenciador.porPagina + 1" class="font-bold"></span>
             a
             <span x-text="Math.min(gerenciador.paginaAtual * gerenciador.porPagina, totalGerenciadorFiltrado)" class="font-bold"></span>
             de
             <span x-text="totalGerenciadorFiltrado" class="font-bold"></span>
+            (Página <span x-text="gerenciador.paginaAtual" class="font-bold"></span> de <span x-text="totalGerenciadorPaginas" class="font-bold"></span>)
+          </div>
+
+          <!-- Controles de Paginação -->
+          <div class="flex items-center gap-2">
+            <!-- Botão Anterior -->
+            <button
+              @click="mudarPaginaGerenciador('anterior')"
+              :disabled="gerenciador.paginaAtual === 1"
+              class="px-3 py-1 text-sm font-medium rounded border border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              ← Anterior
+            </button>
+
+            <!-- Botão Próxima -->
+            <button
+              @click="mudarPaginaGerenciador('proxima')"
+              :disabled="gerenciador.paginaAtual === totalGerenciadorPaginas"
+              class="px-3 py-1 text-sm font-medium rounded border border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              Próxima →
+            </button>
+
+            <!-- Seletor de Itens por Página -->
+            <div class="flex items-center gap-2 ml-4 border-l border-slate-600 pl-4">
+              <label class="text-xs text-slate-400">Itens/página:</label>
+              <select
+                x-model.number="gerenciador.porPagina"
+                @change="gerenciador.paginaAtual = 1"
+                class="px-2 py-1 text-sm bg-slate-700 text-slate-300 border border-slate-600 rounded"
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -1128,81 +1167,318 @@
     </div>
   </div>
 
-  <!-- ════════════════════ MODAL: EDITAR GRUPO ════════════════════ -->
+  <!-- ════════════════════ MODAL: EDITAR GRUPO COM ABAS ════════════════════ -->
   <div x-show="gerenciador.modals.editarGrupo" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0"
     x-transition:leave="transition ease-in duration-100" x-transition:leave-end="opacity-0"
     @click="fecharModalGerenciador()" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div @click.stop class="bg-slate-950 rounded-lg border border-slate-800 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
       <div class="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
         <h2 class="text-lg font-bold text-white">✏️ Editar Grupo <span x-text="gerenciador.grupoSelecionado?.grupo" class="text-blue-400"></span></h2>
         <button @click="fecharModalGerenciador()" class="text-slate-400 hover:text-white text-xl">✕</button>
       </div>
-      <form @submit.prevent="salvarGrupo()" class="p-6 space-y-4">
-        <div>
-          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Administradora</label>
-          <input type="text" x-model="gerenciador.formulario.adm" placeholder="Ex: ITAÚ"
-            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
-        </div>
-        <div>
-          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Tipo de Bem</label>
-          <input type="text" x-model="gerenciador.formulario.tipo_bem" placeholder="Ex: Imóvel"
-            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
+
+      <!-- Navegação de Abas -->
+      <div class="flex border-b border-slate-800 overflow-x-auto bg-slate-900">
+        <button type="button" @click="gerenciador.abaEditarGrupo = 1"
+          :class="gerenciador.abaEditarGrupo === 1 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'"
+          class="px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2" :style="gerenciador.abaEditarGrupo === 1 ? 'border-blue-500' : 'border-transparent'">
+          📋 Dados do Grupo
+        </button>
+        <button type="button" @click="gerenciador.abaEditarGrupo = 2"
+          :class="gerenciador.abaEditarGrupo === 2 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'"
+          class="px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2" :style="gerenciador.abaEditarGrupo === 2 ? 'border-blue-500' : 'border-transparent'">
+          💰 Financeiro
+        </button>
+        <button type="button" @click="gerenciador.abaEditarGrupo = 3"
+          :class="gerenciador.abaEditarGrupo === 3 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'"
+          class="px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2" :style="gerenciador.abaEditarGrupo === 3 ? 'border-blue-500' : 'border-transparent'">
+          📊 Comercial
+        </button>
+        <button type="button" @click="gerenciador.abaEditarGrupo = 4"
+          :class="gerenciador.abaEditarGrupo === 4 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'"
+          class="px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2" :style="gerenciador.abaEditarGrupo === 4 ? 'border-blue-500' : 'border-transparent'">
+          📈 Histórico
+        </button>
+        <button type="button" @click="gerenciador.abaEditarGrupo = 5"
+          :class="gerenciador.abaEditarGrupo === 5 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'"
+          class="px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2" :style="gerenciador.abaEditarGrupo === 5 ? 'border-blue-500' : 'border-transparent'">
+          📝 Observações
+        </button>
+      </div>
+
+      <form @submit.prevent="salvarGrupo()" class="p-6">
+        <!-- ABA 1: Dados do Grupo -->
+        <div x-show="gerenciador.abaEditarGrupo === 1" class="space-y-4">
           <div>
-            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Menor Crédito</label>
-            <input type="number" x-model.number="gerenciador.formulario.menor_credito" placeholder="0"
-              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Administradora</label>
+            <input type="text" x-model="gerenciador.formulario.adm" @change="validarCampo('adm', $event.target.value)" placeholder="Ex: ITAÚ" required
+              :class="temErro('adm') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+              class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+            <p x-show="temErro('adm')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('adm') }}</p>
           </div>
           <div>
-            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Maior Crédito</label>
-            <input type="number" x-model.number="gerenciador.formulario.maior_credito" placeholder="0"
-              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Taxa ADM (%)</label>
-            <input type="number" step="0.01" x-model.number="gerenciador.formulario.taxa_adm" placeholder="0"
-              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Grupo ID</label>
+            <input type="text" x-model="gerenciador.formulario.grupo" @change="validarCampo('grupo', $event.target.value)" placeholder="Ex: 2125" required
+              :class="temErro('grupo') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+              class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+            <p x-show="temErro('grupo')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('grupo') }}</p>
           </div>
           <div>
-            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Fundo Reserva (%)</label>
-            <input type="number" step="0.01" x-model.number="gerenciador.formulario.fundo_rsv" placeholder="0"
-              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Tipo de Bem</label>
+            <input type="text" x-model="gerenciador.formulario.tipo_bem" @change="validarCampo('tipo_bem', $event.target.value)" placeholder="Ex: Imóvel" required
+              :class="temErro('tipo_bem') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+              class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+            <p x-show="temErro('tipo_bem')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('tipo_bem') }}</p>
           </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">1ª Assembleia</label>
+              <input type="date" x-model="gerenciador.formulario.primeira_assembleia" @change="validarCampo('primeira_assembleia', $event.target.value)"
+                :class="temErro('primeira_assembleia') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('primeira_assembleia')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('primeira_assembleia') }}</p>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Prazo Total (meses)</label>
+              <input type="number" x-model.number="gerenciador.formulario.prazo_grupo" @change="validarCampo('prazo_grupo', $event.target.value)" placeholder="80"
+                :class="temErro('prazo_grupo') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('prazo_grupo')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('prazo_grupo') }}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Prazo Restante (meses)</label>
+              <input type="number" x-model.number="gerenciador.formulario.prazo_restante" @change="validarCampo('prazo_restante', $event.target.value)" placeholder="26"
+                :class="temErro('prazo_restante') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('prazo_restante')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('prazo_restante') }}</p>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Data de Término</label>
+              <input type="date" x-model="gerenciador.formulario.data_termino" @change="validarCampo('data_termino', $event.target.value)"
+                :class="temErro('data_termino') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('data_termino')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('data_termino') }}</p>
+            </div>
+          </div>
           <div>
-            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Investidor (%)</label>
-            <input type="number" step="0.01" x-model.number="gerenciador.formulario.investidor" placeholder="0"
-              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Status</label>
+            <select x-model="gerenciador.formulario.status" @change="validarCampo('status', $event.target.value)"
+              :class="temErro('status') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+              class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition">
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+              <option value="encerrado">Encerrado</option>
+              <option value="arquivado">Arquivado</option>
+            </select>
+            <p x-show="temErro('status')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('status') }}</p>
+          </div>
+        </div>
+
+        <!-- ABA 2: Dados Financeiros -->
+        <div x-show="gerenciador.abaEditarGrupo === 2" class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Menor Crédito</label>
+              <input type="number" step="0.01" x-model.number="gerenciador.formulario.menor_credito" @change="validarCampo('menor_credito', $event.target.value)" placeholder="28502.34"
+                :class="temErro('menor_credito') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('menor_credito')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('menor_credito') }}</p>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Maior Crédito</label>
+              <input type="number" step="0.01" x-model.number="gerenciador.formulario.maior_credito" @change="validarCampo('maior_credito', $event.target.value)" placeholder="51304.20"
+                :class="temErro('maior_credito') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('maior_credito')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('maior_credito') }}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Taxa ADM (%)</label>
+              <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.taxa_adm" @change="validarCampo('taxa_adm', $event.target.value)" placeholder="17"
+                :class="temErro('taxa_adm') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('taxa_adm')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('taxa_adm') }}</p>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Fundo Reserva (%)</label>
+              <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.fundo_rsv" @change="validarCampo('fundo_rsv', $event.target.value)" placeholder="3"
+                :class="temErro('fundo_rsv') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('fundo_rsv')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('fundo_rsv') }}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Prestação Integral</label>
+              <input type="number" step="0.01" x-model.number="gerenciador.formulario.prestacao_integral" @change="validarCampo('prestacao_integral', $event.target.value)" placeholder="0"
+                :class="temErro('prestacao_integral') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('prestacao_integral')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('prestacao_integral') }}</p>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Meia Reduzida</label>
+              <input type="number" step="0.01" x-model.number="gerenciador.formulario.meia_reduzida" @change="validarCampo('meia_reduzida', $event.target.value)" placeholder="0"
+                :class="temErro('meia_reduzida') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('meia_reduzida')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('meia_reduzida') }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA 3: Perfil Comercial -->
+        <div x-show="gerenciador.abaEditarGrupo === 3" class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Investidor (%)</label>
+              <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.investidor" @change="validarCampo('investidor', $event.target.value)" placeholder="0"
+                :class="temErro('investidor') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('investidor')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('investidor') }}</p>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Conservador 24M (%)</label>
+              <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.conservador_24m" @change="validarCampo('conservador_24m', $event.target.value)" placeholder="39"
+                :class="temErro('conservador_24m') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('conservador_24m')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('conservador_24m') }}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Moderado 12M (%)</label>
+              <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.moderado_12m" @change="validarCampo('moderado_12m', $event.target.value)" placeholder="39"
+                :class="temErro('moderado_12m') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('moderado_12m')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('moderado_12m') }}</p>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Agressivo 6M (%)</label>
+              <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.agressivo_6m" @change="validarCampo('agressivo_6m', $event.target.value)" placeholder="39"
+                :class="temErro('agressivo_6m') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+                class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+              <p x-show="temErro('agressivo_6m')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('agressivo_6m') }}</p>
+            </div>
           </div>
           <div>
-            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Conservador 24m (%)</label>
-            <input type="number" step="0.01" x-model.number="gerenciador.formulario.conservador_24m" placeholder="0"
-              class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Super Agressivo 3M (%)</label>
+            <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.super_agressivo_3m" @change="validarCampo('super_agressivo_3m', $event.target.value)" placeholder="39"
+              :class="temErro('super_agressivo_3m') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+              class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+            <p x-show="temErro('super_agressivo_3m')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('super_agressivo_3m') }}</p>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Categoria</label>
+            <input type="text" x-model="gerenciador.formulario.categoria" @change="validarCampo('categoria', $event.target.value)" placeholder="350887,9"
+              :class="temErro('categoria') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+              class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
+            <p x-show="temErro('categoria')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('categoria') }}</p>
           </div>
         </div>
-        <div>
-          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Moderado 12m (%)</label>
-          <input type="number" step="0.01" x-model.number="gerenciador.formulario.moderado_12m" placeholder="0"
-            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500" />
+
+        <!-- ABA 4: Histórico Mensal -->
+        <div x-show="gerenciador.abaEditarGrupo === 4" class="space-y-4">
+          <div class="bg-slate-800 p-3 rounded border border-slate-700">
+            <p class="text-sm text-slate-300"><strong>Status:</strong> <span class="text-slate-400" x-text="obterResumoMesesCompletos()"></span></p>
+          </div>
+          <div class="flex gap-2 border-b border-slate-700 pb-3">
+            <button type="button" @click="gerenciador.abaHistoricoAno = 2024"
+              :class="gerenciador.abaHistoricoAno === 2024 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'"
+              class="px-3 py-1 rounded text-sm font-medium">2024</button>
+            <button type="button" @click="gerenciador.abaHistoricoAno = 2025"
+              :class="gerenciador.abaHistoricoAno === 2025 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'"
+              class="px-3 py-1 rounded text-sm font-medium">2025</button>
+            <button type="button" @click="gerenciador.abaHistoricoAno = 2026"
+              :class="gerenciador.abaHistoricoAno === 2026 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'"
+              class="px-3 py-1 rounded text-sm font-medium">2026</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-800">
+                <tr>
+                  <th class="px-3 py-2 text-left text-slate-300">Mês</th>
+                  <th class="px-3 py-2 text-center text-slate-300">Maior Lance (%)</th>
+                  <th class="px-3 py-2 text-center text-slate-300">Menor Lance (%)</th>
+                  <th class="px-3 py-2 text-center text-slate-300">Qtd Contemplações</th>
+                  <th class="px-3 py-2 text-center text-slate-300">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="mes in getMesesAno(gerenciador.abaHistoricoAno)" :key="mes">
+                  <tr class="border-b border-slate-700 hover:bg-slate-800/50">
+                    <td class="px-3 py-2 text-white" x-text="mes"></td>
+                    <td class="px-3 py-2">
+                      <input type="number" step="0.01" min="0" max="100"
+                        :value="getHistoricoField(mes, 'maior')"
+                        @input="setHistoricoField(mes, 'maior', $event.target.value); validarCampo('maior_lance', $event.target.value)"
+                        :class="obterMesPendente(mes) ? 'bg-slate-700 border-slate-600' : 'bg-green-900/20 border-green-700'"
+                        placeholder="-" class="w-full px-2 py-1 border rounded text-white text-center focus:outline-none focus:border-blue-500" />
+                    </td>
+                    <td class="px-3 py-2">
+                      <input type="number" step="0.01" min="0" max="100"
+                        :value="getHistoricoField(mes, 'menor')"
+                        @input="setHistoricoField(mes, 'menor', $event.target.value); validarCampo('menor_lance', $event.target.value)"
+                        :class="obterMesPendente(mes) ? 'bg-slate-700 border-slate-600' : 'bg-green-900/20 border-green-700'"
+                        placeholder="-" class="w-full px-2 py-1 border rounded text-white text-center focus:outline-none focus:border-blue-500" />
+                    </td>
+                    <td class="px-3 py-2">
+                      <input type="number" min="0"
+                        :value="getHistoricoField(mes, 'qtd')"
+                        @input="setHistoricoField(mes, 'qtd', $event.target.value); validarCampo('qtd_contemplacoes', $event.target.value)"
+                        :class="obterMesPendente(mes) ? 'bg-slate-700 border-slate-600' : 'bg-green-900/20 border-green-700'"
+                        placeholder="-" class="w-full px-2 py-1 border rounded text-white text-center focus:outline-none focus:border-blue-500" />
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                      <span x-show="!obterMesPendente(mes)" class="text-green-400 text-lg">✓</span>
+                      <span x-show="obterMesPendente(mes) && (getHistoricoField(mes, 'maior') || getHistoricoField(mes, 'menor') || getHistoricoField(mes, 'qtd'))" class="text-yellow-400 text-lg">⚠️</span>
+                      <span x-show="obterMesPendente(mes) && !getHistoricoField(mes, 'maior') && !getHistoricoField(mes, 'menor') && !getHistoricoField(mes, 'qtd')" class="text-slate-500 text-lg">○</span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div>
-          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Status</label>
-          <select x-model="gerenciador.formulario.status"
-            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-white focus:outline-none focus:border-blue-500">
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
-            <option value="deletado">Deletado</option>
-          </select>
+
+        <!-- ABA 5: Observações -->
+        <div x-show="gerenciador.abaEditarGrupo === 5" class="space-y-4">
+          <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Observações</label>
+            <textarea x-model="gerenciador.formulario.observacoes" @change="validarCampo('observacoes', $event.target.value)" rows="6" placeholder="Notas internas sobre este grupo..."
+              :class="temErro('observacoes') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
+              class="w-full px-3 py-2 bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition"></textarea>
+            <p x-show="temErro('observacoes')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('observacoes') }}</p>
+          </div>
+          <div class="bg-slate-800 p-4 rounded border border-slate-700">
+            <p class="text-sm text-slate-300"><strong>Última atualização:</strong> <span x-text="gerenciador.grupoSelecionado?.ultima_atualizacao || 'N/A'" class="text-slate-400"></span></p>
+            <p class="text-sm text-slate-300"><strong>Responsável:</strong> <span x-text="gerenciador.grupoSelecionado?.responsavel_atualizacao || 'N/A'" class="text-slate-400"></span></p>
+          </div>
         </div>
-        <div class="flex gap-3 pt-4">
-          <button type="button" @click="fecharModalGerenciador()" class="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium">Cancelar</button>
-          <button type="submit" :disabled="gerenciador.salvando" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded font-bold">
-            <span x-show="!gerenciador.salvando">💾 Atualizar</span>
-            <span x-show="gerenciador.salvando">⏳ Atualizando...</span>
+
+        <!-- Botões de Navegação e Salvar -->
+        <div class="flex gap-3 pt-6 border-t border-slate-700 mt-6">
+          <button type="button" @click="gerenciador.abaEditarGrupo--"
+            x-show="gerenciador.abaEditarGrupo > 1"
+            class="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium">
+            ← Anterior
+          </button>
+          <button type="button" @click="gerenciador.abaEditarGrupo++"
+            x-show="gerenciador.abaEditarGrupo < 5"
+            class="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium">
+            Próxima →
+          </button>
+          <button type="button" @click="fecharModalGerenciador()"
+            class="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium">
+            Cancelar
+          </button>
+          <button type="submit"
+            x-show="gerenciador.abaEditarGrupo === 5"
+            :disabled="gerenciador.salvando"
+            class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded font-bold">
+            <span x-show="!gerenciador.salvando">💾 Salvar</span>
+            <span x-show="gerenciador.salvando">⏳ Salvando...</span>
           </button>
         </div>
       </form>

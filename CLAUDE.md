@@ -120,6 +120,24 @@ Veja `docs/ROADMAP.md` para lista completa e datas.
 
 ---
 
+---
+
+## ⚙️ ORDEM DE IMPLEMENTAÇÃO (Crítica)
+
+**REGRA PERMANENTE desde 2026-05-19:**
+
+✅ **SEMPRE fazer implementações via sistema** (tools: Read, Edit, Write, Bash)  
+❌ **NUNCA pedir ação manual** se tiver acesso via sistema/CLI/API/token/credencial
+
+Exceções para ação manual:
+- Teste manual em navegador (após implementação completa)
+- Setup inicial de credenciais externas (Google Sheets, GitHub, etc)
+- Ações que requerem autenticação do usuário
+
+Isso garante: velocidade, rastreabilidade, reprodutibilidade, zero fricção.
+
+---
+
 ## 👤 Contato & Suporte
 
 Para dúvidas sobre o projeto, consulte `docs/ROADMAP.md` ou `docs/QUICK_START.md`.
