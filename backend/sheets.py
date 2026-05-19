@@ -308,6 +308,64 @@ def duplicar_grupo(grupo_id: str, usuario: str = "sistema") -> str | None:
         return None
 
 
+# Mapa de tradução de nomes de campos
+CAMPO_TRADUCAO = {
+    "adm": "Administradora",
+    "grupo": "ID do Grupo",
+    "tipo_bem": "Tipo de Bem",
+    "primeira_assembleia": "1ª Assembleia",
+    "prazo_grupo": "Prazo Total",
+    "prazo_restante": "Prazo Restante",
+    "meses_corridos": "Meses Corridos",
+    "data_termino": "Data de Término",
+    "vida_grupo_pct": "Vida do Grupo (%)",
+    "venc": "Vencimento",
+    "menor_credito": "Menor Crédito",
+    "maior_credito": "Maior Crédito",
+    "taxa_adm": "Taxa ADM",
+    "taxa_promocao": "Taxa Promoção",
+    "fundo_rsv": "Fundo de Reserva",
+    "prestacao_integral": "Prestação Integral",
+    "meia_reduzida": "Meia Reduzida",
+    "investidor": "Investidor",
+    "conservador_24m": "Conservador 24M",
+    "moderado_12m": "Moderado 12M",
+    "agressivo_6m": "Agressivo 6M",
+    "super_agressivo_3m": "Super Agressivo 3M",
+    "lance_quitacao": "Lance Quitação",
+    "media_lance": "Média Lance",
+    "media_contemp": "Média Contemplação",
+    "categoria": "Categoria",
+    "parcela_inicial": "Parcela Inicial",
+    "status": "Status",
+    "historico": "Histórico Mensal",
+    "criado_em": "Criado em",
+    "editado_em": "Editado em",
+    "deletado_em": "Deletado em",
+}
+
+ACAO_TRADUCAO = {
+    "CRIAR": "Criado",
+    "EDITAR": "Editado",
+    "DESATIVAR": "Desativado",
+    "DELETAR": "Deletado",
+    "DUPLICAR": "Duplicado",
+}
+
+
+def formatar_valor(valor):
+    """Formata valor para exibição"""
+    if valor is None:
+        return "—"
+    if isinstance(valor, (int, float)):
+        if isinstance(valor, float) and 0 <= valor <= 100:
+            return f"{valor:.1f}%"
+        if isinstance(valor, float) and valor > 100:
+            return f"R$ {valor:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+        return str(valor)
+    return str(valor)
+
+
 def obter_auditoria_grupo(grupo_id: str) -> list:
     AUDIT_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "auditoria.json")
 
@@ -318,3 +376,56 @@ def obter_auditoria_grupo(grupo_id: str) -> list:
         auditoria = json.load(f)
 
     return [a for a in auditoria if str(a.get("grupo_id")) == str(grupo_id)]
+
+
+def obter_auditoria_grupo_detalhada(grupo_id: str) -> list:
+    """Retorna auditoria com nomes de campos traduzidos e valores formatados"""
+    auditoria_bruta = obter_auditoria_grupo(grupo_id)
+    auditoria_detalhada = []
+
+    for registro in auditoria_bruta:
+        timestamp = registro.get("timestamp", "")
+        # Formata timestamp para exibição pt-BR
+        try:
+            dt = datetime.fromisoformat(timestamp)
+            data_formatada = dt.strftime("%d/%m/%Y %H:%M:%S")
+        except:
+            data_formatada = timestamp
+
+        acao = registro.get("acao", "")
+        acao_traduzida = ACAO_TRADUCAO.get(acao, acao)
+
+        mudancas = registro.get("mudancas", {})
+        mudancas_detalhadas = []
+
+        for campo, mudanca in mudancas.items():
+            if isinstance(mudanca, dict):
+                campo_traduzido = CAMPO_TRADUCAO.get(campo, campo)
+                antes = formatar_valor(mudanca.get("antes"))
+                depois = formatar_valor(mudanca.get("depois"))
+                mudancas_detalhadas.append({
+                    "campo": campo_traduzido,
+                    "antes": antes,
+                    "depois": depois
+                })
+            elif campo == "origem":
+                mudancas_detalhadas.append({
+                    "campo": "Originário do Grupo",
+                    "antes": "—",
+                    "depois": mudanca
+                })
+
+        auditoria_detalhada.append({
+            "timestamp": timestamp,
+            "data_formatada": data_formatada,
+            "usuario": registro.get("usuario", "sistema"),
+            "acao": acao,
+            "acao_traduzida": acao_traduzida,
+            "grupo_id": registro.get("grupo_id"),
+            "mudancas": mudancas_detalhadas
+        })
+
+    # Ordena por timestamp descendente (mais recente primeiro)
+    auditoria_detalhada.sort(key=lambda x: x["timestamp"], reverse=True)
+
+    return auditoria_detalhada

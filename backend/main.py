@@ -1,10 +1,11 @@
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, HTTPException, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_grupo, duplicar_grupo, obter_auditoria_grupo
+from sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_grupo, duplicar_grupo, obter_auditoria_grupo, obter_auditoria_grupo_detalhada
 from piperun import fetch_oportunidade
 from pydantic import BaseModel
 from typing import Optional, Any
@@ -296,16 +297,44 @@ def apagar_grupo(grupo_id: str, usuario: str = Query("operador"), soft: bool = Q
 @app.patch("/api/grupos/{grupo_id}/status")
 def mudar_status_grupo(grupo_id: str, novo_status: str = Body(...), usuario: str = Query("operador")):
     try:
-        if novo_status not in ["ativo", "inativo", "deletado"]:
-            raise HTTPException(status_code=400, detail="Status inválido")
+        # P2.4 — Status Avançado com validação de transições
+        status_validos = ["ativo", "inativo", "encerrado", "arquivado", "em_revisao", "deletado"]
+        if novo_status not in status_validos:
+            raise HTTPException(status_code=400, detail=f"Status inválido. Valores aceitos: {', '.join(status_validos)}")
 
         grupos = fetch_grupos()
-        existe = any(str(g.get("grupo")) == str(grupo_id) for g in grupos)
-        if not existe:
+        grupo_atual = None
+        for g in grupos:
+            if str(g.get("grupo")) == str(grupo_id):
+                grupo_atual = g
+                break
+
+        if not grupo_atual:
             raise HTTPException(status_code=404, detail="Grupo não encontrado")
 
-        if atualizar_grupo_sheets(grupo_id, {"status": novo_status}, usuario):
-            return {"message": f"Status alterado para {novo_status}", "status": "sucesso"}
+        status_atual = grupo_atual.get("status", "ativo")
+
+        # P2.4 — Validação de transições de status
+        transicoes_bloqueadas = {
+            "encerrado": ["ativo", "inativo", "em_revisao", "arquivado"],  # encerrado é final
+            "deletado": ["ativo", "inativo", "em_revisao", "arquivado", "encerrado"]  # deletado é final
+        }
+
+        if status_atual in transicoes_bloqueadas and novo_status in transicoes_bloqueadas[status_atual]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Transição inválida: Grupo em status '{status_atual}' não pode ir para '{novo_status}'"
+            )
+
+        # Registrar alteração de status com auditoria
+        dados_alteracao = {"status": novo_status}
+        if atualizar_grupo_sheets(grupo_id, dados_alteracao, usuario):
+            return {
+                "message": f"Status alterado de '{status_atual}' para '{novo_status}'",
+                "status": "sucesso",
+                "status_anterior": status_atual,
+                "novo_status": novo_status
+            }
         else:
             raise HTTPException(status_code=500, detail="Erro ao mudar status")
     except HTTPException:
@@ -338,9 +367,14 @@ def sincronizar_com_sheets(usuario: str = Query("operador")):
     try:
         # Força recarregamento do cache que sincroniza com sheets
         grupos = fetch_grupos(force_refresh=True)
+        timestamp_sincronizacao = datetime.now().isoformat()
+        data_formatada = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
         return {
             "message": "Sincronização concluída com sucesso",
             "total_grupos": len(grupos),
+            "timestamp": timestamp_sincronizacao,
+            "data_formatada": data_formatada,
             "status": "sucesso"
         }
     except Exception as e:
@@ -352,9 +386,14 @@ def recarregar_de_sheets(usuario: str = Query("operador")):
     try:
         # Força refresh e sincroniza dados
         grupos = fetch_grupos(force_refresh=True)
+        timestamp_sincronizacao = datetime.now().isoformat()
+        data_formatada = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
         return {
             "message": "Dados recarregados com sucesso",
             "total_grupos": len(grupos),
+            "timestamp": timestamp_sincronizacao,
+            "data_formatada": data_formatada,
             "status": "sucesso"
         }
     except Exception as e:
@@ -364,7 +403,7 @@ def recarregar_de_sheets(usuario: str = Query("operador")):
 @app.get("/api/grupos/{grupo_id}/auditoria")
 def obter_historico_grupo(grupo_id: str):
     try:
-        auditoria = obter_auditoria_grupo(grupo_id)
+        auditoria = obter_auditoria_grupo_detalhada(grupo_id)
         return {
             "grupo_id": grupo_id,
             "total_alteracoes": len(auditoria),
