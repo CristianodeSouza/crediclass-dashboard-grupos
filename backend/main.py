@@ -1,14 +1,17 @@
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query, HTTPException, Body
+from fastapi import FastAPI, Query, HTTPException, Body, UploadFile, File
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_grupo, duplicar_grupo, obter_auditoria_grupo, obter_auditoria_grupo_detalhada
 from piperun import fetch_oportunidade
+from import_export import validar_arquivo_excel, extrair_dados_excel, validar_schema, preview_importacao, processar_importacao, exportar_excel_completo, exportar_por_adm, exportar_grupo, exportar_relatorio_adms
+from analytics import calcular_summary_analytics, calcular_comparativo_adms, calcular_tendencias_mensais, calcular_distribuicao_creditos, calcular_estatisticas_detalhadas
 from pydantic import BaseModel
 from typing import Optional, Any
+import io
 
 load_dotenv()
 
@@ -420,6 +423,214 @@ def refresh_dados():
         return {"message": "Dados atualizados", "total": len(grupos)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== IMPORTAÇÃO/EXPORTAÇÃO (P3.1) =====
+
+@app.post("/api/importar/preview")
+async def importar_preview(arquivo: UploadFile = File(...)):
+    """Preview de dados do arquivo Excel antes de importar."""
+    try:
+        conteudo = await arquivo.read()
+
+        # Validar arquivo
+        valido, erro = validar_arquivo_excel(conteudo)
+        if not valido:
+            raise HTTPException(status_code=400, detail=f"Arquivo inválido: {erro}")
+
+        # Extrair dados
+        dados, erros_extracao = extrair_dados_excel(conteudo)
+
+        # Gerar preview
+        preview = preview_importacao(dados, limite=10)
+
+        return {
+            "status": "sucesso",
+            "preview": preview,
+            "erros_extracao": erros_extracao,
+            "tem_erros": len(erros_extracao) > 0
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao processar arquivo: {str(e)}")
+
+
+@app.post("/api/importar/processar")
+async def importar_processar(
+    arquivo: UploadFile = File(...),
+    modo: str = Query("insert_update"),
+    usuario: str = Query("operador")
+):
+    """Processar importação de dados do arquivo Excel."""
+    try:
+        conteudo = await arquivo.read()
+
+        # Validar arquivo
+        valido, erro = validar_arquivo_excel(conteudo)
+        if not valido:
+            raise HTTPException(status_code=400, detail=f"Arquivo inválido: {erro}")
+
+        # Extrair dados
+        dados, erros_extracao = extrair_dados_excel(conteudo)
+        if len(erros_extracao) > 0:
+            return {
+                "status": "erro",
+                "message": "Arquivo com erros de extração",
+                "erros": erros_extracao[:20],  # Limitar a 20 erros
+                "total_erros": len(erros_extracao),
+                "sucesso": False
+            }
+
+        # Validar schema
+        valido_schema, erros_schema = validar_schema(dados)
+        if not valido_schema:
+            return {
+                "status": "erro",
+                "message": "Dados não validam contra schema",
+                "erros": erros_schema[:20],
+                "total_erros": len(erros_schema),
+                "sucesso": False
+            }
+
+        # Processar importação
+        resultado = processar_importacao(dados, modo)
+        resultado["usuario"] = usuario
+        resultado["arquivo"] = arquivo.filename
+
+        return resultado
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao importar: {str(e)}")
+
+
+@app.get("/api/exportar/completo")
+def exportar_tudo():
+    """Exportar todos os grupos em Excel."""
+    try:
+        excel_bytes = exportar_excel_completo()
+
+        return StreamingResponse(
+            iter([excel_bytes]),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=grupos_completo.xlsx"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao exportar: {str(e)}")
+
+
+@app.get("/api/exportar/por-adm/{adm}")
+def exportar_adm(adm: str):
+    """Exportar grupos filtrados por administradora."""
+    try:
+        excel_bytes = exportar_por_adm(adm)
+
+        return StreamingResponse(
+            iter([excel_bytes]),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=grupos_{adm}.xlsx"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao exportar: {str(e)}")
+
+
+@app.get("/api/exportar/grupo/{grupo_id}")
+def exportar_detalhe(grupo_id: str, adm: str = Query(...)):
+    """Exportar detalhes completos de um grupo."""
+    try:
+        resultado = exportar_grupo(grupo_id, adm)
+
+        if "erro" in resultado:
+            raise HTTPException(status_code=404, detail=resultado["erro"])
+
+        return resultado
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao exportar: {str(e)}")
+
+
+@app.get("/api/exportar/relatorio-adms")
+def exportar_relatorio():
+    """Exportar relatório comparativo de administradoras."""
+    try:
+        excel_bytes = exportar_relatorio_adms()
+
+        return StreamingResponse(
+            iter([excel_bytes]),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=relatorio_adms.xlsx"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao exportar: {str(e)}")
+
+
+# ===== ANALYTICS — DASHBOARD ANALÍTICO (P3.2) =====
+
+@app.get("/api/analytics/summary")
+def analytics_summary():
+    """Retorna métricas resumidas para o dashboard."""
+    try:
+        dados = calcular_summary_analytics()
+        return {
+            "status": "sucesso",
+            "dados": dados
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular summary: {str(e)}")
+
+
+@app.get("/api/analytics/adm-comparison")
+def analytics_adm_comparison():
+    """Retorna comparativo de métricas por administradora."""
+    try:
+        dados = calcular_comparativo_adms()
+        return {
+            "status": "sucesso",
+            "dados": dados
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular comparativo ADMs: {str(e)}")
+
+
+@app.get("/api/analytics/trends")
+def analytics_trends():
+    """Retorna tendências de histórico mensal (últimos 12 meses)."""
+    try:
+        dados = calcular_tendencias_mensais()
+        return {
+            "status": "sucesso",
+            "dados": dados
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular tendências: {str(e)}")
+
+
+@app.get("/api/analytics/distribution")
+def analytics_distribution():
+    """Retorna distribuição de créditos por faixa."""
+    try:
+        dados = calcular_distribuicao_creditos()
+        return {
+            "status": "sucesso",
+            "dados": dados
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular distribuição: {str(e)}")
+
+
+@app.get("/api/analytics/statistics")
+def analytics_statistics():
+    """Retorna estatísticas detalhadas de grupos."""
+    try:
+        dados = calcular_estatisticas_detalhadas()
+        return {
+            "status": "sucesso",
+            "dados": dados
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular estatísticas: {str(e)}")
 
 
 if __name__ == "__main__":
