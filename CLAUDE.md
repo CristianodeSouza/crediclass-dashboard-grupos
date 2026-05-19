@@ -118,6 +118,7 @@ Veja `docs/ROADMAP.md` para lista completa e datas.
 - **[FEATURES.md](docs/FEATURES.md)** — Cada feature com uso, fórmulas, estado
 - **[HISTORICO.md](docs/HISTORICO.md)** — Log de mudanças, PRs, testes
 - **[RENDER_SETUP.md](RENDER_SETUP.md)** — Configuração Render + troubleshooting (⚠️ CRÍTICO)
+- **[DOCKERFILE_CRITICAL.md](DOCKERFILE_CRITICAL.md)** — Fix para black screen (2026-05-19) — **LEIA ISSO** se tela estiver preta em produção
 
 ---
 
@@ -150,6 +151,71 @@ curl https://crediclass.csrtecnologia.com.br/api/grupos-gerenciador?limit=1
 ```
 
 ---
+
+---
+
+## 🐳 VALIDAÇÃO DOCKERFILE AUTOMÁTICA (Pre-Commit Hook)
+
+**PROCESSO PERMANENTE desde 2026-05-19 (FIX de Black Screen):**
+
+### ⚠️ PROBLEMA IDENTIFICADO
+Deploy em Render falhava silenciosamente porque o Dockerfile não copiava o diretório `/data/`, causando:
+- API retornava `{"total": 0, "grupos": []}` (dados vazios)
+- Frontend carregava com Alpine.js OK mas sem dados
+- Tela preta em produção (dashboard não-funcional)
+- Erro foi invisível (HTTP 200 OK, mas sem dados)
+
+**Arquivo crítico faltando:** `/data/grupos.json` (cache local com 1.809 grupos)
+
+### ✅ SOLUÇÃO PERMANENTE
+**Pre-commit hook automático** que valida Dockerfile ANTES de cada commit:
+
+```bash
+# Localização: .git/hooks/pre-commit
+# Executa automaticamente: python backend/dockerfile_validator.py
+# Bloqueia commit se validação falhar
+# Erro: COPY data/ ./data/ deve estar presente
+```
+
+**Validações executadas:**
+1. ✅ Arquivo `Dockerfile` existe
+2. ✅ `COPY backend/ ./backend/` presente
+3. ✅ `COPY frontend/ ./frontend/` presente
+4. ✅ **`COPY data/ ./data/` presente** ← CRÍTICO
+5. ✅ `ENV PYTHONPATH=/app` definido
+6. ✅ `EXPOSE 8000` configurado
+7. ✅ `CMD ["python", "-m", "uvicorn", ...]` correto
+8. ✅ Ordem das COPY directives correta
+
+### 🚀 FLUXO DE DESENVOLVIMENTO
+
+```
+1. Developer modifica código (frontend, backend, ou data/)
+   ↓
+2. git commit -m "mensagem"
+   ↓
+3. Pre-commit hook executa validações:
+   - frontend_validator.py (Alpine.js, scripts)
+   - dockerfile_validator.py (COPY directives)
+   ↓
+   ✅ Se PASS: Commit prossegue
+   ❌ Se FAIL: Commit bloqueado, listar erros
+   ↓
+4. Developer corrige Dockerfile (ex: adicionar COPY data/)
+   ↓
+5. git commit -m "fix: adicionar COPY data/ no Dockerfile" ← Agora passa
+```
+
+### 💡 IMPORTANTE
+- **Bypass NÃO é permitido sem motivo** (se tentar `--no-verify`, hook avisa)
+- **Rápido** — executa em < 1s, não atrasa development
+- **Automático** — sem ação manual necessária
+- **Previne deploy vazio** — catch critical directory issues antes de IR A PRODUÇÃO
+
+### 📚 Referência
+- `DOCKERFILE_CRITICAL.md` — Documentação completa do problema e solução
+- `backend/dockerfile_validator.py` — Script de validação (classe DockerfileValidator)
+- `backend/frontend_validator.py` — Validador de frontend (já existente)
 
 ---
 
@@ -235,14 +301,28 @@ Veja: `VALIDACAO_ALPINE_FIX.md` (documentação técnica completa)
 
 Antes de fazer deploy em produção (Render), sempre verificar:
 
-- [ ] **Pre-commit validado** ← Automático, mas confirmar no console
+### 📋 Validações Automáticas (Pre-Commit)
+- [ ] **Frontend validado** ← Automático ao fazer git commit
+- [ ] **Dockerfile validado** ← Automático ao fazer git commit
+  - [ ] ✅ `COPY backend/ ./backend/` presente
+  - [ ] ✅ `COPY frontend/ ./frontend/` presente
+  - [ ] ✅ **`COPY data/ ./data/` presente** (CRÍTICO — evita black screen)
+
+### 📋 Verificações Manuais em Produção
 - [ ] **Testes backend passam** (se houver)
 - [ ] **Sem erros em console do navegador** (F12 DevTools)
 - [ ] **Templates {{ }} renderizados** (dados visíveis na UI)
 - [ ] **Botões funcionam** (testar "Executar Cálculo" manualmente)
-- [ ] **API responde** (`curl https://crediclass.csrtecnologia.com.br/api/grupos-gerenciador?limit=1`)
+- [ ] **API responde com dados:**
+  ```bash
+  curl https://crediclass.csrtecnologia.com.br/api/grupos-gerenciador?limit=1
+  # Esperado: {"total":342,"grupos":[...]}
+  # NÃO esperado: {"total":0,"grupos":[]}
+  ```
 
 Se TODOS os itens passarem, é seguro fazer `git push origin main` → Render deploy automático.
+
+⚠️ **Se API retorna `"total":0`:** Verificar que `/data/grupos.json` foi copiado ao container Render (veja DOCKERFILE_CRITICAL.md)
 
 ---
 
