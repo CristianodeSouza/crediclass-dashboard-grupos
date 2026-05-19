@@ -1187,23 +1187,26 @@
 </div>
 
   <!-- ════════════════════ ABA: GERENCIADOR DE GRUPOS ════════════════════ -->
-  <div x-show="abaAtiva === 'gerenciador'" class="flex flex-col lg:flex-row flex-1 min-h-0 min-w-0 bg-slate-950">
+  <div x-show="abaAtiva === 'gerenciador'" class="flex flex-col lg:flex-row flex-1 min-h-0 min-w-0 bg-slate-950 relative">
+      <!-- OVERLAY MOBILE (quando filtros estão abertos) -->
+      <div x-show="mostrarFiltrosMobile" class="fixed inset-0 z-30 lg:hidden bg-black/40 backdrop-blur-sm" @click="mostrarFiltrosMobile = false"></div>
       <!-- FILTRO TOGGLE (Mobile) -->
-      <div class="lg:hidden bg-slate-900 border-b border-slate-800 px-3 py-2 flex gap-2">
+      <div class="lg:hidden bg-slate-900 border-b border-slate-800 px-3 py-3 flex gap-2 z-20">
         <button @click="mostrarFiltrosMobile = !mostrarFiltrosMobile"
-          class="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded text-xs text-white transition">
-          <span x-show="!mostrarFiltrosMobile">🔍 Mostrar Filtros</span>
-          <span x-show="mostrarFiltrosMobile">✕ Ocultar Filtros</span>
+          class="flex-1 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded text-sm text-white transition font-medium">
+          <span x-show="!mostrarFiltrosMobile">🔍 Filtros</span>
+          <span x-show="mostrarFiltrosMobile">✕ Fechar</span>
         </button>
         <button @click="sincronizarGrupos()" :disabled="loadingGerenciador"
-          class="px-3 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 rounded text-xs text-white transition">
+          class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 active:bg-blue-700 rounded text-sm text-white transition font-medium">
           <span x-show="!loadingGerenciador">⟳</span>
           <span x-show="loadingGerenciador">⏳</span>
         </button>
       </div>
 
       <!-- SIDEBAR FILTROS (Desktop: sempre visível, Mobile: colapsável) -->
-      <aside x-show="mostrarFiltrosMobile || window.innerWidth >= 1024" class="lg:flex-none lg:w-72 bg-slate-900 border-b lg:border-b-0 lg:border-r border-slate-800 overflow-y-auto p-3 lg:p-4 flex flex-col gap-3 lg:gap-4">
+      <aside x-show="mostrarFiltrosMobile || window.innerWidth >= 1024" class="fixed inset-0 z-40 lg:static lg:z-auto lg:relative lg:flex-none lg:w-72 bg-slate-900 border-b lg:border-b-0 lg:border-r border-slate-800 overflow-y-auto p-3 lg:p-4 flex flex-col gap-3 lg:gap-4 lg:max-h-[calc(100vh-3.5rem)]"
+        @click.self="mostrarFiltrosMobile = false">
         <div class="hidden lg:block">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">STATUS DE SINCRONIZAÇÃO</h3>
           <div class="bg-slate-800 rounded-lg p-3">
@@ -1387,7 +1390,7 @@
                     <p class="text-slate-200 font-semibold" x-text="(grupo.taxa_adm || '—')"></p>
                   </div>
                 </div>
-                <button @click="grupo._expandido = !grupo._expandido" class="w-full px-2 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs text-white transition font-medium mb-2">
+                <button @click="grupo._expandido = !grupo._expandido" class="w-full px-3 py-2.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 rounded text-sm text-white transition font-medium mb-2 touch-manipulation">
                   <span x-show="!grupo._expandido">📊 Ver Histórico</span>
                   <span x-show="grupo._expandido">📊 Ocultar Histórico</span>
                 </button>
@@ -1403,29 +1406,29 @@
                   </div>
                 </div>
               </div>
-              <div class="flex gap-2 px-3 py-2 bg-slate-900 border-t border-slate-700">
-                <button @click="editarGrupo(grupo)" class="flex-1 px-2 py-2 bg-blue-600 hover:bg-blue-500 rounded text-xs text-white transition font-medium">✏️ Editar</button>
-                <button @click="excluirGrupo(grupo.grupo)" class="flex-1 px-2 py-2 bg-red-600 hover:bg-red-500 rounded text-xs text-white transition font-medium">🗑️ Excluir</button>
+              <div class="flex gap-2 px-3 py-2.5 bg-slate-900 border-t border-slate-700">
+                <button @click="editarGrupo(grupo)" class="flex-1 px-3 py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded text-sm text-white transition font-medium touch-manipulation">✏️ Editar</button>
+                <button @click="excluirGrupo(grupo.grupo)" class="flex-1 px-3 py-2.5 bg-red-600 hover:bg-red-500 active:bg-red-700 rounded text-sm text-white transition font-medium touch-manipulation">🗑️ Excluir</button>
               </div>
             </div>
           </template>
         </div>
 
         <!-- PAGINAÇÃO -->
-        <div class="flex-none bg-slate-900 border-t border-slate-800 px-3 lg:px-6 py-2 lg:py-3">
-          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
-            <div class="flex gap-1 lg:gap-2">
+        <div class="flex-none bg-slate-900 border-t border-slate-800 px-3 lg:px-6 py-3">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div class="flex gap-2">
               <button @click="paginaGerenciador = Math.max(1, paginaGerenciador - 1)" :disabled="paginaGerenciador === 1"
-                class="px-2 lg:px-3 py-1 lg:py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 rounded text-xs text-white transition">← Anterior</button>
+                class="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 lg:py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 active:bg-slate-600 rounded text-sm lg:text-xs text-white transition font-medium touch-manipulation">← Anterior</button>
               <button @click="paginaGerenciador = Math.min(totalPaginasGerenciador, paginaGerenciador + 1)" :disabled="paginaGerenciador === totalPaginasGerenciador"
-                class="px-2 lg:px-3 py-1 lg:py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 rounded text-xs text-white transition">Próxima →</button>
+                class="flex-1 lg:flex-none px-3 lg:px-4 py-2.5 lg:py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 active:bg-slate-600 rounded text-sm lg:text-xs text-white transition font-medium touch-manipulation">Próxima →</button>
             </div>
-            <div class="text-xs lg:text-sm text-slate-400 text-center lg:text-left">
+            <div class="text-sm lg:text-xs text-slate-400 text-center lg:text-left">
               Página <strong x-text="paginaGerenciador"></strong> de <strong x-text="totalPaginasGerenciador"></strong>
             </div>
             <div>
               <select x-model="porPaginaGerenciador" @change="paginaGerenciador = 1"
-                class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500">
+                class="w-full lg:w-auto bg-slate-800 border border-slate-700 rounded px-3 py-2.5 lg:py-1 text-sm lg:text-xs text-white focus:outline-none focus:border-blue-500">
                 <option value="20">20/pág</option>
                 <option value="50">50/pág</option>
                 <option value="100">100/pág</option>
