@@ -4,6 +4,86 @@ Log de atualizações, features implementadas e correções. Mais recentes prime
 
 ---
 
+## 2026-05-19 | Validador Frontend Corrigido + Teste com Dados Reais Piperun
+
+### ✅ Correção Crítica: Validador Frontend
+
+1. **Problema**: Validador reportava funções faltando (false positive)
+   - Procurava `"function init()"` mas app.js define `async init()` como método
+   - Procurava `"async function refresh()"` mas app.js define `async refresh()`
+   - **Impacto**: Bloqueava validação pré-deploy mesmo com código correto
+
+2. **Solução**: Atualizado pattern matching em `backend/frontend_validator.py`
+   ```python
+   # Padrões corrigidos:
+   REQUIRED_SCRIPT_TAGS_IN_APP_JS = [
+       "function dashboard()",      # Permanece igual
+       "async init()",              # ANTES: "function init()"
+       "async refresh()",           # ANTES: "async function refresh()"
+   ]
+   ```
+
+3. **Validação**: `python scripts/validate_frontend.py` agora passa ✅
+
+### ✨ Nova Feature: Endpoint de Teste com Dados Reais
+
+1. **Novo Endpoint**: `GET /api/teste-calculadora/{deal_id}`
+   - Busca Oportunidade no Piperun CRM
+   - Extrai campos financeiros (crédito, renda, parcela)
+   - Executa calculadora para 6 administradoras
+   - Retorna JSON estruturado com resultados
+
+2. **Script de Teste**: `scripts/test_calculator_with_piperun.py`
+   - Uso: `python scripts/test_calculator_with_piperun.py 59393258`
+   - Testa calculadora com ID de oportunidade real
+   - Exibe dados do Piperun e resultados formatados
+   - Compatível com Windows (UTF-8 encoding)
+
+3. **Teste Realizado**: Oportunidade 59393258 (Ramon Gomes Reis)
+   - ✅ Dados extraídos do Piperun corretamente
+   - ✅ Calculadora executada com sucesso
+   - ✅ Comparativo de 6 ADMs funcionando
+   - ✅ PORTO oferece melhor prazo: 35.4 meses com 86.6% lance máximo
+
+### 📝 Documentação Adicionada
+
+1. `docs/FRONTEND_VALIDATION.md` — Guia técnico do validador
+2. `docs/IMPLEMENTACAO_CALCULADORA.md` — Documentação completa (novo)
+3. Scripts:
+   - `scripts/validate_frontend.py` — CLI de validação
+   - `scripts/test_calculator_with_piperun.py` — Teste automatizado
+
+### 🐍 Mudanças Técnicas
+
+**Arquivo Modified:** `backend/main.py`
+- Novo endpoint `/api/teste-calculadora/{deal_id}` (68 linhas)
+- Integração completa com Piperun API
+- Simulação de cálculo para 6 administradoras
+- Retorno estruturado em JSON
+
+**Arquivo Modified:** `frontend/index.html`
+- Verificado: Alpine.js carrega ANTES de app.js (sem defer)
+- Status: Correto, sem race condition
+
+### ✅ Status de Testes
+
+| Teste | Status | Detalhe |
+|---|---|---|
+| Frontend Validação | ✅ Passa | `python scripts/validate_frontend.py` |
+| Endpoint Calculadora | ✅ 200 OK | GET /api/teste-calculadora/59393258 |
+| Dados Piperun | ✅ Extraído | Cliente, renda, crédito, parcela |
+| Simulação Calculadora | ✅ Sucesso | 6 ADMs comparadas |
+| Script Teste | ✅ Funciona | Compatível Windows |
+| Console Browser | ✅ Sem erros | Nenhum erro JavaScript |
+
+### 🚀 Próximos Passos
+
+1. Deploy no Render (trigger automático via GitHub)
+2. Validar em produção: crediclass.csrtecnologia.com.br
+3. Testar fluxo: Piperun → Endpoint → Dashboard
+
+---
+
 ## 2026-05-18 | Correção de Bugs e Implementação de CRUD
 
 ### Bugs Corrigidos
