@@ -30,6 +30,12 @@ class FrontendValidator:
         "async refresh()",
     ]
 
+    # Scripts que DEVEM ter atributo 'defer' (carregamento não-bloqueante)
+    CRITICAL_DEFER_SCRIPTS = [
+        ("Alpine.js", "alpinejs@3"),
+        ("app.js", "/static/js/app.js"),
+    ]
+
     def __init__(self, frontend_dir: str = None):
         if frontend_dir is None:
             frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
@@ -52,6 +58,7 @@ class FrontendValidator:
         self._check_files_exist()
         self._check_html_structure()
         self._check_required_scripts()
+        self._check_defer_attributes()
         self._check_script_order()
         self._check_app_js_content()
         self._check_x_data_binding()
@@ -93,6 +100,31 @@ class FrontendValidator:
                 self.errors.append(
                     f" {name} no encontrado (procurando por: '{identifier}')"
                 )
+
+    def _check_defer_attributes(self) -> None:
+        """Verifica se scripts crticos (Alpine, app.js) tem atributo 'defer'"""
+        if not os.path.exists(self.html_file):
+            return
+
+        with open(self.html_file, "r", encoding="utf-8") as f:
+            html_content = f.read()
+
+        for name, identifier in self.CRITICAL_DEFER_SCRIPTS:
+            # Procura por <script ... src="...identifier...">
+            pattern = r'<script[^>]*src="[^"]*' + re.escape(identifier) + r'[^"]*"[^>]*>'
+            match = re.search(pattern, html_content, re.IGNORECASE)
+
+            if match:
+                script_tag = match.group(0)
+                if "defer" not in script_tag.lower():
+                    self.errors.append(
+                        f" CRITICO: {name} nao tem atributo 'defer'\n"
+                        f"    Adicione: <script defer src=\"...{identifier}...\"></script>\n"
+                        f"    Tag encontrada: {script_tag[:80]}..."
+                    )
+            else:
+                # Se nao encontrou, ja foi reportado em _check_required_scripts
+                pass
 
     def _check_script_order(self) -> None:
         """Verifica se Alpine.js carrega ANTES de app.js"""
