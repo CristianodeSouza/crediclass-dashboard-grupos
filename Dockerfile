@@ -16,6 +16,9 @@ COPY backend/ ./backend/
 # Copy frontend code
 COPY frontend/ ./frontend/
 
+# Copy data (cache, auditoria, etc)
+COPY data/ ./data/
+
 # Set Python path to find modules
 ENV PYTHONPATH=/app
 
