@@ -1289,8 +1289,11 @@
           <table class="w-full border-collapse text-sm">
             <thead class="sticky top-0 bg-slate-800">
               <tr class="border-b border-slate-700">
+                <th class="text-center px-3 py-3 font-semibold text-slate-300 w-8">+</th>
                 <th class="text-left px-6 py-3 font-semibold text-slate-300">ADM</th>
                 <th class="text-left px-6 py-3 font-semibold text-slate-300">Grupo ID</th>
+                <th class="text-right px-4 py-3 font-semibold text-slate-300">Vida %</th>
+                <th class="text-right px-4 py-3 font-semibold text-slate-300">Prazo</th>
                 <th class="text-right px-6 py-3 font-semibold text-slate-300 hidden xl:table-cell">Menor Crédito</th>
                 <th class="text-right px-6 py-3 font-semibold text-slate-300">Maior Crédito</th>
                 <th class="text-right px-6 py-3 font-semibold text-slate-300 hidden sm:table-cell">Taxa ADM</th>
@@ -1299,17 +1302,53 @@
             </thead>
             <tbody class="divide-y divide-slate-800">
               <template x-for="grupo in gruposGerenciadorPaginados" :key="grupo.grupo">
-                <tr class="hover:bg-slate-800/50 transition">
-                  <td class="px-6 py-3 text-slate-200 font-medium" x-text="grupo.adm"></td>
-                  <td class="px-6 py-3 text-slate-200" x-text="grupo.grupo"></td>
-                  <td class="px-6 py-3 text-right text-slate-300 hidden xl:table-cell" x-text="'R$ ' + (grupo.menor_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></td>
-                  <td class="px-6 py-3 text-right text-slate-300" x-text="'R$ ' + (grupo.maior_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></td>
-                  <td class="px-6 py-3 text-right text-slate-300 hidden sm:table-cell" x-text="(grupo.taxa_adm || '—')"></td>
-                  <td class="px-6 py-3 text-center">
-                    <button @click="editarGrupo(grupo)" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs text-white transition">✏️</button>
-                    <button @click="excluirGrupo(grupo.grupo)" class="px-3 py-1 ml-1 bg-red-600 hover:bg-red-500 rounded text-xs text-white transition">🗑️</button>
-                  </td>
-                </tr>
+                <template>
+                  <tr class="hover:bg-slate-800/50 transition cursor-pointer" @click="grupo._expandido = !grupo._expandido">
+                    <td class="text-center px-3 py-3 text-slate-400" x-text="grupo._expandido ? '▼' : '▶'"></td>
+                    <td class="px-6 py-3 text-slate-200 font-medium" x-text="grupo.adm"></td>
+                    <td class="px-6 py-3 text-slate-200" x-text="grupo.grupo"></td>
+                    <td class="px-4 py-3 text-right text-slate-300" x-text="(grupo.vida_grupo_pct ? grupo.vida_grupo_pct.toFixed(1) : '—') + '%'"></td>
+                    <td class="px-4 py-3 text-right text-slate-300" x-text="(grupo.prazo_restante || '—') + 'm'"></td>
+                    <td class="px-6 py-3 text-right text-slate-300 hidden xl:table-cell" x-text="'R$ ' + (grupo.menor_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></td>
+                    <td class="px-6 py-3 text-right text-slate-300" x-text="'R$ ' + (grupo.maior_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></td>
+                    <td class="px-6 py-3 text-right text-slate-300 hidden sm:table-cell" x-text="(grupo.taxa_adm || '—')"></td>
+                    <td class="px-6 py-3 text-center" @click.stop>
+                      <button @click="editarGrupo(grupo)" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded text-xs text-white transition">✏️</button>
+                      <button @click="excluirGrupo(grupo.grupo)" class="px-3 py-1 ml-1 bg-red-600 hover:bg-red-500 rounded text-xs text-white transition">🗑️</button>
+                    </td>
+                  </tr>
+                  <!-- ROW EXPANDIDO - HISTÓRICO MENSAL -->
+                  <tr x-show="grupo._expandido" class="bg-slate-850 border-t-2 border-slate-700">
+                    <td colspan="9" class="px-6 py-4">
+                      <div class="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                        <h4 class="text-sm font-bold text-slate-300 mb-3">📊 Histórico Mensal (Últimos 12 meses)</h4>
+                        <div class="overflow-x-auto">
+                          <table class="w-full text-xs">
+                            <thead>
+                              <tr class="border-b border-slate-700">
+                                <th class="text-left px-2 py-2 text-slate-400">Mês</th>
+                                <th class="text-right px-2 py-2 text-slate-400">Maior Lance</th>
+                                <th class="text-right px-2 py-2 text-slate-400">Menor Lance</th>
+                                <th class="text-right px-2 py-2 text-slate-400">DTE (Qty)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="item in (grupo.historico || []).slice(-12)" :key="item.mes">
+                                <tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                                  <td class="px-2 py-2 text-slate-300 font-medium" x-text="item.mes"></td>
+                                  <td class="px-2 py-2 text-right text-slate-300" x-text="(item.maior ? item.maior.toFixed(1) : '—') + '%'"></td>
+                                  <td class="px-2 py-2 text-right text-slate-300" x-text="(item.menor ? item.menor.toFixed(1) : '—') + '%'"></td>
+                                  <td class="px-2 py-2 text-right text-slate-200 font-semibold" x-text="item.qtd || '—'"></td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2">Exibindo últimos 12 meses. Total: <strong x-text="grupo.historico ? grupo.historico.length : 0"></strong> meses na base</p>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
               </template>
             </tbody>
           </table>
@@ -1318,28 +1357,53 @@
         <!-- CARDS (Mobile) -->
         <div class="lg:hidden flex-1 overflow-auto p-3 space-y-3">
           <template x-for="grupo in gruposGerenciadorPaginados" :key="grupo.grupo">
-            <div class="bg-slate-800 rounded-lg p-3 border border-slate-700">
-              <div class="flex justify-between items-start mb-2">
-                <div>
-                  <p class="text-xs text-slate-400">ADM</p>
-                  <p class="text-sm font-bold text-blue-400" x-text="grupo.adm"></p>
+            <div class="bg-slate-800 rounded-lg border border-slate-700">
+              <div class="p-3">
+                <div class="flex justify-between items-start mb-2">
+                  <div>
+                    <p class="text-xs text-slate-400">ADM</p>
+                    <p class="text-sm font-bold text-blue-400" x-text="grupo.adm"></p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-xs text-slate-400">Grupo</p>
+                    <p class="text-sm font-mono text-slate-200" x-text="grupo.grupo"></p>
+                  </div>
                 </div>
-                <div class="text-right">
-                  <p class="text-xs text-slate-400">Grupo</p>
-                  <p class="text-sm font-mono text-slate-200" x-text="grupo.grupo"></p>
+                <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
+                  <div class="bg-slate-900 p-2 rounded">
+                    <p class="text-slate-400 text-xs">Vida %</p>
+                    <p class="text-slate-200 font-semibold" x-text="(grupo.vida_grupo_pct ? grupo.vida_grupo_pct.toFixed(1) : '—') + '%'"></p>
+                  </div>
+                  <div class="bg-slate-900 p-2 rounded text-right">
+                    <p class="text-slate-400 text-xs">Prazo</p>
+                    <p class="text-slate-200 font-semibold" x-text="(grupo.prazo_restante || '—') + 'm'"></p>
+                  </div>
+                  <div class="bg-slate-900 p-2 rounded">
+                    <p class="text-slate-400 text-xs">Maior Crédito</p>
+                    <p class="text-slate-200 font-semibold text-sm" x-text="'R$ ' + (grupo.maior_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 0})"></p>
+                  </div>
+                  <div class="bg-slate-900 p-2 rounded text-right">
+                    <p class="text-slate-400 text-xs">Taxa ADM</p>
+                    <p class="text-slate-200 font-semibold" x-text="(grupo.taxa_adm || '—')"></p>
+                  </div>
+                </div>
+                <button @click="grupo._expandido = !grupo._expandido" class="w-full px-2 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs text-white transition font-medium mb-2">
+                  <span x-show="!grupo._expandido">📊 Ver Histórico</span>
+                  <span x-show="grupo._expandido">📊 Ocultar Histórico</span>
+                </button>
+                <div x-show="grupo._expandido" class="bg-slate-900 rounded p-2 mb-2 border-t border-slate-700 mt-2">
+                  <h4 class="text-xs font-bold text-slate-300 mb-2">Últimos 6 Meses</h4>
+                  <div class="space-y-1 text-xs">
+                    <template x-for="item in (grupo.historico || []).slice(-6)" :key="item.mes">
+                      <div class="flex justify-between text-slate-400">
+                        <span x-text="item.mes" class="font-medium text-slate-300"></span>
+                        <span><strong x-text="item.qtd || '—'"></strong> compr.</span>
+                      </div>
+                    </template>
+                  </div>
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
-                <div>
-                  <p class="text-slate-400">Maior Crédito</p>
-                  <p class="text-slate-200 font-semibold" x-text="'R$ ' + (grupo.maior_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 0})"></p>
-                </div>
-                <div class="text-right">
-                  <p class="text-slate-400">Taxa ADM</p>
-                  <p class="text-slate-200 font-semibold" x-text="(grupo.taxa_adm || '—')"></p>
-                </div>
-              </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 px-3 py-2 bg-slate-900 border-t border-slate-700">
                 <button @click="editarGrupo(grupo)" class="flex-1 px-2 py-2 bg-blue-600 hover:bg-blue-500 rounded text-xs text-white transition font-medium">✏️ Editar</button>
                 <button @click="excluirGrupo(grupo.grupo)" class="flex-1 px-2 py-2 bg-red-600 hover:bg-red-500 rounded text-xs text-white transition font-medium">🗑️ Excluir</button>
               </div>
