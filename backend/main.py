@@ -487,6 +487,38 @@ def refresh_dados():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/debug/cache-status")
+def debug_cache_status():
+    """Debug: Verifica status do cache e arquivo grupos.json"""
+    import os
+    from pathlib import Path
+
+    cache_file = os.path.join(os.path.dirname(__file__), "..", "data", "grupos.json")
+    exists = os.path.exists(cache_file)
+    size = os.path.getsize(cache_file) if exists else 0
+
+    try:
+        if exists:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                count = len(data) if isinstance(data, list) else 0
+        else:
+            count = 0
+            data = None
+    except Exception as e:
+        count = 0
+        data = str(e)
+
+    return {
+        "cache_file": cache_file,
+        "exists": exists,
+        "size_bytes": size,
+        "grupos_count": count,
+        "error": data if isinstance(data, str) else None,
+        "timestamp": datetime.now().isoformat()
+    }
+
+
 # ===== IMPORTAÇÃO/EXPORTAÇÃO (P3.1) =====
 
 @app.post("/api/importar/preview")
