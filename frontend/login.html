@@ -687,18 +687,6 @@
     errorMessage.style.color = '#fca5a5';
   }
 
-  // ==========================================
-  // SEGURANÇA: NÃO LOG SENHAS
-  // ==========================================
-  // Nunca logar senha em console em produção
-  Object.defineProperty(senhaInput, 'value', {
-    get() {
-      return this._value || '';
-    },
-    set(val) {
-      this._value = val;
-    }
-  });
 </script>
 
 </body>
