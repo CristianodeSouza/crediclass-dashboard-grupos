@@ -787,7 +787,12 @@ function dashboard() {
     },
 
     abrirPreviewEstudo() {
+      console.log("[Preview Debug] abrirPreviewEstudo() chamada");
+      console.log("[Preview Debug] grupoSelecionado:", this.grupoSelecionado);
+      console.log("[Preview Debug] admSelecionada:", this.admSelecionada);
+
       if (!this.grupoSelecionado || !this.admSelecionada) {
+        console.warn("[Preview Debug] ❌ Grupo ou ADM não selecionados");
         alert("Selecione um grupo e uma ADM");
         return;
       }
@@ -823,17 +828,31 @@ function dashboard() {
       // Preparar histórico (últimos 12 meses)
       this.previewEstudo.historico = this.gerarHistoricoMeses();
 
+      console.log("[Preview Debug] ✓ Abrindo preview modal");
+      console.log("[Preview Debug] previewEstudo.dadosGrupo:", this.previewEstudo.dadosGrupo);
+
       this.previewEstudo.isOpen = true;
       this.previewEstudo.editMode = false;
+
+      console.log("[Preview Debug] ✓ Modal aberta - previewEstudo.isOpen:", this.previewEstudo.isOpen);
     },
 
     selecionarEAbrirPreview() {
+      console.log("[Preview Debug] selecionarEAbrirPreview() chamada");
+      console.log("[Preview Debug] selecionados.length:", this.selecionados.length);
+      console.log("[Preview Debug] selecionados:", this.selecionados);
+
       if (this.selecionados.length === 0) {
+        console.warn("[Preview Debug] ❌ Nenhum grupo selecionado");
         alert("Nenhum grupo selecionado");
         return;
       }
+
+      console.log("[Preview Debug] ✓ Setando grupoSelecionado:", this.selecionados[0]);
       this.grupoSelecionado = this.selecionados[0];
       this.admSelecionada = this.selecionados[0].adm;
+
+      console.log("[Preview Debug] ✓ Chamando abrirPreviewEstudo()");
       this.abrirPreviewEstudo();
     },
 
