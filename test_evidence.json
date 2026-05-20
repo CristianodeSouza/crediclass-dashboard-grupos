@@ -1,0 +1,141 @@
+{
+  "timestamp": "2026-05-20T06:09:05.522870",
+  "tests": [
+    {
+      "name": "Frontend responde HTTP 200",
+      "status": "PASS",
+      "details": "Status: 200"
+    },
+    {
+      "name": "HTML tem tamanho > 10KB",
+      "status": "PASS",
+      "details": "Size: 178923 bytes"
+    },
+    {
+      "name": "[x-cloak] CSS presente",
+      "status": "PASS",
+      "details": "CSS previne flash do HTML"
+    },
+    {
+      "name": "x-cloak atributo no body",
+      "status": "PASS",
+      "details": "Body tag tem x-cloak"
+    },
+    {
+      "name": "x-cloak CSS vem ANTES do body",
+      "status": "PASS",
+      "details": "CSS pos: 1052, body pos: 1114"
+    },
+    {
+      "name": "Alpine.js 3.x carregado",
+      "status": "PASS",
+      "details": "CDN link presente"
+    },
+    {
+      "name": "x-data='dashboard()' presente",
+      "status": "PASS",
+      "details": "Alpine data binding configurado"
+    },
+    {
+      "name": "x-init='init()' presente",
+      "status": "PASS",
+      "details": "Inicialização setup"
+    },
+    {
+      "name": "Alpine.js carrega ANTES de app.js",
+      "status": "PASS",
+      "details": "Alpine pos: 683, app.js pos: 748"
+    },
+    {
+      "name": "Alpine.js com defer",
+      "status": "PASS",
+      "details": "Carregamento assíncrono"
+    },
+    {
+      "name": "app.js com defer",
+      "status": "PASS",
+      "details": "Carregamento assíncrono"
+    },
+    {
+      "name": "app.js carrega HTTP 200",
+      "status": "PASS",
+      "details": "Size: 79767 bytes"
+    },
+    {
+      "name": "dashboard() function presente",
+      "status": "PASS",
+      "details": "Função principal definida"
+    },
+    {
+      "name": "Alpine.start() implementado",
+      "status": "PASS",
+      "details": "Inicialização correta (não initTree)"
+    },
+    {
+      "name": "init() function presente",
+      "status": "PASS",
+      "details": "Inicialização do estado"
+    },
+    {
+      "name": "Alpine.start() no final do app.js",
+      "status": "PASS",
+      "details": "Execução na ordem correta"
+    },
+    {
+      "name": "style.css carrega HTTP 200",
+      "status": "PASS",
+      "details": "Size: 347 bytes"
+    },
+    {
+      "name": "API GET /api/grupos-gerenciador",
+      "status": "PASS",
+      "details": "Status: 200"
+    },
+    {
+      "name": "API retorna 'total'",
+      "status": "PASS",
+      "details": "total=342"
+    },
+    {
+      "name": "API retorna 'grupos' array",
+      "status": "PASS",
+      "details": "count=20"
+    },
+    {
+      "name": "Total > 0 (dados carregados)",
+      "status": "PASS",
+      "details": "total=342"
+    },
+    {
+      "name": "Todos os componentes críticos presentes",
+      "status": "PASS",
+      "details": "HTML + JavaScript + API OK"
+    }
+  ],
+  "passed": 22,
+  "failed": 0,
+  "analysis": {
+    "html_size": 178923,
+    "html_lines": 2667,
+    "xcloak_css_pos": 1052,
+    "body_pos": 1114,
+    "has_alpine": true,
+    "has_xdata": true,
+    "script_order": {
+      "alpine_pos": 683,
+      "app_pos": 748,
+      "correct": true
+    },
+    "app_js": {
+      "size": 79767,
+      "has_dashboard": true,
+      "has_alpine_start": true,
+      "has_init": true
+    },
+    "api": {
+      "total": 342,
+      "grupos_count": 20,
+      "has_data": true
+    }
+  }
+}
