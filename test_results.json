@@ -1,0 +1,147 @@
+{
+  "timestamp": "2026-05-20T06:05:22.852889",
+  "tests": [
+    {
+      "name": "API GET /api/grupos-gerenciador",
+      "status": "PASS",
+      "details": "Status: 200, Grupos: 342"
+    },
+    {
+      "name": "API retorna 'total'",
+      "status": "PASS",
+      "details": "total=342"
+    },
+    {
+      "name": "API retorna 'grupos' array",
+      "status": "PASS",
+      "details": "grupos count=20"
+    },
+    {
+      "name": "Total > 0 (dados carregados)",
+      "status": "PASS",
+      "details": "total=342"
+    },
+    {
+      "name": "Frontend carrega HTTP 200",
+      "status": "PASS",
+      "details": "Status: 200"
+    },
+    {
+      "name": "HTML contém body",
+      "status": "PASS",
+      "details": "Body tag presente"
+    },
+    {
+      "name": "x-cloak presente no body",
+      "status": "PASS",
+      "details": "Prevenção de flash implementada"
+    },
+    {
+      "name": "x-data='dashboard()' presente",
+      "status": "PASS",
+      "details": "Alpine.js binding configurado"
+    },
+    {
+      "name": "Alpine.js CDN carregado",
+      "status": "PASS",
+      "details": "Alpine 3.14.1"
+    },
+    {
+      "name": "app.js com defer",
+      "status": "PASS",
+      "details": "Defer attribute presente"
+    },
+    {
+      "name": "app.js carrega com 200",
+      "status": "PASS",
+      "details": "Size: 79767 bytes"
+    },
+    {
+      "name": "app.js contém 'function dashboard()'",
+      "status": "PASS",
+      "details": "Dashboard function defined"
+    },
+    {
+      "name": "app.js contém 'Alpine.start()'",
+      "status": "PASS",
+      "details": "Alpine initialization method"
+    },
+    {
+      "name": "app.js contém 'gerenciador'",
+      "status": "PASS",
+      "details": "Gerenciador object defined"
+    },
+    {
+      "name": "style.css carrega com 200",
+      "status": "PASS",
+      "details": "Size: 347 bytes"
+    },
+    {
+      "name": "Função 'abrirPreviewEstudo' definida",
+      "status": "FAIL",
+      "details": "Método presente no código"
+    },
+    {
+      "name": "Função 'fecharPreviewEstudo' definida",
+      "status": "FAIL",
+      "details": "Método presente no código"
+    },
+    {
+      "name": "Função 'toggleModoEdicaoEstudo' definida",
+      "status": "FAIL",
+      "details": "Método presente no código"
+    },
+    {
+      "name": "Função 'gerarPDFDaPreview' definida",
+      "status": "FAIL",
+      "details": "Método presente no código"
+    },
+    {
+      "name": "Função 'sincronizarComSheets' definida",
+      "status": "FAIL",
+      "details": "Método presente no código"
+    },
+    {
+      "name": "Função 'init' definida",
+      "status": "FAIL",
+      "details": "Método presente no código"
+    },
+    {
+      "name": "Função 'refresh' definida",
+      "status": "FAIL",
+      "details": "Método presente no código"
+    },
+    {
+      "name": "Função 'atualizarBuscaGerenciador' definida",
+      "status": "FAIL",
+      "details": "Método presente no código"
+    },
+    {
+      "name": "[x-cloak] CSS presente",
+      "status": "PASS",
+      "details": "CSS previne flash do HTML"
+    },
+    {
+      "name": "x-cloak no atributo body",
+      "status": "PASS",
+      "details": "Body tem x-cloak"
+    },
+    {
+      "name": "Alpine.start() implementado",
+      "status": "PASS",
+      "details": "Sem múltiplas Alpine.initTree()"
+    },
+    {
+      "name": "Alpine.js ANTES de app.js",
+      "status": "PASS",
+      "details": "Alpine: 661, app.js: 725"
+    },
+    {
+      "name": "Deployment Readiness",
+      "status": "FAIL",
+      "details": "Exception: 'charmap' codec can't decode byte 0x8d in position 661: character maps to <undefined>"
+    }
+  ],
+  "passed": 19,
+  "failed": 9
+}
