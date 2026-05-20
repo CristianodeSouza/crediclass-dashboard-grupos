@@ -2074,6 +2074,12 @@ function dashboard() {
   };
 }
 
+// ✅ CRÍTICO: Registrar dashboard com Alpine ANTES de chamar Alpine.start()
+if (typeof Alpine !== 'undefined' && typeof dashboard === 'function') {
+  Alpine.data('dashboard', dashboard);
+  console.log('[Alpine Init] ✓ dashboard() registrada com Alpine.data()');
+}
+
 // Reinicializar Alpine após carregamento completo do script
 if (typeof Alpine !== 'undefined') {
   console.log('[Alpine Init] ✓ Alpine detectado, app.js carregado');
