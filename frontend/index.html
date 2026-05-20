@@ -65,31 +65,31 @@
     @click="abaAtiva = 'mapa'"
     :class="abaAtiva === 'mapa' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
     class="px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm font-medium transition whitespace-nowrap">
-    <span class="md:hidden">📊</span><span class="hidden md:inline">📊 Mapa</span>
+    📊 Mapa de Grupos
   </button>
   <button
     @click="abaAtiva = 'calculadora'"
     :class="abaAtiva === 'calculadora' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
     class="px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm font-medium transition whitespace-nowrap">
-    <span class="md:hidden">🧮</span><span class="hidden md:inline">🧮 Calc.</span>
+    🧮 Calculadora
   </button>
   <button
     @click="mudarAba('gerenciador')"
     :class="abaAtiva === 'gerenciador' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
     class="px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm font-medium transition whitespace-nowrap">
-    <span class="md:hidden">🛠️</span><span class="hidden md:inline">🛠️ Ger.</span>
+    🛠️ Gerenciador
   </button>
   <button
     @click="abaAtiva = 'importacao'"
     :class="abaAtiva === 'importacao' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
     class="px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm font-medium transition whitespace-nowrap">
-    <span class="md:hidden">📥</span><span class="hidden md:inline">📥 Imp.</span>
+    📥 Importação
   </button>
   <button
     @click="mudarAba('analytics')"
     :class="abaAtiva === 'analytics' ? 'border-b-2 border-blue-500 text-white' : 'border-b-2 border-transparent text-slate-400 hover:text-slate-300'"
     class="px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm font-medium transition whitespace-nowrap">
-    <span class="md:hidden">📈</span><span class="hidden md:inline">📈 Analytics</span>
+    📈 Analytics
   </button>
 </nav>
 
