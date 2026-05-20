@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import List, Dict, Tuple, Optional
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-import pandas as pd
+from openpyxl.utils import get_column_letter
 from .sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo
 
 
@@ -52,7 +52,7 @@ def validar_arquivo_excel(arquivo_bytes: bytes) -> Tuple[bool, str]:
 
 def extrair_dados_excel(arquivo_bytes: bytes) -> Tuple[List[Dict], List[str]]:
     """
-    Extrair dados de arquivo Excel.
+    Extrair dados de arquivo Excel usando openpyxl.
 
     Retorna:
     - Lista de dicts com dados
@@ -62,14 +62,23 @@ def extrair_dados_excel(arquivo_bytes: bytes) -> Tuple[List[Dict], List[str]]:
     dados = []
 
     try:
-        df = pd.read_excel(io.BytesIO(arquivo_bytes), sheet_name=0)
+        wb = load_workbook(io.BytesIO(arquivo_bytes))
+        ws = wb.active
+
+        if not ws or ws.max_row < 2:
+            erros.append("Arquivo vazio ou sem linhas de dados")
+            return [], erros
+
+        # Ler header (primeira linha)
+        header = []
+        for cell in ws[1]:
+            header.append(str(cell.value).lower() if cell.value else "")
 
         # Detectar colunas automaticamente (case-insensitive)
-        colunas_arquivo = {col.lower(): col for col in df.columns}
+        colunas_arquivo = {col.lower(): (col, idx) for idx, col in enumerate(header)}
 
-        for idx, row in df.iterrows():
-            linha_num = idx + 2  # +2 porque pandas é 0-indexed e Excel tem header
-
+        # Processar linhas (começar da linha 2, pulando header)
+        for linha_num, row in enumerate(ws.iter_rows(min_row=2, values_only=False), start=2):
             try:
                 linha_data = {}
 
@@ -79,11 +88,11 @@ def extrair_dados_excel(arquivo_bytes: bytes) -> Tuple[List[Dict], List[str]]:
                         erros.append(f"Linha {linha_num}: coluna obrigatória '{col_esperada}' não encontrada")
                         raise ValueError(f"Coluna obrigatória ausente: {col_esperada}")
 
-                    col_real = colunas_arquivo[col_esperada]
-                    valor = row[col_real]
+                    col_nome, col_idx = colunas_arquivo[col_esperada]
+                    valor = row[col_idx].value if col_idx < len(row) else None
 
                     # Validar tipo e converter
-                    if pd.isna(valor):
+                    if valor is None or valor == "":
                         erros.append(f"Linha {linha_num}: '{col_esperada}' está vazio")
                         raise ValueError(f"Campo obrigatório vazio: {col_esperada}")
 
@@ -99,10 +108,10 @@ def extrair_dados_excel(arquivo_bytes: bytes) -> Tuple[List[Dict], List[str]]:
                 # Processar colunas opcionais
                 for col_esperada, col_tipo in COLUNAS_OPCIONAIS.items():
                     if col_esperada in colunas_arquivo:
-                        col_real = colunas_arquivo[col_esperada]
-                        valor = row[col_real]
+                        col_nome, col_idx = colunas_arquivo[col_esperada]
+                        valor = row[col_idx].value if col_idx < len(row) else None
 
-                        if not pd.isna(valor):
+                        if valor is not None and valor != "":
                             try:
                                 if col_tipo == float:
                                     linha_data[col_esperada] = float(valor)
@@ -250,83 +259,106 @@ def processar_importacao(dados: List[Dict], modo: str = "insert_update") -> Dict
 # ═════════════════════════════════════════════════════════════════════════════
 
 def exportar_excel_completo() -> bytes:
-    """Exportar todos os grupos em Excel completo."""
+    """Exportar todos os grupos em Excel completo usando openpyxl."""
     grupos = fetch_grupos()
-    df = pd.DataFrame(grupos)
 
-    # Reordenar colunas (obrigatórias primeiro)
+    # Definir ordem de colunas
     colunas_ordem = list(COLUNAS_OBRIGATORIAS.keys()) + list(COLUNAS_OPCIONAIS.keys())
-    colunas_presentes = [c for c in colunas_ordem if c in df.columns]
-    colunas_presentes += [c for c in df.columns if c not in colunas_presentes]
 
-    df = df[colunas_presentes]
+    # Se há grupos, garantir que todas as colunas existem
+    if grupos:
+        todas_chaves = set()
+        for g in grupos:
+            todas_chaves.update(g.keys())
+        colunas_presentes = [c for c in colunas_ordem if c in todas_chaves]
+        colunas_presentes += [c for c in todas_chaves if c not in colunas_presentes]
+    else:
+        colunas_presentes = colunas_ordem
 
-    # Escrever para bytes
+    # Criar workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Grupos"
+
+    # Escrever header
+    for col_idx, col_nome in enumerate(colunas_presentes, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=col_nome)
+        cell.fill = PatternFill(start_color="1d4ed8", end_color="1d4ed8", fill_type="solid")
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.alignment = Alignment(horizontal="center")
+
+    # Escrever dados
+    for row_idx, grupo in enumerate(grupos, start=2):
+        for col_idx, col_nome in enumerate(colunas_presentes, start=1):
+            valor = grupo.get(col_nome, "")
+            cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+
+    # Ajustar largura colunas
+    for col_idx, col_nome in enumerate(colunas_presentes, start=1):
+        max_length = len(str(col_nome))
+        for row in ws.iter_rows(min_col=col_idx, max_col=col_idx, min_row=2):
+            try:
+                if row[0].value:
+                    max_length = max(max_length, len(str(row[0].value)))
+            except:
+                pass
+        ws.column_dimensions[get_column_letter(col_idx)].width = min(max_length + 2, 50)
+
+    # Converter para bytes
     excel_io = io.BytesIO()
-    with pd.ExcelWriter(excel_io, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Grupos", index=False)
-
-        # Formatar header
-        ws = writer.sheets["Grupos"]
-        header_fill = PatternFill(start_color="1d4ed8", end_color="1d4ed8", fill_type="solid")
-        header_font = Font(bold=True, color="FFFFFF")
-
-        for cell in ws[1]:
-            cell.fill = header_fill
-            cell.font = header_font
-            cell.alignment = Alignment(horizontal="center")
-
-        # Ajustar largura colunas
-        for column in ws.columns:
-            max_length = 0
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            ws.column_dimensions[column[0].column_letter].width = min(max_length + 2, 50)
-
+    wb.save(excel_io)
     excel_io.seek(0)
     return excel_io.getvalue()
 
 
 def exportar_por_adm(adm: str) -> bytes:
-    """Exportar grupos filtrados por administradora."""
+    """Exportar grupos filtrados por administradora usando openpyxl."""
     grupos = fetch_grupos()
     grupos_filtrados = [g for g in grupos if g["adm"].upper() == adm.upper()]
 
-    df = pd.DataFrame(grupos_filtrados)
-
     colunas_ordem = list(COLUNAS_OBRIGATORIAS.keys()) + list(COLUNAS_OPCIONAIS.keys())
-    colunas_presentes = [c for c in colunas_ordem if c in df.columns]
-    colunas_presentes += [c for c in df.columns if c not in colunas_presentes]
 
-    df = df[colunas_presentes]
+    if grupos_filtrados:
+        todas_chaves = set()
+        for g in grupos_filtrados:
+            todas_chaves.update(g.keys())
+        colunas_presentes = [c for c in colunas_ordem if c in todas_chaves]
+        colunas_presentes += [c for c in todas_chaves if c not in colunas_presentes]
+    else:
+        colunas_presentes = colunas_ordem
 
+    # Criar workbook com nome da ADM (max 31 chars para aba)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = adm[:31]
+
+    # Escrever header
+    for col_idx, col_nome in enumerate(colunas_presentes, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=col_nome)
+        cell.fill = PatternFill(start_color="1d4ed8", end_color="1d4ed8", fill_type="solid")
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.alignment = Alignment(horizontal="center")
+
+    # Escrever dados
+    for row_idx, grupo in enumerate(grupos_filtrados, start=2):
+        for col_idx, col_nome in enumerate(colunas_presentes, start=1):
+            valor = grupo.get(col_nome, "")
+            cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+
+    # Ajustar largura colunas
+    for col_idx, col_nome in enumerate(colunas_presentes, start=1):
+        max_length = len(str(col_nome))
+        for row in ws.iter_rows(min_col=col_idx, max_col=col_idx, min_row=2):
+            try:
+                if row[0].value:
+                    max_length = max(max_length, len(str(row[0].value)))
+            except:
+                pass
+        ws.column_dimensions[get_column_letter(col_idx)].width = min(max_length + 2, 50)
+
+    # Converter para bytes
     excel_io = io.BytesIO()
-    with pd.ExcelWriter(excel_io, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name=adm[:31], index=False)  # max 31 chars para nome aba
-
-        ws = writer.sheets[adm[:31]]
-        header_fill = PatternFill(start_color="1d4ed8", end_color="1d4ed8", fill_type="solid")
-        header_font = Font(bold=True, color="FFFFFF")
-
-        for cell in ws[1]:
-            cell.fill = header_fill
-            cell.font = header_font
-            cell.alignment = Alignment(horizontal="center")
-
-        for column in ws.columns:
-            max_length = 0
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            ws.column_dimensions[column[0].column_letter].width = min(max_length + 2, 50)
-
+    wb.save(excel_io)
     excel_io.seek(0)
     return excel_io.getvalue()
 
@@ -347,7 +379,7 @@ def exportar_grupo(grupo_id: str, adm: str) -> Dict:
 
 
 def exportar_relatorio_adms() -> bytes:
-    """Exportar relatório comparativo de administradoras."""
+    """Exportar relatório comparativo de administradoras usando openpyxl."""
     grupos = fetch_grupos()
 
     # Agrupar por ADM
@@ -376,7 +408,7 @@ def exportar_relatorio_adms() -> bytes:
             relatorio[adm]["credito_medio"] = relatorio[adm]["credito_total"] / total
             relatorio[adm]["taxa_adm_media"] = relatorio[adm]["taxa_adm_media"] / total
 
-    # Montar DataFrame
+    # Montar dados relatório
     dados_relatorio = []
     for adm, dados in relatorio.items():
         dados_relatorio.append({
@@ -387,31 +419,43 @@ def exportar_relatorio_adms() -> bytes:
             "Taxa ADM Média (%)": dados["taxa_adm_media"]
         })
 
-    df = pd.DataFrame(dados_relatorio)
-    df = df.sort_values("Total de Grupos", ascending=False)
+    # Ordenar por Total de Grupos (descendente)
+    dados_relatorio.sort(key=lambda x: x["Total de Grupos"], reverse=True)
 
+    # Criar workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Relatório ADMs"
+
+    # Colunas do relatório
+    colunas_rel = ["Administradora", "Total de Grupos", "Crédito Total (R$)", "Crédito Médio (R$)", "Taxa ADM Média (%)"]
+
+    # Escrever header
+    for col_idx, col_nome in enumerate(colunas_rel, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=col_nome)
+        cell.fill = PatternFill(start_color="059669", end_color="059669", fill_type="solid")
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.alignment = Alignment(horizontal="center")
+
+    # Escrever dados
+    for row_idx, dados in enumerate(dados_relatorio, start=2):
+        for col_idx, col_nome in enumerate(colunas_rel, start=1):
+            valor = dados.get(col_nome, "")
+            cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+
+    # Ajustar largura colunas
+    for col_idx, col_nome in enumerate(colunas_rel, start=1):
+        max_length = len(str(col_nome))
+        for row in ws.iter_rows(min_col=col_idx, max_col=col_idx, min_row=2):
+            try:
+                if row[0].value:
+                    max_length = max(max_length, len(str(row[0].value)))
+            except:
+                pass
+        ws.column_dimensions[get_column_letter(col_idx)].width = min(max_length + 2, 50)
+
+    # Converter para bytes
     excel_io = io.BytesIO()
-    with pd.ExcelWriter(excel_io, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Relatório ADMs", index=False)
-
-        ws = writer.sheets["Relatório ADMs"]
-        header_fill = PatternFill(start_color="059669", end_color="059669", fill_type="solid")
-        header_font = Font(bold=True, color="FFFFFF")
-
-        for cell in ws[1]:
-            cell.fill = header_fill
-            cell.font = header_font
-            cell.alignment = Alignment(horizontal="center")
-
-        for column in ws.columns:
-            max_length = 0
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            ws.column_dimensions[column[0].column_letter].width = min(max_length + 2, 50)
-
+    wb.save(excel_io)
     excel_io.seek(0)
     return excel_io.getvalue()
