@@ -66,7 +66,7 @@ def build_history(row: list, headers: list) -> list:
             menor = parse_percent(row[menor_idx] if menor_idx < len(row) else "")
             qtd = parse_int(row[qtd_idx] if qtd_idx < len(row) else "")
             if maior is not None or menor is not None:
-                history.append({"mes": month, "maior": maior, "menor": menor, "qtd": qtd})
+                history.append({"mes": month, "maior_lance": maior, "menor_lance": menor, "qtd": qtd})
         except ValueError:
             continue
     return history

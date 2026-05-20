@@ -67,6 +67,7 @@ function dashboard() {
     // Modal
     grupoDetalhe: null,
     historicoChart: null,
+    historicoChartGerenciador: null,
 
     // ── GERENCIADOR ─────────────────────────────────────
     gerenciador: {
@@ -381,13 +382,27 @@ function dashboard() {
 
     // ── Modal ────────────────────────────────────────────
     abrirDetalhe(g) {
+      // Destruir chart anterior se existir
       if (this.historicoChart) {
-        this.historicoChart.destroy();
+        try {
+          this.historicoChart.destroy();
+        } catch (e) {
+          console.warn("[abrirDetalhe] Erro ao destruir chart anterior:", e);
+        }
         this.historicoChart = null;
       }
+
       this.grupoDetalhe = g;
+      console.log("[Modal] Abrindo detalhe para grupo:", g.adm, "G.", g.grupo);
+
+      // Aguardar renderização do DOM antes de criar chart
       this.$nextTick(() => {
-        if (g.historico?.length) this.renderChart(g.historico);
+        if (g.historico?.length) {
+          console.log("[Modal] Renderizando gráfico com", g.historico.length, "meses de histórico");
+          this.renderChart(g.historico);
+        } else {
+          console.log("[Modal] Grupo sem histórico, gráfico não renderizado");
+        }
       });
     },
 
@@ -401,7 +416,20 @@ function dashboard() {
 
     renderChart(historico) {
       const canvas = document.getElementById("historicoChart");
-      if (!canvas) return;
+      if (!canvas) {
+        console.warn("[renderChart] Canvas com ID 'historicoChart' não encontrado");
+        return;
+      }
+
+      // Destruir chart anterior se existir
+      if (this.historicoChart) {
+        try {
+          this.historicoChart.destroy();
+        } catch (e) {
+          console.warn("[renderChart] Erro ao destruir chart anterior:", e);
+        }
+        this.historicoChart = null;
+      }
 
       this.historicoChart = new Chart(canvas, {
         type: "line",
@@ -410,7 +438,7 @@ function dashboard() {
           datasets: [
             {
               label: "Maior Lance",
-              data: historico.map(h => h.maior),
+              data: historico.map(h => h.maior_lance || h.maior),
               borderColor: "#3b82f6",
               backgroundColor: "rgba(59,130,246,0.08)",
               tension: 0.3,
@@ -420,7 +448,7 @@ function dashboard() {
             },
             {
               label: "Menor Lance",
-              data: historico.map(h => h.menor),
+              data: historico.map(h => h.menor_lance || h.menor),
               borderColor: "#10b981",
               backgroundColor: "transparent",
               tension: 0.3,
@@ -831,8 +859,8 @@ function dashboard() {
       console.log("[Preview Debug] ✓ Abrindo preview modal");
       console.log("[Preview Debug] previewEstudo.dadosGrupo:", this.previewEstudo.dadosGrupo);
 
-      this.previewEstudo.isOpen = true;
-      this.previewEstudo.editMode = false;
+      // ✅ FIX: Usar spread operator para forçar reatividade Alpine
+      this.previewEstudo = { ...this.previewEstudo, isOpen: true, editMode: false };
 
       console.log("[Preview Debug] ✓ Modal aberta - previewEstudo.isOpen:", this.previewEstudo.isOpen);
     },
@@ -857,12 +885,13 @@ function dashboard() {
     },
 
     fecharPreviewEstudo() {
-      this.previewEstudo.isOpen = false;
-      this.previewEstudo.editMode = false;
+      // ✅ FIX: Usar spread operator para forçar reatividade Alpine
+      this.previewEstudo = { ...this.previewEstudo, isOpen: false, editMode: false };
     },
 
     toggleModoEdicaoEstudo() {
-      this.previewEstudo.editMode = !this.previewEstudo.editMode;
+      // ✅ FIX: Usar spread operator para forçar reatividade Alpine
+      this.previewEstudo = { ...this.previewEstudo, editMode: !this.previewEstudo.editMode };
     },
 
     gerarHistoricoMeses() {
@@ -1051,10 +1080,15 @@ function dashboard() {
     },
 
     abrirModalDetalheGerenciador(grupo) {
+      console.log("[Modal Gerenciador] Abrindo detalhe para grupo:", grupo.adm, "G.", grupo.grupo);
+
       this.gerenciador.grupoSelecionado = grupo;
       this.gerenciador.modals.detalhe = true;
       this.calcularEstatisticasGerenciador(grupo);
+
+      // Aguardar renderização do DOM antes de criar chart
       this.$nextTick(() => {
+        console.log("[Modal Gerenciador] Inicializando gráfico histórico");
         this.inicializarGraficoHistoricoGerenciador();
       });
     },
@@ -1081,10 +1115,23 @@ function dashboard() {
 
     inicializarGraficoHistoricoGerenciador() {
       const grupo = this.gerenciador.grupoSelecionado;
-      if (!grupo || !grupo.historico || grupo.historico.length === 0) return;
+      if (!grupo || !grupo.historico || grupo.historico.length === 0) {
+        console.warn("[inicializarGraficoHistoricoGerenciador] Grupo ou histórico não disponível");
+        return;
+      }
       const ctx = document.getElementById("historicoChartGerenciador");
-      if (!ctx) return;
-      if (this.historicoChartGerenciador) this.historicoChartGerenciador.destroy();
+      if (!ctx) {
+        console.warn("[inicializarGraficoHistoricoGerenciador] Canvas com ID 'historicoChartGerenciador' não encontrado");
+        return;
+      }
+      // Destruir chart anterior se existir
+      if (this.historicoChartGerenciador) {
+        try {
+          this.historicoChartGerenciador.destroy();
+        } catch (e) {
+          console.warn("[inicializarGraficoHistoricoGerenciador] Erro ao destruir chart anterior:", e);
+        }
+      }
       const labels = grupo.historico.map(h => {
         const [ano, mes] = h.mes.split("-");
         const nomeMes = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"][parseInt(mes) - 1];
