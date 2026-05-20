@@ -39,6 +39,16 @@ function dashboard() {
     avisoViabilidade: null,
     scoreViabilidade: 100,
 
+    // Preview Estudo Financeiro
+    previewEstudo: {
+      isOpen: false,
+      editMode: false,
+      dadosCliente: {},
+      dadosGrupo: {},
+      simulacoes: [],
+      historico: []
+    },
+
     // Filtros
     filtros: { busca: "", adm: "", tipo_bem: "", prazo_min: "", prazo_max: "", credito_min: "" },
     filtrarCompativeis: false,
@@ -773,6 +783,145 @@ function dashboard() {
           jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
         };
         html2pdf().set(opt).from(element).save();
+      }, 100);
+    },
+
+    abrirPreviewEstudo() {
+      if (!this.grupoSelecionado || !this.admSelecionada) {
+        alert("Selecione um grupo e uma ADM");
+        return;
+      }
+
+      const cliente = this.oportunidade?.formulario || {};
+      const grupo = this.grupoSelecionado;
+      const admData = this.calc.resultados.find(a => a.nome === this.admSelecionada);
+
+      // Preparar dados do cliente
+      this.previewEstudo.dadosCliente = {
+        nome: cliente.nome_cliente || "Não preenchido",
+        cpf: cliente.cpf_cliente || "Não preenchido",
+        email: cliente.email_cliente || "Não preenchido",
+        renda: cliente.renda_mensal_num || 0
+      };
+
+      // Preparar dados do grupo
+      this.previewEstudo.dadosGrupo = {
+        adm: this.admSelecionada,
+        grupo: grupo.grupo,
+        tipo_bem: grupo.tipo_bem || "N/A",
+        menor_credito: grupo.menor_credito || 0,
+        maior_credito: grupo.maior_credito || 0,
+        parcela_inicial: grupo.parcela_inicial || 0,
+        taxa_adm: (admData?.taxaAdm * 100 || 0).toFixed(2),
+        fundo_rsv: (admData?.fundoRsv * 100 || 0).toFixed(2),
+        prazo_restante: grupo.prazo_restante || 222
+      };
+
+      // Copiar simulações
+      this.previewEstudo.simulacoes = JSON.parse(JSON.stringify(this.simulacoesEstudo));
+
+      // Preparar histórico (últimos 12 meses)
+      this.previewEstudo.historico = this.gerarHistoricoMeses();
+
+      this.previewEstudo.isOpen = true;
+      this.previewEstudo.editMode = false;
+    },
+
+    fecharPreviewEstudo() {
+      this.previewEstudo.isOpen = false;
+      this.previewEstudo.editMode = false;
+    },
+
+    toggleModoEdicaoEstudo() {
+      this.previewEstudo.editMode = !this.previewEstudo.editMode;
+    },
+
+    gerarHistoricoMeses() {
+      const meses = [];
+      const today = new Date();
+      for (let i = 11; i >= 0; i--) {
+        const data = new Date(today);
+        data.setMonth(data.getMonth() - i);
+        const mesNome = data.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }).toUpperCase();
+        meses.push({
+          mes: mesNome,
+          maiorLance: (50 + Math.random() * 30).toFixed(2),
+          qtdContemplacoes: Math.floor(Math.random() * 50),
+          menorLance: (40 + Math.random() * 35).toFixed(2)
+        });
+      }
+      return meses;
+    },
+
+    gerarPDFDaPreview() {
+      if (!this.grupoSelecionado || !this.admSelecionada) {
+        alert("Selecione um grupo e uma ADM");
+        return;
+      }
+
+      const admData = this.calc.resultados.find(a => a.nome === this.admSelecionada);
+      const grupo = this.grupoSelecionado;
+      const cliente = this.previewEstudo.dadosCliente;
+
+      const today = new Date();
+      const dataFormatada = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+
+      document.getElementById("efData").textContent = dataFormatada;
+      document.getElementById("efCartaCredito").textContent = this.formatCurrency(grupo.maior_credito);
+      document.getElementById("efParcelaReduzida").textContent = this.formatCurrency(grupo.maior_credito * 0.30);
+      document.getElementById("efLanceEmbutido").textContent = this.formatCurrency(admData?.creditoContratar || 0);
+      document.getElementById("efPrazo").textContent = `${grupo.prazo_restante || 222} meses`;
+      document.getElementById("efTaxaAdm").textContent = `${(admData?.taxaAdm * 100 || 0).toFixed(2)}%`;
+      document.getElementById("efFundoReserva").textContent = `${(admData?.fundoRsv * 100 || 0).toFixed(2)}%`;
+
+      let simHtml = "";
+      this.simulacoesEstudo.forEach((sim, idx) => {
+        simHtml += `
+          <tr style="border-bottom: 1px solid #ddd; ${idx % 2 === 0 ? 'background: #fafafa;' : ''}">
+            <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">${idx + 1}</td>
+            <td style="padding: 6px; border-right: 1px solid #ddd;">
+              <div style="font-weight: bold; color: #1a202c;">${sim.tipo}</div>
+              <div style="font-size: 9px; color: #666;">${sim.descricao}</div>
+            </td>
+            <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">
+              <div style="font-weight: bold;">${sim.lancePercentual.toFixed(2)}%</div>
+              <div style="font-size: 9px; color: #666;">${this.formatCurrency(sim.lanceTotalR$)}</div>
+            </td>
+            <td style="padding: 6px; text-align: right; border-right: 1px solid #ddd; font-weight: bold;">${this.formatCurrency(sim.creditoDisponivel)}</td>
+            <td style="padding: 6px; text-align: right; border-right: 1px solid #ddd; font-weight: bold;">${this.formatCurrency(sim.parcelasMeses)}</td>
+            <td style="padding: 6px; text-align: right;">${Math.ceil(grupo.prazo_restante || 222)} meses</td>
+          </tr>
+        `;
+      });
+      document.getElementById("efSimulacoes").innerHTML = simHtml;
+
+      let historico = "<tr style='border-bottom: 1px solid #ddd;'>";
+      for (let i = 0; i < 12; i++) {
+        const mes = new Date();
+        mes.setMonth(mes.getMonth() - (11 - i));
+        const mesStr = mes.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }).toLowerCase();
+        historico += `
+          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${mesStr}</td>
+          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${(50 + Math.random() * 30).toFixed(2)}%</td>
+          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${Math.floor(Math.random() * 50)}</td>
+          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${(40 + Math.random() * 35).toFixed(2)}%</td>
+          <td style="padding: 6px; text-align: center; ${i < 11 ? 'border-right: 1px solid #ddd;' : ''} font-size: 10px;">${Math.floor(Math.random() * 30)}</td>
+        `;
+      }
+      historico += "</tr>";
+      document.getElementById("efHistoricoLances").innerHTML = historico;
+
+      setTimeout(() => {
+        const element = document.getElementById('estudoFinanceiroPDF');
+        const opt = {
+          margin: [5, 5, 5, 5],
+          filename: `Estudo_Financeiro_${this.admSelecionada}_Grupo_${grupo.grupo}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+        };
+        html2pdf().set(opt).from(element).save();
+        this.fecharPreviewEstudo();
       }, 100);
     },
 
