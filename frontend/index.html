@@ -908,11 +908,189 @@
               </div>
 
               <!-- Botão Gerar Estudo -->
-              <button @click="gerarEstudoFinal()"
+              <button @click="abrirPreviewEstudo()"
                 class="w-full py-2 md:py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-semibold text-xs md:text-sm transition">
-                ✓ Gerar Estudo Final
+                ✓ Gerar Estudo Financeiro
               </button>
             </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- ════════════════════ MODAL: PREVIEW ESTUDO FINANCEIRO ════════════════════ -->
+        <template x-if="previewEstudo.isOpen">
+          <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 md:p-4 overflow-y-auto">
+            <div class="bg-slate-900 rounded-lg max-w-[8.5in] w-full my-4 md:my-6 border border-slate-700 shadow-2xl" style="max-height: 95vh; overflow-y: auto;">
+
+              <!-- Header da Modal -->
+              <div class="sticky top-0 bg-slate-800 border-b border-slate-700 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-3 z-10">
+                <div class="flex-1 min-w-0">
+                  <h2 class="font-bold text-white text-sm md:text-lg truncate">Estudo Financeiro</h2>
+                  <p class="text-xs text-slate-400 truncate" x-text="`${previewEstudo.dadosGrupo.adm} - Grupo ${previewEstudo.dadosGrupo.grupo}`"></p>
+                </div>
+                <button @click="fecharPreviewEstudo()" class="flex-shrink-0 text-slate-400 hover:text-slate-200 text-xl">✕</button>
+              </div>
+
+              <!-- Conteúdo A4 -->
+              <div class="px-3 md:px-8 py-4 md:py-6 space-y-4 md:space-y-6" style="background: linear-gradient(to bottom, rgba(15,23,42,1), rgba(30,41,59,1));">
+
+                <!-- DADOS DO CLIENTE -->
+                <div class="bg-slate-800/50 border border-slate-700 rounded p-3 md:p-4 space-y-2">
+                  <h3 class="font-bold text-white text-xs md:text-sm mb-3">DADOS DO CLIENTE</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label class="text-xs text-slate-400 block mb-1">Nome</label>
+                      <template x-if="previewEstudo.editMode">
+                        <input type="text" x-model="previewEstudo.dadosCliente.nome" class="w-full bg-slate-700 text-white px-2 py-1 rounded text-xs border border-slate-600 focus:border-blue-500 outline-none" />
+                      </template>
+                      <template x-if="!previewEstudo.editMode">
+                        <p class="text-slate-300 text-xs" x-text="previewEstudo.dadosCliente.nome"></p>
+                      </template>
+                    </div>
+                    <div>
+                      <label class="text-xs text-slate-400 block mb-1">CPF</label>
+                      <template x-if="previewEstudo.editMode">
+                        <input type="text" x-model="previewEstudo.dadosCliente.cpf" class="w-full bg-slate-700 text-white px-2 py-1 rounded text-xs border border-slate-600 focus:border-blue-500 outline-none" />
+                      </template>
+                      <template x-if="!previewEstudo.editMode">
+                        <p class="text-slate-300 text-xs" x-text="previewEstudo.dadosCliente.cpf"></p>
+                      </template>
+                    </div>
+                    <div class="md:col-span-2">
+                      <label class="text-xs text-slate-400 block mb-1">Email</label>
+                      <template x-if="previewEstudo.editMode">
+                        <input type="email" x-model="previewEstudo.dadosCliente.email" class="w-full bg-slate-700 text-white px-2 py-1 rounded text-xs border border-slate-600 focus:border-blue-500 outline-none" />
+                      </template>
+                      <template x-if="!previewEstudo.editMode">
+                        <p class="text-slate-300 text-xs" x-text="previewEstudo.dadosCliente.email"></p>
+                      </template>
+                    </div>
+                    <div>
+                      <label class="text-xs text-slate-400 block mb-1">Renda Mensal</label>
+                      <p class="text-slate-300 text-xs" x-text="formatCurrency(previewEstudo.dadosCliente.renda)"></p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DADOS DO GRUPO -->
+                <div class="bg-slate-800/50 border border-slate-700 rounded p-3 md:p-4 space-y-2">
+                  <h3 class="font-bold text-white text-xs md:text-sm mb-3">DADOS DO GRUPO</h3>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <p class="text-xs text-slate-400 mb-1">Administradora</p>
+                      <p class="text-slate-300 text-xs font-semibold" x-text="previewEstudo.dadosGrupo.adm"></p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-slate-400 mb-1">Grupo</p>
+                      <p class="text-slate-300 text-xs font-semibold" x-text="previewEstudo.dadosGrupo.grupo"></p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-slate-400 mb-1">Tipo de Bem</p>
+                      <p class="text-slate-300 text-xs" x-text="previewEstudo.dadosGrupo.tipo_bem"></p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-slate-400 mb-1">Crédito Mínimo</p>
+                      <p class="text-slate-300 text-xs font-mono" x-text="formatCurrency(previewEstudo.dadosGrupo.menor_credito)"></p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-slate-400 mb-1">Crédito Máximo</p>
+                      <p class="text-slate-300 text-xs font-mono" x-text="formatCurrency(previewEstudo.dadosGrupo.maior_credito)"></p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-slate-400 mb-1">Parcela Inicial</p>
+                      <p class="text-slate-300 text-xs font-mono" x-text="formatCurrency(previewEstudo.dadosGrupo.parcela_inicial)"></p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-slate-400 mb-1">Taxa ADM</p>
+                      <p class="text-slate-300 text-xs" x-text="previewEstudo.dadosGrupo.taxa_adm + '%'"></p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-slate-400 mb-1">Fundo Reserva</p>
+                      <p class="text-slate-300 text-xs" x-text="previewEstudo.dadosGrupo.fundo_rsv + '%'"></p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-slate-400 mb-1">Prazo Restante</p>
+                      <p class="text-slate-300 text-xs" x-text="previewEstudo.dadosGrupo.prazo_restante + ' meses'"></p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SIMULAÇÕES -->
+                <div class="bg-slate-800/50 border border-slate-700 rounded p-3 md:p-4 space-y-3">
+                  <h3 class="font-bold text-white text-xs md:text-sm mb-3">4 SIMULAÇÕES FINANCEIRAS</h3>
+                  <div class="space-y-2">
+                    <template x-for="(sim, idx) in previewEstudo.simulacoes" :key="idx">
+                      <div class="bg-slate-700/40 border border-slate-600 rounded p-2 md:p-3">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 text-xs">
+                          <div>
+                            <p class="text-slate-400 mb-1">Tipo</p>
+                            <p class="text-white font-semibold text-xs md:text-sm" x-text="sim.tipo"></p>
+                          </div>
+                          <div>
+                            <p class="text-slate-400 mb-1">Lance %</p>
+                            <p class="text-blue-400 font-semibold" x-text="sim.lancePercentual.toFixed(2) + '%'"></p>
+                          </div>
+                          <div>
+                            <p class="text-slate-400 mb-1">Crédito Disp.</p>
+                            <p class="text-emerald-400 font-semibold font-mono text-xs" x-text="formatCurrency(sim.creditoDisponivel)"></p>
+                          </div>
+                          <div>
+                            <p class="text-slate-400 mb-1">Prazo (meses)</p>
+                            <p class="text-slate-300 font-semibold" x-text="Math.ceil(sim.parcelasMeses)"></p>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- HISTÓRICO MENSAL (Últimos 12 meses) -->
+                <div class="bg-slate-800/50 border border-slate-700 rounded p-3 md:p-4 space-y-2">
+                  <h3 class="font-bold text-white text-xs md:text-sm mb-3">HISTÓRICO DE LANCES (Últimos 12 meses)</h3>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                      <thead class="bg-slate-700/50 text-slate-300">
+                        <tr>
+                          <th class="px-2 py-1 text-left">Mês</th>
+                          <th class="px-2 py-1 text-center">Maior %</th>
+                          <th class="px-2 py-1 text-center">Menor %</th>
+                          <th class="px-2 py-1 text-center">Qtd</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-700">
+                        <template x-for="(h, idx) in previewEstudo.historico" :key="idx">
+                          <tr class="hover:bg-slate-700/20">
+                            <td class="px-2 py-1 text-slate-300" x-text="h.mes"></td>
+                            <td class="px-2 py-1 text-center text-slate-300" x-text="h.maiorLance + '%'"></td>
+                            <td class="px-2 py-1 text-center text-slate-300" x-text="h.menorLance + '%'"></td>
+                            <td class="px-2 py-1 text-center text-slate-300" x-text="h.qtdContemplacoes"></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Footer com Botões de Ação -->
+              <div class="sticky bottom-0 bg-slate-800 border-t border-slate-700 px-4 md:px-6 py-3 md:py-4 flex gap-2 justify-end">
+                <button @click="fecharPreviewEstudo()"
+                  class="px-3 md:px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded text-xs md:text-sm transition">
+                  ← Voltar
+                </button>
+                <button @click="toggleModoEdicaoEstudo()"
+                  :class="previewEstudo.editMode ? 'bg-amber-600 hover:bg-amber-500' : 'bg-slate-700 hover:bg-slate-600'"
+                  class="px-3 md:px-4 py-2 text-white rounded text-xs md:text-sm transition">
+                  <span x-show="!previewEstudo.editMode">✎ Editar</span>
+                  <span x-show="previewEstudo.editMode">✓ Pronto</span>
+                </button>
+                <button @click="gerarPDFDaPreview()"
+                  class="px-3 md:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs md:text-sm transition">
+                  ↓ Gerar PDF
+                </button>
+              </div>
+
             </div>
           </div>
         </template>
