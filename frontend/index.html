@@ -1853,21 +1853,21 @@
             <input type="text" x-model="gerenciador.formulario.adm" @change="validarCampo('adm', $event.target.value)" placeholder="Ex: ITAÚ" required
               :class="temErro('adm') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
               class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
-            <p x-show="temErro('adm')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('adm') }}</p>
+            <p x-show="temErro('adm')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('adm')"></span></p>
           </div>
           <div>
             <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Grupo ID</label>
             <input type="text" x-model="gerenciador.formulario.grupo" @change="validarCampo('grupo', $event.target.value)" placeholder="Ex: 2125" required
               :class="temErro('grupo') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
               class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
-            <p x-show="temErro('grupo')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('grupo') }}</p>
+            <p x-show="temErro('grupo')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('grupo')"></span></p>
           </div>
           <div>
             <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Tipo de Bem</label>
             <input type="text" x-model="gerenciador.formulario.tipo_bem" @change="validarCampo('tipo_bem', $event.target.value)" placeholder="Ex: Imóvel" required
               :class="temErro('tipo_bem') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
               class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
-            <p x-show="temErro('tipo_bem')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('tipo_bem') }}</p>
+            <p x-show="temErro('tipo_bem')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('tipo_bem')"></span></p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
             <div>
@@ -1875,14 +1875,14 @@
               <input type="date" x-model="gerenciador.formulario.primeira_assembleia" @change="validarCampo('primeira_assembleia', $event.target.value)"
                 :class="temErro('primeira_assembleia') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('primeira_assembleia')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('primeira_assembleia') }}</p>
+              <p x-show="temErro('primeira_assembleia')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('primeira_assembleia')"></span></p>
             </div>
             <div>
               <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Prazo Total (meses)</label>
               <input type="number" x-model.number="gerenciador.formulario.prazo_grupo" @change="validarCampo('prazo_grupo', $event.target.value)" placeholder="80"
                 :class="temErro('prazo_grupo') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('prazo_grupo')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('prazo_grupo') }}</p>
+              <p x-show="temErro('prazo_grupo')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('prazo_grupo')"></span></p>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
@@ -1891,14 +1891,14 @@
               <input type="number" x-model.number="gerenciador.formulario.prazo_restante" @change="validarCampo('prazo_restante', $event.target.value)" placeholder="26"
                 :class="temErro('prazo_restante') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('prazo_restante')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('prazo_restante') }}</p>
+              <p x-show="temErro('prazo_restante')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('prazo_restante')"></span></p>
             </div>
             <div>
               <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Data de Término</label>
               <input type="date" x-model="gerenciador.formulario.data_termino" @change="validarCampo('data_termino', $event.target.value)"
                 :class="temErro('data_termino') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base bg-slate-800 border rounded text-white focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('data_termino')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('data_termino') }}</p>
+              <p x-show="temErro('data_termino')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('data_termino')"></span></p>
             </div>
           </div>
           <div>
@@ -1911,7 +1911,7 @@
               <option value="encerrado">Encerrado</option>
               <option value="arquivado">Arquivado</option>
             </select>
-            <p x-show="temErro('status')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('status') }}</p>
+            <p x-show="temErro('status')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('status')"></span></p>
           </div>
         </div>
 
@@ -1923,14 +1923,14 @@
               <input type="number" step="0.01" x-model.number="gerenciador.formulario.menor_credito" @change="validarCampo('menor_credito', $event.target.value)" placeholder="28502.34"
                 :class="temErro('menor_credito') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('menor_credito')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('menor_credito') }}</p>
+              <p x-show="temErro('menor_credito')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('menor_credito')"></span></p>
             </div>
             <div>
               <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1"><span class="hidden md:inline">Maior Crédito</span><span class="inline md:hidden">Mai. Créd.</span></label>
               <input type="number" step="0.01" x-model.number="gerenciador.formulario.maior_credito" @change="validarCampo('maior_credito', $event.target.value)" placeholder="51304.20"
                 :class="temErro('maior_credito') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('maior_credito')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('maior_credito') }}</p>
+              <p x-show="temErro('maior_credito')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('maior_credito')"></span></p>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
@@ -1939,14 +1939,14 @@
               <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.taxa_adm" @change="validarCampo('taxa_adm', $event.target.value)" placeholder="17"
                 :class="temErro('taxa_adm') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('taxa_adm')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('taxa_adm') }}</p>
+              <p x-show="temErro('taxa_adm')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('taxa_adm')"></span></p>
             </div>
             <div>
               <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1"><span class="hidden md:inline">Fundo Reserva (%)</span><span class="inline md:hidden">Fundo Rsv</span></label>
               <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.fundo_rsv" @change="validarCampo('fundo_rsv', $event.target.value)" placeholder="3"
                 :class="temErro('fundo_rsv') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('fundo_rsv')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('fundo_rsv') }}</p>
+              <p x-show="temErro('fundo_rsv')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('fundo_rsv')"></span></p>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
@@ -1955,14 +1955,14 @@
               <input type="number" step="0.01" x-model.number="gerenciador.formulario.prestacao_integral" @change="validarCampo('prestacao_integral', $event.target.value)" placeholder="0"
                 :class="temErro('prestacao_integral') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('prestacao_integral')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('prestacao_integral') }}</p>
+              <p x-show="temErro('prestacao_integral')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('prestacao_integral')"></span></p>
             </div>
             <div>
               <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1"><span class="hidden md:inline">Meia Reduzida</span><span class="inline md:hidden">Meia Red</span></label>
               <input type="number" step="0.01" x-model.number="gerenciador.formulario.meia_reduzida" @change="validarCampo('meia_reduzida', $event.target.value)" placeholder="0"
                 :class="temErro('meia_reduzida') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('meia_reduzida')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('meia_reduzida') }}</p>
+              <p x-show="temErro('meia_reduzida')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('meia_reduzida')"></span></p>
             </div>
           </div>
         </div>
@@ -1975,14 +1975,14 @@
               <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.investidor" @change="validarCampo('investidor', $event.target.value)" placeholder="0"
                 :class="temErro('investidor') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('investidor')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('investidor') }}</p>
+              <p x-show="temErro('investidor')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('investidor')"></span></p>
             </div>
             <div>
               <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1"><span class="hidden md:inline">Conservador 24M (%)</span><span class="inline md:hidden">Cons 24M</span></label>
               <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.conservador_24m" @change="validarCampo('conservador_24m', $event.target.value)" placeholder="39"
                 :class="temErro('conservador_24m') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('conservador_24m')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('conservador_24m') }}</p>
+              <p x-show="temErro('conservador_24m')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('conservador_24m')"></span></p>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
@@ -1991,14 +1991,14 @@
               <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.moderado_12m" @change="validarCampo('moderado_12m', $event.target.value)" placeholder="39"
                 :class="temErro('moderado_12m') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('moderado_12m')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('moderado_12m') }}</p>
+              <p x-show="temErro('moderado_12m')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('moderado_12m')"></span></p>
             </div>
             <div>
               <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1"><span class="hidden md:inline">Agressivo 6M (%)</span><span class="inline md:hidden">Agr 6M</span></label>
               <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.agressivo_6m" @change="validarCampo('agressivo_6m', $event.target.value)" placeholder="39"
                 :class="temErro('agressivo_6m') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
                 class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-              <p x-show="temErro('agressivo_6m')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('agressivo_6m') }}</p>
+              <p x-show="temErro('agressivo_6m')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('agressivo_6m')"></span></p>
             </div>
           </div>
           <div>
@@ -2006,14 +2006,14 @@
             <input type="number" step="0.01" min="0" max="100" x-model.number="gerenciador.formulario.super_agressivo_3m" @change="validarCampo('super_agressivo_3m', $event.target.value)" placeholder="39"
               :class="temErro('super_agressivo_3m') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
               class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-            <p x-show="temErro('super_agressivo_3m')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('super_agressivo_3m') }}</p>
+            <p x-show="temErro('super_agressivo_3m')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('super_agressivo_3m')"></span></p>
           </div>
           <div>
             <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Categoria</label>
             <input type="text" x-model="gerenciador.formulario.categoria" @change="validarCampo('categoria', $event.target.value)" placeholder="350887,9"
               :class="temErro('categoria') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
               class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition" />
-            <p x-show="temErro('categoria')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('categoria') }}</p>
+            <p x-show="temErro('categoria')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('categoria')"></span></p>
           </div>
         </div>
 
@@ -2088,7 +2088,7 @@
             <textarea x-model="gerenciador.formulario.observacoes" @change="validarCampo('observacoes', $event.target.value)" rows="5" placeholder="Notas internas sobre este grupo..."
               :class="temErro('observacoes') ? 'border-red-500 bg-red-950' : 'border-slate-700'"
               class="w-full px-2 md:px-3 py-1.5 md:py-2 bg-slate-800 border rounded text-white text-xs md:text-sm focus:outline-none focus:border-blue-500 transition"></textarea>
-            <p x-show="temErro('observacoes')" class="text-xs text-red-400 mt-1">❌ {{ obterErro('observacoes') }}</p>
+            <p x-show="temErro('observacoes')" class="text-xs text-red-400 mt-1">❌ <span x-text="obterErro('observacoes')"></span></p>
           </div>
           <div class="bg-slate-800 p-2 md:p-3 rounded border border-slate-700">
             <p class="text-xs md:text-sm text-slate-300"><strong><span class="hidden md:inline">Última atualização:</span><span class="inline md:hidden">Ult. At.:</span></strong> <span x-text="gerenciador.grupoSelecionado?.ultima_atualizacao || 'N/A'" class="text-slate-400"></span></p>

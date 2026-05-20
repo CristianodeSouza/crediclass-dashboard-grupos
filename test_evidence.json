@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-20T06:09:05.522870",
+  "timestamp": "2026-05-20T07:12:26.437302",
   "tests": [
     {
       "name": "Frontend responde HTTP 200",
@@ -9,7 +9,7 @@
     {
       "name": "HTML tem tamanho > 10KB",
       "status": "PASS",
-      "details": "Size: 178923 bytes"
+      "details": "Size: 179137 bytes"
     },
     {
       "name": "[x-cloak] CSS presente",
@@ -24,7 +24,7 @@
     {
       "name": "x-cloak CSS vem ANTES do body",
       "status": "PASS",
-      "details": "CSS pos: 1052, body pos: 1114"
+      "details": "CSS pos: 1040, body pos: 1102"
     },
     {
       "name": "Alpine.js 3.x carregado",
@@ -44,7 +44,7 @@
     {
       "name": "Alpine.js carrega ANTES de app.js",
       "status": "PASS",
-      "details": "Alpine pos: 683, app.js pos: 748"
+      "details": "Alpine pos: 677, app.js pos: 736"
     },
     {
       "name": "Alpine.js com defer",
@@ -53,7 +53,7 @@
     },
     {
       "name": "app.js com defer",
-      "status": "PASS",
+      "status": "FAIL",
       "details": "Carregamento assíncrono"
     },
     {
@@ -112,18 +112,18 @@
       "details": "HTML + JavaScript + API OK"
     }
   ],
-  "passed": 22,
-  "failed": 0,
+  "passed": 21,
+  "failed": 1,
   "analysis": {
-    "html_size": 178923,
-    "html_lines": 2667,
-    "xcloak_css_pos": 1052,
-    "body_pos": 1114,
+    "html_size": 179137,
+    "html_lines": 2669,
+    "xcloak_css_pos": 1040,
+    "body_pos": 1102,
     "has_alpine": true,
     "has_xdata": true,
     "script_order": {
-      "alpine_pos": 683,
-      "app_pos": 748,
+      "alpine_pos": 677,
+      "app_pos": 736,
       "correct": true
     },
     "app_js": {
