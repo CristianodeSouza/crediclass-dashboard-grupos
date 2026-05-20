@@ -827,6 +827,16 @@ function dashboard() {
       this.previewEstudo.editMode = false;
     },
 
+    selecionarEAbrirPreview() {
+      if (this.selecionados.length === 0) {
+        alert("Nenhum grupo selecionado");
+        return;
+      }
+      this.grupoSelecionado = this.selecionados[0];
+      this.admSelecionada = this.selecionados[0].adm;
+      this.abrirPreviewEstudo();
+    },
+
     fecharPreviewEstudo() {
       this.previewEstudo.isOpen = false;
       this.previewEstudo.editMode = false;

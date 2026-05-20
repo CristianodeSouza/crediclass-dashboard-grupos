@@ -286,7 +286,7 @@
             <button @click="toggleSelecao(g)" class="text-slate-600 hover:text-red-400 transition text-base leading-none">×</button>
           </div>
         </template>
-        <button @click="grupoSelecionado = selecionados[0]; admSelecionada = selecionados[0].adm; abrirPreviewEstudo()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold text-white transition">
+        <button @click="selecionarEAbrirPreview()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold text-white transition">
           Gerar Estudo Financeiro
         </button>
       </div>
