@@ -1375,10 +1375,10 @@
 
   <!-- ════════════════════════ ABA: ANALYTICS DASHBOARD ════════════════════════ -->
   <template x-if="abaAtiva === 'analytics'">
-    <div class="space-y-6 px-4 md:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full overflow-y-auto">
+    <div class="space-y-3 md:space-y-6 px-3 md:px-4 lg:px-6 py-3 md:py-6 max-w-7xl mx-auto w-full overflow-y-auto">
       <!-- Header com Loading -->
-      <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-white">📈 Dashboard Analítico</h1>
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
+        <h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-white">📈 Dashboard Analítico</h1>
         <template x-if="analytics.carregando">
           <div class="text-slate-400 text-sm flex items-center gap-2">
             <div class="w-4 h-4 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin"></div>
@@ -1388,95 +1388,95 @@
       </div>
 
       <!-- KPI Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <!-- Total de Grupos -->
-        <div class="bg-gradient-to-br from-blue-900/30 to-blue-800/10 border border-blue-700/30 rounded-lg p-6">
-          <p class="text-slate-400 text-sm font-medium uppercase tracking-wide">Total de Grupos</p>
-          <p class="text-3xl font-bold text-blue-300 mt-3">
+        <div class="bg-gradient-to-br from-blue-900/30 to-blue-800/10 border border-blue-700/30 rounded-lg p-3 md:p-6">
+          <p class="text-slate-400 text-xs md:text-sm font-medium uppercase tracking-tight md:tracking-wide">Total de Grupos</p>
+          <p class="text-xl md:text-2xl lg:text-3xl font-bold text-blue-300 mt-2 md:mt-3">
             <span x-text="analytics.dados.summary?.total_grupos || '—'"></span>
           </p>
-          <p class="text-xs text-slate-500 mt-2">Grupos ativos no sistema</p>
+          <p class="text-xs text-slate-500 mt-1 md:mt-2">Grupos ativos no sistema</p>
         </div>
 
         <!-- Total de Crédito -->
-        <div class="bg-gradient-to-br from-emerald-900/30 to-emerald-800/10 border border-emerald-700/30 rounded-lg p-6">
-          <p class="text-slate-400 text-sm font-medium uppercase tracking-wide">Total de Crédito</p>
-          <p class="text-3xl font-bold text-emerald-300 mt-3">
+        <div class="bg-gradient-to-br from-emerald-900/30 to-emerald-800/10 border border-emerald-700/30 rounded-lg p-3 md:p-6">
+          <p class="text-slate-400 text-xs md:text-sm font-medium uppercase tracking-tight md:tracking-wide">Total de Crédito</p>
+          <p class="text-xl md:text-2xl lg:text-3xl font-bold text-emerald-300 mt-2 md:mt-3">
             R$ <span x-text="(analytics.dados.summary?.total_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></span>
           </p>
-          <p class="text-xs text-slate-500 mt-2">Soma de todos os créditos</p>
+          <p class="text-xs text-slate-500 mt-1 md:mt-2">Soma de todos os créditos</p>
         </div>
 
         <!-- Crédito Médio -->
-        <div class="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border border-purple-700/30 rounded-lg p-6">
-          <p class="text-slate-400 text-sm font-medium uppercase tracking-wide">Crédito Médio</p>
-          <p class="text-3xl font-bold text-purple-300 mt-3">
+        <div class="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border border-purple-700/30 rounded-lg p-3 md:p-6">
+          <p class="text-slate-400 text-xs md:text-sm font-medium uppercase tracking-tight md:tracking-wide">Crédito Médio</p>
+          <p class="text-xl md:text-2xl lg:text-3xl font-bold text-purple-300 mt-2 md:mt-3">
             R$ <span x-text="(analytics.dados.summary?.credito_medio || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})"></span>
           </p>
-          <p class="text-xs text-slate-500 mt-2">Média por grupo</p>
+          <p class="text-xs text-slate-500 mt-1 md:mt-2">Média por grupo</p>
         </div>
 
         <!-- Taxa ADM Média -->
-        <div class="bg-gradient-to-br from-amber-900/30 to-amber-800/10 border border-amber-700/30 rounded-lg p-6">
-          <p class="text-slate-400 text-sm font-medium uppercase tracking-wide">Taxa ADM Média</p>
-          <p class="text-3xl font-bold text-amber-300 mt-3">
+        <div class="bg-gradient-to-br from-amber-900/30 to-amber-800/10 border border-amber-700/30 rounded-lg p-3 md:p-6">
+          <p class="text-slate-400 text-xs md:text-sm font-medium uppercase tracking-tight md:tracking-wide">Taxa ADM Média</p>
+          <p class="text-xl md:text-2xl lg:text-3xl font-bold text-amber-300 mt-2 md:mt-3">
             <span x-text="(analytics.dados.summary?.taxa_adm_media || 0).toFixed(2)"></span>%
           </p>
-          <p class="text-xs text-slate-500 mt-2">Taxa média de administração</p>
+          <p class="text-xs text-slate-500 mt-1 md:mt-2">Taxa média de administração</p>
         </div>
       </div>
 
       <!-- Top 3 Administradoras -->
-      <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-        <h2 class="text-lg font-bold text-white mb-4">🏆 Top 3 Administradoras</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-3 md:p-6">
+        <h2 class="text-base md:text-lg font-bold text-white mb-3 md:mb-4">🏆 Top 3 Administradoras</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
           <template x-for="(adm, idx) in (analytics.dados.summary?.principais_adms || []).slice(0, 3)" :key="idx">
-            <div class="bg-slate-800/50 border border-slate-700 rounded p-4">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-xl font-bold text-yellow-400">
+            <div class="bg-slate-800/50 border border-slate-700 rounded p-3 md:p-4">
+              <div class="flex items-center justify-between mb-2 md:mb-3">
+                <span class="text-lg md:text-xl font-bold text-yellow-400">
                   <template x-if="idx === 0">🥇</template>
                   <template x-if="idx === 1">🥈</template>
                   <template x-if="idx === 2">🥉</template>
                 </span>
-                <p class="text-sm text-slate-400">#<span x-text="idx + 1"></span></p>
+                <p class="text-xs md:text-sm text-slate-400">#<span x-text="idx + 1"></span></p>
               </div>
-              <p class="font-semibold text-white truncate" x-text="adm.adm"></p>
-              <p class="text-2xl font-bold text-blue-400 mt-2" x-text="adm.total + ' grupos'"></p>
+              <p class="font-semibold text-white text-sm md:text-base truncate" x-text="adm.adm"></p>
+              <p class="text-lg md:text-2xl font-bold text-blue-400 mt-1 md:mt-2" x-text="adm.total + ' grupos'"></p>
             </div>
           </template>
         </div>
       </div>
 
       <!-- Gráficos Section -->
-      <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
 
         <!-- Gráfico 1: Distribuição entre ADMs (Donut) -->
-        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-          <h3 class="text-lg font-bold text-white mb-4">Distribuição de Crédito por ADM</h3>
+        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-3 md:p-6">
+          <h3 class="text-base md:text-lg font-bold text-white mb-3 md:mb-4">Distribuição de Crédito por ADM</h3>
           <div class="relative h-48 md:h-64 lg:h-80">
             <canvas id="chartDistribuicaoAdm"></canvas>
           </div>
         </div>
 
         <!-- Gráfico 2: Comparativo ADMs (Bar) -->
-        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-          <h3 class="text-lg font-bold text-white mb-4">Comparativo de Grupos por ADM</h3>
+        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-3 md:p-6">
+          <h3 class="text-base md:text-lg font-bold text-white mb-3 md:mb-4">Comparativo de Grupos por ADM</h3>
           <div class="relative h-48 md:h-64 lg:h-80">
             <canvas id="chartComparativoAdm"></canvas>
           </div>
         </div>
 
         <!-- Gráfico 3: Tendências Mensais (Line) -->
-        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6 lg:col-span-2">
-          <h3 class="text-lg font-bold text-white mb-4">Tendências de Lances - Últimos 12 Meses</h3>
+        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-3 md:p-6 lg:col-span-2">
+          <h3 class="text-base md:text-lg font-bold text-white mb-3 md:mb-4">Tendências de Lances - Últimos 12 Meses</h3>
           <div class="relative h-48 md:h-64 lg:h-80">
             <canvas id="chartTendencias"></canvas>
           </div>
         </div>
 
         <!-- Gráfico 4: Distribuição por Faixa de Crédito (Bar) -->
-        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6 lg:col-span-2">
-          <h3 class="text-lg font-bold text-white mb-4">Distribuição de Grupos por Faixa de Crédito</h3>
+        <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-3 md:p-6 lg:col-span-2">
+          <h3 class="text-base md:text-lg font-bold text-white mb-3 md:mb-4">Distribuição de Grupos por Faixa de Crédito</h3>
           <div class="relative h-48 md:h-64 lg:h-80">
             <canvas id="chartDistribuicaoFaixa"></canvas>
           </div>
@@ -1484,54 +1484,54 @@
       </div>
 
       <!-- Estatísticas Detalhadas -->
-      <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
-        <h2 class="text-lg font-bold text-white mb-4">📊 Estatísticas Detalhadas</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-900/50 border border-slate-800 rounded-lg p-3 md:p-6">
+        <h2 class="text-base md:text-lg font-bold text-white mb-3 md:mb-4">📊 Estatísticas Detalhadas</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <div>
-            <p class="text-slate-400 text-xs uppercase tracking-wide">Crédito Mínimo</p>
-            <p class="text-2xl font-bold text-white mt-2">
+            <p class="text-slate-400 text-xs uppercase tracking-tight md:tracking-wide">Crédito Mínimo</p>
+            <p class="text-lg md:text-2xl font-bold text-white mt-1 md:mt-2">
               R$ <span x-text="(analytics.dados.estatisticas?.credito_minimo || 0).toLocaleString('pt-BR', {maximumFractionDigits: 0})"></span>
             </p>
           </div>
           <div>
-            <p class="text-slate-400 text-xs uppercase tracking-wide">Crédito Máximo</p>
-            <p class="text-2xl font-bold text-white mt-2">
+            <p class="text-slate-400 text-xs uppercase tracking-tight md:tracking-wide">Crédito Máximo</p>
+            <p class="text-lg md:text-2xl font-bold text-white mt-1 md:mt-2">
               R$ <span x-text="(analytics.dados.estatisticas?.credito_maximo || 0).toLocaleString('pt-BR', {maximumFractionDigits: 0})"></span>
             </p>
           </div>
           <div>
-            <p class="text-slate-400 text-xs uppercase tracking-wide">Crédito Mediana</p>
-            <p class="text-2xl font-bold text-white mt-2">
+            <p class="text-slate-400 text-xs uppercase tracking-tight md:tracking-wide">Crédito Mediana</p>
+            <p class="text-lg md:text-2xl font-bold text-white mt-1 md:mt-2">
               R$ <span x-text="(analytics.dados.estatisticas?.credito_mediana || 0).toLocaleString('pt-BR', {maximumFractionDigits: 0})"></span>
             </p>
           </div>
           <div>
-            <p class="text-slate-400 text-xs uppercase tracking-wide">Taxa Máxima</p>
-            <p class="text-2xl font-bold text-white mt-2">
+            <p class="text-slate-400 text-xs uppercase tracking-tight md:tracking-wide">Taxa Máxima</p>
+            <p class="text-lg md:text-2xl font-bold text-white mt-1 md:mt-2">
               <span x-text="(analytics.dados.estatisticas?.taxa_adm_maxima || 0).toFixed(2)"></span>%
             </p>
           </div>
           <div>
-            <p class="text-slate-400 text-xs uppercase tracking-wide">Taxa Mínima</p>
-            <p class="text-2xl font-bold text-white mt-2">
+            <p class="text-slate-400 text-xs uppercase tracking-tight md:tracking-wide">Taxa Mínima</p>
+            <p class="text-lg md:text-2xl font-bold text-white mt-1 md:mt-2">
               <span x-text="(analytics.dados.estatisticas?.taxa_adm_minima || 0).toFixed(2)"></span>%
             </p>
           </div>
           <div>
-            <p class="text-slate-400 text-xs uppercase tracking-wide">Vida Máxima %</p>
-            <p class="text-2xl font-bold text-white mt-2">
+            <p class="text-slate-400 text-xs uppercase tracking-tight md:tracking-wide">Vida Máxima %</p>
+            <p class="text-lg md:text-2xl font-bold text-white mt-1 md:mt-2">
               <span x-text="(analytics.dados.estatisticas?.vida_maxima || 0).toFixed(2)"></span>%
             </p>
           </div>
           <div>
-            <p class="text-slate-400 text-xs uppercase tracking-wide">Vida Mínima %</p>
-            <p class="text-2xl font-bold text-white mt-2">
+            <p class="text-slate-400 text-xs uppercase tracking-tight md:tracking-wide">Vida Mínima %</p>
+            <p class="text-lg md:text-2xl font-bold text-white mt-1 md:mt-2">
               <span x-text="(analytics.dados.estatisticas?.vida_minima || 0).toFixed(2)"></span>%
             </p>
           </div>
           <div>
-            <p class="text-slate-400 text-xs uppercase tracking-wide">Tipos de Bem</p>
-            <p class="text-2xl font-bold text-white mt-2">
+            <p class="text-slate-400 text-xs uppercase tracking-tight md:tracking-wide">Tipos de Bem</p>
+            <p class="text-lg md:text-2xl font-bold text-white mt-1 md:mt-2">
               <span x-text="Object.keys(analytics.dados.estatisticas?.grupos_por_tipo_bem || {}).length || 0"></span>
             </p>
           </div>
@@ -1540,12 +1540,12 @@
 
       <!-- Mensagem de Erro -->
       <template x-if="analytics.erro">
-        <div class="bg-red-900/20 border border-red-700 rounded-lg p-4 flex items-start gap-3">
-          <span class="text-2xl">⚠️</span>
-          <div>
-            <p class="font-semibold text-red-300">Erro ao carregar dados</p>
-            <p class="text-red-200 text-sm mt-1" x-text="analytics.erro"></p>
-            <button @click="carregarAnalytics()" class="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition">
+        <div class="bg-red-900/20 border border-red-700 rounded-lg p-3 md:p-4 flex items-start gap-2 md:gap-3">
+          <span class="text-xl md:text-2xl flex-shrink-0">⚠️</span>
+          <div class="min-w-0">
+            <p class="font-semibold text-red-300 text-sm md:text-base">Erro ao carregar dados</p>
+            <p class="text-red-200 text-xs md:text-sm mt-1 break-words" x-text="analytics.erro"></p>
+            <button @click="carregarAnalytics()" class="mt-2 md:mt-3 bg-red-600 hover:bg-red-700 text-white px-3 md:px-4 py-2 rounded text-xs md:text-sm transition">
               🔄 Tentar Novamente
             </button>
           </div>
