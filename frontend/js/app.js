@@ -2047,60 +2047,21 @@ function dashboard() {
 
 // Reinicializar Alpine após carregamento completo do script
 if (typeof Alpine !== 'undefined') {
-  console.log('[Alpine Init] ✓ Alpine detected, app.js fully loaded');
-  console.log('[Alpine Init] Globals available:', {
-    Alpine_version: Alpine.version,
-    dashboard_type: typeof dashboard,
-    document_ready: document.readyState,
-    body_x_data: document.body.getAttribute('x-data'),
-    timestamp: new Date().toISOString()
-  });
+  console.log('[Alpine Init] ✓ Alpine detectado, app.js carregado');
+  console.log('[Alpine Init] dashboard() disponível?', typeof dashboard === 'function');
 
-  if (typeof dashboard === 'function') {
-    console.log('[Alpine Init] ✓ dashboard() function found, calling Alpine.initTree()...');
-
-    // Test object before initialization
-    const testInstance = dashboard();
-    console.log('[Alpine Init] Test instance methods:', Object.keys(testInstance).filter(k => typeof testInstance[k] === 'function'));
-    console.log('[Alpine Init] refresh available?', typeof testInstance.refresh);
-
+  // Alpine.start() é a forma recomendada - ele aguarda o DOM estar pronto
+  // e compila automaticamente sem conflitos de timing
+  if (typeof Alpine !== 'undefined') {
+    console.log('[Alpine Init] ✓ Iniciando Alpine.start() — x-cloak removido do render quando pronto');
     try {
-      // Use setTimeout to ensure DOM is ready
-      setTimeout(() => {
-        Alpine.initTree(document.body);
-        console.log('[Alpine Init] ✅ Alpine.initTree() completed successfully');
-
-        // Verify binding
-        setTimeout(() => {
-          const bodyEl = document.body;
-          const alpineData = Alpine.$data(bodyEl);
-          if (alpineData) {
-            console.log('[Alpine Init] Alpine data keys:', Object.keys(alpineData).slice(0, 20));
-            console.log('[Alpine Init] refresh in Alpine data?', 'refresh' in alpineData);
-            console.log('[Alpine Init] typeof refresh in Alpine:', typeof alpineData.refresh);
-          }
-        }, 100);
-      }, 100);
+      Alpine.start();
+      console.log('[Alpine Init] ✅ Alpine.start() iniciado com sucesso');
     } catch (err) {
-      console.error('[Alpine Init] ❌ Alpine.initTree() threw error:', err);
+      console.error('[Alpine Init] ❌ Erro ao iniciar Alpine:', err);
     }
   } else {
-    console.error('[Alpine Init] ❌ dashboard() NOT found! Retrying in 500ms...');
-    setTimeout(() => {
-      console.log('[Alpine Init] [Retry 1] Checking again...');
-      if (typeof dashboard === 'function') {
-        console.log('[Alpine Init] ✓ dashboard() now available, initializing...');
-        try {
-          Alpine.initTree(document.body);
-          console.log('[Alpine Init] ✅ Alpine.initTree() succeeded on retry');
-        } catch (err) {
-          console.error('[Alpine Init] ❌ Alpine.initTree() error on retry:', err);
-        }
-      } else {
-        console.error('[Alpine Init] 🔴 CRITICAL: dashboard() still not available after 500ms delay');
-        console.log('[Alpine Init] Window contents:', Object.keys(window).filter(k => k.includes('dashboard') || k.includes('app')));
-      }
-    }, 500);
+    console.error('[Alpine Init] 🔴 CRÍTICO: Alpine não foi carregado do CDN!');
   }
 } else {
   console.error('[Alpine Init] 🔴 CRÍTICO: Alpine não foi carregado do CDN!');
