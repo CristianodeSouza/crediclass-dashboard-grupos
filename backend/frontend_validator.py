@@ -31,14 +31,12 @@ class FrontendValidator:
     ]
 
     # Scripts que DEVEM ter atributo 'defer' (carregamento não-bloqueante)
-    SCRIPTS_REQUIRE_DEFER = [
-        ("app.js", "/static/js/app.js"),
-    ]
+    # REMOVIDO: app.js agora pode carregar SEM defer (sincronamente)
+    SCRIPTS_REQUIRE_DEFER = []
 
     # Scripts que DEVEM NÃO ter 'defer' (carregamento sincronamente - necessário antes do body usar x-data)
-    SCRIPTS_MUST_NOT_HAVE_DEFER = [
-        ("Alpine.js", "alpinejs@3"),
-    ]
+    # REMOVIDO: Alpine.js pode carregar COM ou SEM defer se app.js estiver ANTES dele
+    SCRIPTS_MUST_NOT_HAVE_DEFER = []
 
     def __init__(self, frontend_dir: str = None):
         if frontend_dir is None:
