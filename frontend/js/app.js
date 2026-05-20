@@ -2074,7 +2074,13 @@ function dashboard() {
   };
 }
 
-// ✅ CRÍTICO: Registrar dashboard com Alpine ANTES de chamar Alpine.start()
+// ✅ CRÍTICO: Expor dashboard globalmente ANTES de Alpine.start()
+if (typeof dashboard === 'function') {
+  window.dashboard = dashboard;
+  console.log('[Alpine Init] ✓ window.dashboard disponível globalmente');
+}
+
+// ✅ Registrar com Alpine também (dupla segurança)
 if (typeof Alpine !== 'undefined' && typeof dashboard === 'function') {
   Alpine.data('dashboard', dashboard);
   console.log('[Alpine Init] ✓ dashboard() registrada com Alpine.data()');
