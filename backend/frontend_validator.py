@@ -31,9 +31,13 @@ class FrontendValidator:
     ]
 
     # Scripts que DEVEM ter atributo 'defer' (carregamento não-bloqueante)
-    CRITICAL_DEFER_SCRIPTS = [
-        ("Alpine.js", "alpinejs@3"),
+    SCRIPTS_REQUIRE_DEFER = [
         ("app.js", "/static/js/app.js"),
+    ]
+
+    # Scripts que DEVEM NÃO ter 'defer' (carregamento sincronamente - necessário antes do body usar x-data)
+    SCRIPTS_MUST_NOT_HAVE_DEFER = [
+        ("Alpine.js", "alpinejs@3"),
     ]
 
     def __init__(self, frontend_dir: str = None):
@@ -102,15 +106,18 @@ class FrontendValidator:
                 )
 
     def _check_defer_attributes(self) -> None:
-        """Verifica se scripts crticos (Alpine, app.js) tem atributo 'defer'"""
+        """Verifica se scripts têm defer correto:
+        - app.js DEVE ter defer (carregamento não-bloqueante)
+        - Alpine.js NÃO deve ter defer (deve carregar sincronamente antes do body usar x-data)
+        """
         if not os.path.exists(self.html_file):
             return
 
         with open(self.html_file, "r", encoding="utf-8") as f:
             html_content = f.read()
 
-        for name, identifier in self.CRITICAL_DEFER_SCRIPTS:
-            # Procura por <script ... src="...identifier...">
+        # Validar scripts que EXIGEM defer
+        for name, identifier in self.SCRIPTS_REQUIRE_DEFER:
             pattern = r'<script[^>]*src="[^"]*' + re.escape(identifier) + r'[^"]*"[^>]*>'
             match = re.search(pattern, html_content, re.IGNORECASE)
 
@@ -122,9 +129,21 @@ class FrontendValidator:
                         f"    Adicione: <script defer src=\"...{identifier}...\"></script>\n"
                         f"    Tag encontrada: {script_tag[:80]}..."
                     )
-            else:
-                # Se nao encontrou, ja foi reportado em _check_required_scripts
-                pass
+
+        # Validar scripts que NÃO devem ter defer
+        for name, identifier in self.SCRIPTS_MUST_NOT_HAVE_DEFER:
+            pattern = r'<script[^>]*src="[^"]*' + re.escape(identifier) + r'[^"]*"[^>]*>'
+            match = re.search(pattern, html_content, re.IGNORECASE)
+
+            if match:
+                script_tag = match.group(0)
+                if "defer" in script_tag.lower():
+                    self.errors.append(
+                        f" CRITICO: {name} tem atributo 'defer' (ERRADO!)\n"
+                        f"    {name} DEVE carregar sincronamente ANTES do body usar x-data\n"
+                        f"    Remova: <script defer ...> → <script ...>\n"
+                        f"    Tag encontrada: {script_tag[:80]}..."
+                    )
 
     def _check_script_order(self) -> None:
         """Verifica se Alpine.js carrega ANTES de app.js"""
