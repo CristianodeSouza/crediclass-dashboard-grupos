@@ -83,11 +83,6 @@ class GrupoCreate(BaseModel):
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 
-@app.get("/login")
-def login_page():
-    return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
-
-
 @app.get("/")
 def index():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
