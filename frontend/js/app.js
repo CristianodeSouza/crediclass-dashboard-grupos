@@ -2134,23 +2134,4 @@ if (typeof Alpine !== 'undefined' && typeof dashboard === 'function') {
 }
 
 // Reinicializar Alpine após carregamento completo do script
-if (typeof Alpine !== 'undefined') {
-  console.log('[Alpine Init] ✓ Alpine detectado, app.js carregado');
-  console.log('[Alpine Init] dashboard() disponível?', typeof dashboard === 'function');
-
-  // Alpine.start() é a forma recomendada - ele aguarda o DOM estar pronto
-  // e compila automaticamente sem conflitos de timing
-  if (typeof Alpine !== 'undefined') {
-    console.log('[Alpine Init] ✓ Iniciando Alpine.start() — x-cloak removido do render quando pronto');
-    try {
-      Alpine.start();
-      console.log('[Alpine Init] ✅ Alpine.start() iniciado com sucesso');
-    } catch (err) {
-      console.error('[Alpine Init] ❌ Erro ao iniciar Alpine:', err);
-    }
-  } else {
-    console.error('[Alpine Init] 🔴 CRÍTICO: Alpine não foi carregado do CDN!');
-  }
-} else {
-  console.error('[Alpine Init] 🔴 CRÍTICO: Alpine não foi carregado do CDN!');
-}
+console.log('[Alpine Init] dashboard() carregado e pronto para Alpine.js');
