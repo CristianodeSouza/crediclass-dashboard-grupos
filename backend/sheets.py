@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
+from google.oauth2.service_account import Credentials
 
 load_dotenv()
 
@@ -11,9 +12,39 @@ SHEET_RANGE = "Tabela de Grupos 3.0!A:EF"
 API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyBTQeZkVls2uwJT0XeNJS0ZrTLZUPWCESM")
 
 CACHE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "grupos.json")
+SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), "service-account-key.json")
+
+# Cache para o service (para não recriar toda vez)
+_service_cache = None
 
 
-def get_service():
+def get_service_account_credentials():
+    """Tenta carregar credenciais de Service Account para escrita"""
+    try:
+        if os.path.exists(SERVICE_ACCOUNT_FILE):
+            credentials = Credentials.from_service_account_file(
+                SERVICE_ACCOUNT_FILE,
+                scopes=["https://www.googleapis.com/auth/spreadsheets"]
+            )
+            return credentials
+    except Exception as e:
+        print(f"Aviso: Nao conseguiu carregar Service Account: {e}")
+    return None
+
+
+def get_service(use_write_permissions=False):
+    """Retorna serviço Google Sheets com permissões apropriadas"""
+    global _service_cache
+
+    if use_write_permissions:
+        # Tenta usar Service Account para escrita
+        credentials = get_service_account_credentials()
+        if credentials:
+            return build("sheets", "v4", credentials=credentials)
+        else:
+            print("Aviso: Service Account nao disponivel. Updates serao salvos apenas em cache local.")
+
+    # Fallback: API Key para leitura
     return build("sheets", "v4", developerKey=API_KEY)
 
 
@@ -164,6 +195,115 @@ def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict =
         json.dump(auditoria, f, ensure_ascii=False, indent=2)
 
 
+def mapa_campo_para_coluna() -> dict:
+    """Retorna mapeamento de campo para índice de coluna no Google Sheets"""
+    return {
+        "adm": 0,
+        "grupo": 1,
+        "tipo_bem": 2,
+        "primeira_assembleia": 3,
+        "prazo_grupo": 4,
+        "prazo_restante": 5,
+        "meses_corridos": 6,
+        "data_termino": 7,
+        "vida_grupo_pct": 8,
+        "venc": 10,
+        "menor_credito": 11,
+        "maior_credito": 12,
+        "taxa_adm": 13,
+        "taxa_promocao": 16,
+        "fundo_rsv": 19,
+        "prestacao_integral": 20,
+        "meia_reduzida": 21,
+        "investidor": 26,
+        "conservador_24m": 27,
+        "moderado_12m": 28,
+        "agressivo_6m": 29,
+        "super_agressivo_3m": 30,
+        "lance_quitacao": 31,
+        "media_lance": 32,
+        "media_contemp": 33,
+        "categoria": 37,
+        "parcela_inicial": 38,
+    }
+
+
+def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
+    """Sincroniza alterações de grupo com Google Sheets via API
+
+    Tenta usar Service Account. Se nao disponivel, retorna False silenciosamente
+    e aviso eh registrado (cache sera atualizado normalmente).
+    """
+    try:
+        service = get_service(use_write_permissions=True)
+
+        # Verifica se conseguiu credenciais de escrita
+        if not service:
+            print(f"AVISO: Nao foi possivel sincronizar com Google Sheets (Service Account nao configurado)")
+            return False
+
+        # Lê todos os dados do Sheets
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range="Tabela de Grupos 3.0!A:EF"
+        ).execute()
+
+        rows = result.get("values", [])
+        if not rows:
+            return False
+
+        # Encontra a linha do grupo (linha 0 é header, então +1)
+        grupo_row_idx = None
+        for i, row in enumerate(rows[1:], start=1):
+            if len(row) > 1 and str(row[1]) == str(grupo_id):
+                grupo_row_idx = i
+                break
+
+        if grupo_row_idx is None:
+            return False
+
+        # Mapeia campos para colunas
+        campo_para_coluna = mapa_campo_para_coluna()
+
+        # Prepara updates para a API
+        updates = []
+        for campo, valor in dados.items():
+            if campo in campo_para_coluna:
+                col_idx = campo_para_coluna[campo]
+                col_letra = chr(65 + col_idx)  # A=65, B=66, etc
+                cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
+
+                # Formata o valor corretamente
+                if valor is None:
+                    valor_str = ""
+                elif isinstance(valor, float):
+                    # Numeros: formatar com 2 casas decimais, usando virgula como separador
+                    valor_str = f"{valor:.2f}".replace(".", ",")
+                elif isinstance(valor, (int, bool)):
+                    valor_str = str(valor)
+                else:
+                    valor_str = str(valor)
+
+                updates.append({
+                    "range": cell_ref,
+                    "values": [[valor_str]]
+                })
+
+        if not updates:
+            return False
+
+        # Executa batch update na API
+        service.spreadsheets().values().batchUpdate(
+            spreadsheetId=SPREADSHEET_ID,
+            body={"data": updates, "valueInputOption": "USER_ENTERED"}
+        ).execute()
+
+        return True
+    except Exception as e:
+        print(f"Erro ao sincronizar com Google Sheets: {e}")
+        return False
+
+
 def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema") -> bool:
     try:
         grupos = fetch_grupos()
@@ -191,6 +331,12 @@ def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema")
         os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(grupos, f, ensure_ascii=False, indent=2)
+
+        # 🔴 NOVA: Sincroniza com Google Sheets
+        if not sincronizar_grupo_ao_sheets(grupo_id, dados):
+            print(f"Aviso: Cache atualizado mas Google Sheets não foi sincronizado para grupo {grupo_id}")
+            # Não retorna False para não bloquear o update do cache
+            # Mas avisa no console para investigação
 
         # Registra auditoria
         if mudancas:

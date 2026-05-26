@@ -32,6 +32,8 @@ token.json
 .env
 .env.local
 .env.*.local
+service-account-key.json
+*-key.json
 
 # Cache
 .cache/
