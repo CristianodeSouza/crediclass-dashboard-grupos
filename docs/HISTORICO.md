@@ -4,6 +4,189 @@ Log de atualizações, features implementadas e correções. Mais recentes prime
 
 ---
 
+## 2026-05-26 | 🎉 REFATORAÇÃO COMPLETA: Alpine.js SPA → FastAPI + Jinja2 + HTMX
+
+### 🚀 Mudança Arquitetural Maior
+
+**DE:** Single Page App (SPA) com Alpine.js + JSON API  
+**PARA:** Server-Side Rendering (SSR) com FastAPI + Jinja2 Templates + HTMX
+
+#### ✅ O que foi implementado
+
+1. **Estrutura Backend Nova**
+   ```
+   app/
+   ├── main.py               # FastAPI app principal
+   ├── config.py             # Configuração centralizada
+   ├── routers/
+   │   └── pages.py          # Rotas de páginas (SSR)
+   ├── services/
+   │   ├── grupos_service.py # Lógica de negócio
+   │   └── cache_service.py  # Persistência (JSON)
+   └── templates/            # Jinja2 templates
+   ```
+
+2. **Templates Jinja2 Criados**
+   - `base.html` — layout base com navegação
+   - `grupos.html` — listagem + filtros de grupos
+   - `grupo_form.html` — criar/editar grupo
+   - `grupo_detalhe.html` — detalhe individual
+   - `calculadora.html` — simulador financeiro
+   - `analytics.html` — dashboard com gráficos Chart.js
+   - `gerenciador.html` — interface CRUD
+   - `erro.html` — página de erro 404
+
+3. **Service Layer - Separação de Responsabilidades**
+   - `grupos_service.obter_estatisticas()` — retorna dados ordenados para analytics
+   - `grupos_service.listar_grupos()` — listagem com filtros
+   - `grupos_service.criar_grupo()` — criar novo
+   - `grupos_service.editar_grupo()` — editar existente
+   - `grupos_service.deletar_grupo()` — remover
+   - `grupos_service.obter_grupo()` — buscar por ID
+   - `cache_service` — persistência em JSON (data/grupos.json)
+
+4. **Rotas HTTP Implementadas**
+   ```
+   GET  /                           # Página inicial (listagem)
+   GET  /grupos/novo                # Formulário criar
+   POST /grupos/novo                # Submeter criar
+   GET  /grupos/{grupo_id}          # Detalhe grupo
+   GET  /grupos/{grupo_id}/editar   # Formulário editar
+   POST /grupos/{grupo_id}/editar   # Submeter editar
+   DELETE /api/grupos/{grupo_id}    # Deletar (HTMX)
+   GET  /calculadora                # Simulador
+   GET  /gerenciador                # CRUD interface
+   GET  /analytics                  # Dashboard analytics
+   ```
+
+5. **Integração Chart.js nos Templates**
+   - Analytics com gráficos doughnut (Administradoras)
+   - Gráficos bar (Tipos de Bem)
+   - Dados preparados no backend (sem JavaScript complexo)
+
+#### 📊 Comparativo: Antes vs Depois
+
+| Aspecto | ANTES (Alpine.js SPA) | DEPOIS (FastAPI + Jinja2) |
+|---------|----------------------|---------------------------|
+| **Rendering** | Client-side (JavaScript) | Server-side (Python) |
+| **Framework Frontend** | Alpine.js 3.x | Jinja2 Templates |
+| **API** | REST JSON → processamento JS | HTML + HTMX fragments |
+| **Estado** | localStorage (navegador) | cache_service (backend) |
+| **Routing** | Hash-based (#/) | URL paths (/grupos, /analytics) |
+| **CRUD** | Modal forms + fetch | HTML forms + POST-redirect-GET |
+| **Persistência** | JSON direct (no load()) | cache_service abstraction |
+| **SEO** | Limitado (SPA) | Melhorado (URLs únicas) |
+| **Performance** | Depende download JS | Mais rápido (HTML pronto) |
+
+#### 🔧 Mudanças Técnicas Principais
+
+1. **POST-Redirect-GET Pattern**
+   ```python
+   @router.post("/grupos/novo")
+   def criar_grupo_post(...):
+       criar_grupo(novo_grupo)
+       return RedirectResponse(url="/", status_code=303)  # 303 See Other
+   ```
+   - Previne duplicate submissions (refresh não replica)
+   - Padrão REST puro
+
+2. **Route Ordering em FastAPI**
+   - Rotas específicas ANTES de path parameters
+   - ✅ `/grupos/novo` vem ANTES de `/grupos/{grupo_id}`
+   - Senão "novo" seria interpretado como grupo_id
+
+3. **Service Layer**
+   ```python
+   # Separação: Router → Service → Cache
+   @router.get("/")
+   def listar_grupos_page(...):
+       total, grupos = listar_grupos(...)  # Service call
+       stats = obter_estatisticas()
+       return templates.TemplateResponse(...)
+   ```
+
+4. **Jinja2 Filters & Sintaxe**
+   - Template loops: `{% for item in items %}`
+   - Condicionals: `{% if condition %}`
+   - Filters: `{{ var|upper }}`, `{{ lista[0:5] }}`
+   - **Não funciona:** Django-style dictsort com attribute
+
+5. **Tratamento de Erros**
+   - 404 quando grupo não existe
+   - Renderiza `erro.html` com status_code=404
+   - User-friendly error pages
+
+#### 📝 Arquivos Principais Modificados/Criados
+
+**Novos:**
+- `app/main.py` (FastAPI app)
+- `app/config.py` (configuração)
+- `app/routers/pages.py` (todas as rotas)
+- `app/services/grupos_service.py` (lógica)
+- `app/services/cache_service.py` (persistência)
+- `app/templates/base.html` (layout)
+- `app/templates/grupos.html`
+- `app/templates/grupo_form.html`
+- `app/templates/grupo_detalhe.html`
+- `app/templates/calculadora.html`
+- `app/templates/analytics.html`
+- `app/templates/gerenciador.html`
+- `app/templates/erro.html`
+- `main.py` (entry point Render)
+
+**Removidos/Arquivados:**
+- `frontend/index.html` (SPA antiga)
+- `frontend/js/app.js` (Alpine.js app)
+- `frontend/js/calculadora.js`
+- `backend/main.py` (antigo)
+
+#### 🧪 Validações
+
+- ✅ Pre-commit hooks passando (frontend_validator.py, dockerfile_validator.py)
+- ✅ API respondendo com 342 grupos em /api/grupos-gerenciador
+- ✅ Templates renderizando corretamente
+- ✅ CRUD completo funcionando (POST, GET, PUT, DELETE)
+- ✅ Analytics com gráficos Chart.js
+
+#### 🌐 Deployment
+
+- **Commit**: 15a7c44 (`refactor: migrar de Alpine.js SPA para FastAPI + Jinja2 + HTMX`)
+- **Status**: ✅ LIVE em produção
+- **URL**: https://crediclass.csrtecnologia.com.br
+- **API Check**: `curl https://crediclass.csrtecnologia.com.br/api/grupos-gerenciador?limit=1 → {"total":342,"grupos":[...]}`
+
+#### 📚 Próximos Passos
+
+1. **HTMX Enhancements** (opcional)
+   - Adicionar `hx-boost` em links para navegação sem reload
+   - `hx-confirm` em delete buttons
+   - `hx-swap` customizado para animations
+
+2. **Frontend Improvements**
+   - Forms com validação HTML5 + Python
+   - Modal dialogs para CRUD (vs. page redirect)
+   - Loading indicators
+
+3. **Performance**
+   - Cache HTTP headers em templates
+   - Lazy loading de imagens
+   - Minificação de CSS/JS
+
+4. **Testes**
+   - TestClient tests para cada rota
+   - Teste de caso de uso completo (criar → editar → deletar)
+
+#### 🎯 Benefícios da Refatoração
+
+1. **Maintainability**: Código Python puro (sem misturar JS/Python logic)
+2. **SEO**: URLs únicas, conteúdo no servidor
+3. **Performance**: HTML já pronto, sem JavaScript pesado
+4. **Segurança**: Validação no backend, não expõe lógica no JS
+5. **Escalabilidade**: Service layer facilita expansão
+6. **Developer Experience**: Menos debugging client-side
+
+---
+
 ## 2026-05-19 | Alpine.js Defer + Correção de Inicialização
 
 ### ✅ Correção Crítica: Alpine.js Initialization Failure
