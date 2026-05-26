@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Grupo {{ grupo.grupo }} - {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl">
+    <div class="flex justify-between items-start mb-6">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900">Grupo {{ grupo.grupo }}</h2>
+            <p class="text-gray-600 mt-2">{{ grupo.adm }} - {{ grupo.tipo_bem }}</p>
+        </div>
+        <div class="space-x-2">
+            <a href="/grupos/{{ grupo.grupo }}/editar" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                Editar
+            </a>
+            <a href="/" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <!-- Informações Básicas -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Informações Básicas</h3>
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Administradora</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ grupo.adm }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Tipo de Bem</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ grupo.tipo_bem }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Status</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ grupo.status or 'Ativo' }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Créditos -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Créditos</h3>
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Maior Crédito</dt>
+                    <dd class="mt-1 text-sm text-gray-900">R$ {{ "%.2f"|format(grupo.maior_credito or 0) }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Menor Crédito</dt>
+                    <dd class="mt-1 text-sm text-gray-900">R$ {{ "%.2f"|format(grupo.menor_credito or 0) }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Diferença</dt>
+                    <dd class="mt-1 text-sm text-gray-900">R$ {{ "%.2f"|format((grupo.maior_credito or 0) - (grupo.menor_credito or 0)) }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Taxas -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Taxas e Percentuais</h3>
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Taxa ADM</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ "%.2f"|format(grupo.taxa_adm or 0) }}%</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Fundo de Reserva</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ "%.2f"|format(grupo.fundo_rsv or 0) }}%</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Investidor</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ "%.2f"|format(grupo.investidor or 0) }}%</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Modalidades -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Modalidades</h3>
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Conservador 24M</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ "%.2f"|format(grupo.conservador_24m or 0) }}%</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Moderado 12M</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ "%.2f"|format(grupo.moderado_12m or 0) }}%</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Datas -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mt-4">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Controle</h3>
+        <dl class="grid grid-cols-2 gap-4">
+            {% if grupo.criado_em %}
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Criado em</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ grupo.criado_em }}</dd>
+                </div>
+            {% endif %}
+            {% if grupo.editado_em %}
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Editado em</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ grupo.editado_em }}</dd>
+                </div>
+            {% endif %}
+        </dl>
+    </div>
+</div>
+{% endblock %}

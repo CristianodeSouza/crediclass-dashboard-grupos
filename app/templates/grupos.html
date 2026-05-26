@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Grupos - {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Cabeçalho -->
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl font-bold text-gray-900">Grupos de Consórcio</h2>
+        <a href="/grupos/novo" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+            + Novo Grupo
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <form method="get" class="flex gap-4">
+            <div class="flex-1">
+                <label for="busca" class="block text-sm font-medium text-gray-700">Buscar</label>
+                <input
+                    type="text"
+                    name="busca"
+                    id="busca"
+                    placeholder="Grupo, ADM ou tipo de bem..."
+                    value="{{ busca or '' }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border px-3 py-2"
+                />
+            </div>
+
+            <div class="flex-1">
+                <label for="administradora" class="block text-sm font-medium text-gray-700">Administradora</label>
+                <select name="administradora" id="administradora" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border px-3 py-2">
+                    <option value="">Todas</option>
+                    {% for adm in administradoras %}
+                        <option value="{{ adm }}" {% if adm == administradora %}selected{% endif %}>{{ adm }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex-1">
+                <label for="tipo_bem" class="block text-sm font-medium text-gray-700">Tipo de Bem</label>
+                <select name="tipo_bem" id="tipo_bem" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border px-3 py-2">
+                    <option value="">Todos</option>
+                    {% for tipo in tipos_bem %}
+                        <option value="{{ tipo }}" {% if tipo == tipo_bem %}selected{% endif %}>{{ tipo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-end">
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="grid grid-cols-4 gap-4">
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <p class="text-gray-500 text-sm">Total de Grupos</p>
+            <p class="text-3xl font-bold text-gray-900">{{ total }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <p class="text-gray-500 text-sm">Administradoras</p>
+            <p class="text-3xl font-bold text-gray-900">{{ administradoras|length }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <p class="text-gray-500 text-sm">Tipos de Bem</p>
+            <p class="text-3xl font-bold text-gray-900">{{ tipos_bem|length }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <p class="text-gray-500 text-sm">Exibindo</p>
+            <p class="text-3xl font-bold text-gray-900">{{ grupos|length }}</p>
+        </div>
+    </div>
+
+    <!-- Tabela de Grupos -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grupo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Administradora</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Bem</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crédito</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Taxa ADM</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for grupo in grupos %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ grupo.grupo }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ grupo.adm }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ grupo.tipo_bem }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            R$ {{ "%.2f"|format(grupo.maior_credito or 0) }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ "%.2f"|format(grupo.taxa_adm or 0) }}%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                            <a href="/grupos/{{ grupo.grupo }}/editar" class="text-blue-600 hover:text-blue-900">Editar</a>
+                            <button
+                                hx-delete="/api/grupos/{{ grupo.grupo }}"
+                                hx-confirm="Tem certeza que deseja deletar este grupo?"
+                                hx-swap="outerHTML swap:1s"
+                                class="text-red-600 hover:text-red-900">
+                                Deletar
+                            </button>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            Nenhum grupo encontrado.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação (simples) -->
+    {% if total > grupos|length %}
+        <div class="flex justify-center items-center space-x-4">
+            <p class="text-gray-600 text-sm">
+                Exibindo {{ grupos|length }} de {{ total }} grupos
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
