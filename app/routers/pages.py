@@ -17,6 +17,15 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 @router.get("/", response_class=HTMLResponse)
+def home_page(request: Request):
+    """Serve SPA original (calculadora + mapa de grupos)"""
+    from pathlib import Path
+    index_path = Path(__file__).parent.parent.parent / "frontend" / "index.html"
+    with open(index_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@router.get("/grupos", response_class=HTMLResponse)
 def listar_grupos_page(
     request: Request,
     busca: str = Query(None),
@@ -25,7 +34,7 @@ def listar_grupos_page(
     limit: int = Query(50),
     offset: int = Query(0),
 ):
-    """Página de listagem de grupos"""
+    """Página de listagem de grupos (novo SSR)"""
     total, grupos = listar_grupos(
         administradora=administradora,
         tipo_bem=tipo_bem,

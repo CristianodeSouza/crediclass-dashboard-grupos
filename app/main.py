@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from dotenv import load_dotenv
 from .config import STATIC_DIR, APP_TITLE
 from .routers import pages
+from .api_legacy import router as legacy_router
 
 load_dotenv()
 
@@ -22,6 +23,9 @@ app.add_middleware(
 
 # Rotas de páginas (renderizadas com Jinja2)
 app.include_router(pages.router)
+
+# Rotas de API legacy (original SPA backend)
+app.include_router(legacy_router)
 
 # Servir arquivos estáticos
 if STATIC_DIR.exists():
