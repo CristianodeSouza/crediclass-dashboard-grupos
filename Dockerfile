@@ -23,6 +23,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar app (nova estrutura FastAPI + Jinja2)
 COPY app/ ./app/
 
+# Copiar backend (módulos de negócio: sheets.py, piperun.py, etc)
+COPY backend/ ./backend/
+
 # Copiar entry point
 COPY main.py ./main.py
 
