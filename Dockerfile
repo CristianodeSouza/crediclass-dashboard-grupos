@@ -15,15 +15,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements ANTES do código (layer caching)
-COPY backend/requirements.txt ./backend/requirements.txt
+COPY requirements.txt ./requirements.txt
 
 # Instalar dependências Python
-RUN pip install --no-cache-dir -r backend/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar backend
-COPY backend/ ./backend/
+# Copiar app (nova estrutura FastAPI + Jinja2)
+COPY app/ ./app/
 
-# Copiar frontend (CRÍTICO — contém app.js e index.html)
+# Copiar entry point
+COPY main.py ./main.py
+
+# Copiar frontend (estáticos: CSS, JS)
 COPY frontend/ ./frontend/
 
 # Copiar dados (CRÍTICO — evita "tela preta" em produção)
@@ -32,5 +35,5 @@ COPY data/ ./data/
 # Expor porta
 EXPOSE 8000
 
-# Comando de inicialização
-CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Comando de inicialização (novo entry point)
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
