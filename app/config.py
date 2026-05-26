@@ -7,7 +7,7 @@ load_dotenv()
 # Diretórios
 BASE_DIR = Path(__file__).parent.parent
 TEMPLATES_DIR = Path(__file__).parent / "templates"
-STATIC_DIR = BASE_DIR / "frontend" / "static"
+STATIC_DIR = BASE_DIR / "frontend"  # frontend/js e frontend/css servidos como /static/js e /static/css
 DATA_DIR = BASE_DIR / "data"
 
 # Aplicação
