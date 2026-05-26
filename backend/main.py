@@ -10,9 +10,12 @@ from .sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_g
 from .piperun import fetch_oportunidade
 from .import_export import validar_arquivo_excel, extrair_dados_excel, validar_schema, preview_importacao, processar_importacao, exportar_excel_completo, exportar_por_adm, exportar_grupo, exportar_relatorio_adms
 from .analytics import calcular_summary_analytics, calcular_comparativo_adms, calcular_tendencias_mensais, calcular_distribuicao_creditos, calcular_estatisticas_detalhadas
+from .sync_queue import SyncQueue, processar_fila_sincronizacao
 from pydantic import BaseModel
 from typing import Optional, Any
 import io
+import asyncio
+from fastapi.concurrency import run_in_threadpool
 
 load_dotenv()
 
@@ -24,6 +27,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ═════════════════════════════════════════════════════════════
+# BACKGROUND JOB: Sincronização com Google Sheets (Opção 4)
+# ═════════════════════════════════════════════════════════════
+
+async def background_sync_worker():
+    """Background job que processa fila de sincronização a cada 15 segundos"""
+    while True:
+        try:
+            await asyncio.sleep(15)  # Processa a cada 15 segundos
+            resultado = await processar_fila_sincronizacao()
+            if resultado.get("processados", 0) > 0 or resultado.get("erros", 0) > 0:
+                print(f"[SYNC] Processados: {resultado.get('processados', 0)}, Erros: {resultado.get('erros', 0)}")
+        except Exception as e:
+            print(f"[SYNC] Erro no background job: {e}")
+            await asyncio.sleep(15)
+
+@app.on_event("startup")
+async def startup_event():
+    """Inicia background job ao ligar a aplicação"""
+    print("[STARTUP] Iniciando background sync worker...")
+    asyncio.create_task(background_sync_worker())
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 
@@ -293,6 +318,20 @@ def listar_grupos_gerenciador(
     }
 
 
+@app.get("/api/sync-queue/status")
+def status_fila_sincronizacao():
+    """Retorna status da fila de sincronização com Google Sheets"""
+    try:
+        pendentes = SyncQueue.obter_pendentes()
+        return {
+            "pendentes": len(pendentes),
+            "items": pendentes,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {"pendentes": 0, "items": [], "erro": str(e)}
+
+
 @app.get("/api/administradoras")
 def listar_todas_administradoras():
     try:
@@ -331,6 +370,7 @@ def criar_novo_grupo(grupo: GrupoCreate, usuario: str = Query("operador")):
 
 @app.put("/api/grupos/{grupo_id}")
 def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operador")):
+    """Edita grupo e dispara sincronização assíncrona com Google Sheets"""
     try:
         grupos = fetch_grupos()
 
@@ -340,10 +380,18 @@ def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operad
             raise HTTPException(status_code=404, detail="Grupo não encontrado")
 
         dados = grupo.dict(exclude_none=True)
-        dados["editado_em"] = datetime.now().isoformat() if "datetime" in dir() else ""
+        dados["editado_em"] = datetime.now().isoformat()
 
+        # OPÇÃO 4: Primeiro salva no cache, depois dispara sincronização assíncrona
         if atualizar_grupo_sheets(grupo_id, dados, usuario):
-            return {"message": "Grupo atualizado com sucesso", "status": "sucesso"}
+            # Adiciona à fila para sincronização em background (webhook-driven)
+            SyncQueue.adicionar(grupo_id, dados, usuario)
+
+            return {
+                "message": "Grupo atualizado com sucesso. Sincronização em andamento...",
+                "status": "sucesso",
+                "sincronizacao": "pendente"
+            }
         else:
             raise HTTPException(status_code=500, detail="Erro ao atualizar grupo")
     except HTTPException:
@@ -404,14 +452,18 @@ def mudar_status_grupo(grupo_id: str, novo_status: str = Body(...), usuario: str
                 detail=f"Transição inválida: Grupo em status '{status_atual}' não pode ir para '{novo_status}'"
             )
 
-        # Registrar alteração de status com auditoria
+        # Registrar alteração de status com auditoria (OPÇÃO 4)
         dados_alteracao = {"status": novo_status}
         if atualizar_grupo_sheets(grupo_id, dados_alteracao, usuario):
+            # Disparar sincronização assíncrona
+            SyncQueue.adicionar(grupo_id, dados_alteracao, usuario)
+
             return {
-                "message": f"Status alterado de '{status_atual}' para '{novo_status}'",
+                "message": f"Status alterado de '{status_atual}' para '{novo_status}'. Sincronização em andamento...",
                 "status": "sucesso",
                 "status_anterior": status_atual,
-                "novo_status": novo_status
+                "novo_status": novo_status,
+                "sincronizacao": "pendente"
             }
         else:
             raise HTTPException(status_code=500, detail="Erro ao mudar status")
