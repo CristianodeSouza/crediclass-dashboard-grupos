@@ -1,10 +1,17 @@
 import os
 import json
+import sys
+from pathlib import Path
 from datetime import datetime
 from fastapi import APIRouter, Query, HTTPException, Body, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, Any
+
+# Ajustar sys.path para encontrar backend (em Docker: /app/backend)
+backend_path = Path(__file__).parent.parent / "backend"
+if str(backend_path) not in sys.path:
+    sys.path.insert(0, str(backend_path.parent))  # Adiciona /app ao sys.path
 
 router = APIRouter(prefix="/api", tags=["legacy"])
 
