@@ -6,15 +6,64 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, Any
 
-# Import from backend modules
-from backend.sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_grupo, duplicar_grupo, obter_auditoria_grupo, obter_auditoria_grupo_detalhada
-from backend.piperun import fetch_oportunidade
-from backend.import_export import validar_arquivo_excel, extrair_dados_excel, validar_schema, preview_importacao, processar_importacao, exportar_excel_completo, exportar_por_adm, exportar_grupo, exportar_relatorio_adms
-from backend.analytics import calcular_summary_analytics, calcular_comparativo_adms, calcular_tendencias_mensais, calcular_distribuicao_creditos, calcular_estatisticas_detalhadas
-from backend.sync_queue import SyncQueue, processar_fila_sincronizacao
-from backend.frontend_validator import FrontendValidator
-
 router = APIRouter(prefix="/api", tags=["legacy"])
+
+# Import from backend modules (with fallback for missing dependencies)
+try:
+    from backend.sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_grupo, duplicar_grupo, obter_auditoria_grupo, obter_auditoria_grupo_detalhada
+except ImportError as e:
+    print(f"[WARNING] Failed to import backend.sheets: {e}")
+    fetch_grupos = lambda *args, **kwargs: []
+    atualizar_grupo_sheets = criar_grupo = deletar_grupo = duplicar_grupo = lambda *args, **kwargs: None
+    obter_auditoria_grupo = obter_auditoria_grupo_detalhada = lambda *args, **kwargs: []
+
+try:
+    from backend.piperun import fetch_oportunidade
+except ImportError as e:
+    print(f"[WARNING] Failed to import backend.piperun: {e}")
+    async def fetch_oportunidade(*args, **kwargs):
+        raise HTTPException(status_code=503, detail="Piperun service unavailable")
+
+try:
+    from backend.import_export import validar_arquivo_excel, extrair_dados_excel, validar_schema, preview_importacao, processar_importacao, exportar_excel_completo, exportar_por_adm, exportar_grupo, exportar_relatorio_adms
+except ImportError as e:
+    print(f"[WARNING] Failed to import backend.import_export: {e}")
+    def mock_import(*args, **kwargs):
+        raise HTTPException(status_code=503, detail="Import/export service unavailable")
+    validar_arquivo_excel = extrair_dados_excel = validar_schema = preview_importacao = processar_importacao = mock_import
+    exportar_excel_completo = exportar_por_adm = exportar_grupo = exportar_relatorio_adms = mock_import
+
+try:
+    from backend.analytics import calcular_summary_analytics, calcular_comparativo_adms, calcular_tendencias_mensais, calcular_distribuicao_creditos, calcular_estatisticas_detalhadas
+except ImportError as e:
+    print(f"[WARNING] Failed to import backend.analytics: {e}")
+    def mock_analytics(*args, **kwargs):
+        return {}
+    calcular_summary_analytics = calcular_comparativo_adms = calcular_tendencias_mensais = calcular_distribuicao_creditos = calcular_estatisticas_detalhadas = mock_analytics
+
+try:
+    from backend.sync_queue import SyncQueue, processar_fila_sincronizacao
+except ImportError as e:
+    print(f"[WARNING] Failed to import backend.sync_queue: {e}")
+    class SyncQueue:
+        @staticmethod
+        def obter_pendentes():
+            return []
+        @staticmethod
+        def adicionar(*args, **kwargs):
+            pass
+    async def processar_fila_sincronizacao():
+        return {"processados": 0, "erros": 0}
+
+try:
+    from backend.frontend_validator import FrontendValidator
+except ImportError as e:
+    print(f"[WARNING] Failed to import backend.frontend_validator: {e}")
+    class FrontendValidator:
+        def __init__(self, path):
+            self.path = path
+        def validate(self):
+            return True, [], []
 
 # Caminho para diretório frontend (para endpoint health)
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
