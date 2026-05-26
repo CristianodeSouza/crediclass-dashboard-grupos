@@ -6,10 +6,7 @@
   <title>Crediclass — Estudo Financeiro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Verificar autenticação antes de carregar dashboard
-    if (!localStorage.getItem('crediclass_usuario')) {
-      window.location.href = '/login';
-    }
+    // Configuração Tailwind
     tailwind.config = {
       theme: {
         extend: {
