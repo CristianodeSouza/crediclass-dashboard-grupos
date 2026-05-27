@@ -356,23 +356,29 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
         print(f"[DEBUG] Service obtido com sucesso. Campos a atualizar: {list(dados.keys())}")
 
         # Lê todos os dados do Sheets
+        print(f"[DEBUG] Lendo dados do Sheets (range: A:EF)...")
         result = service.spreadsheets().values().get(
             spreadsheetId=SPREADSHEET_ID,
             range="Tabela de Grupos 3.0!A:EF"
         ).execute()
 
         rows = result.get("values", [])
+        print(f"[DEBUG] Google Sheets retornou {len(rows)} linhas")
         if not rows:
+            print(f"[DEBUG] ERRO: Sheets vazio!")
             return False
 
         # Encontra a linha do grupo (linha 0 é header, então +1)
         grupo_row_idx = None
+        print(f"[DEBUG] Procurando grupo {grupo_id} em {len(rows)} linhas do Sheets...")
         for i, row in enumerate(rows[1:], start=1):
             if len(row) > 1 and str(row[1]) == str(grupo_id):
                 grupo_row_idx = i
+                print(f"[DEBUG] Grupo encontrado na linha {grupo_row_idx}")
                 break
 
         if grupo_row_idx is None:
+            print(f"[DEBUG] ERRO: Grupo {grupo_id} NÃO encontrado no Google Sheets!")
             return False
 
         # Mapeia campos para colunas
