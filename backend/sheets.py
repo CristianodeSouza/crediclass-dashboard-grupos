@@ -345,12 +345,15 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
     e aviso eh registrado (cache sera atualizado normalmente).
     """
     try:
+        print(f"[DEBUG] Iniciando sincronizacao de grupo {grupo_id} com Google Sheets...")
         service = get_service(use_write_permissions=True)
 
         # Verifica se conseguiu credenciais de escrita
         if not service:
             print(f"AVISO: Nao foi possivel sincronizar com Google Sheets (Service Account nao configurado)")
             return False
+
+        print(f"[DEBUG] Service obtido com sucesso. Campos a atualizar: {list(dados.keys())}")
 
         # Lê todos os dados do Sheets
         result = service.spreadsheets().values().get(
@@ -454,22 +457,29 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
                     continue
 
         if not updates:
+            print(f"[DEBUG] Nenhum update a fazer para grupo {grupo_id}")
             return False
 
+        print(f"[DEBUG] Executando {len(updates)} updates para grupo {grupo_id}...")
+
         # Executa batch update na API
-        service.spreadsheets().values().batchUpdate(
+        response = service.spreadsheets().values().batchUpdate(
             spreadsheetId=SPREADSHEET_ID,
             body={"data": updates, "valueInputOption": "USER_ENTERED"}
         ).execute()
 
+        print(f"[SUCESSO] Grupo {grupo_id} sincronizado com Google Sheets. Response: {response.get('responses', [])[:3]}")
         return True
     except Exception as e:
-        print(f"Erro ao sincronizar com Google Sheets: {e}")
+        print(f"[ERRO CRÍTICO] Erro ao sincronizar com Google Sheets: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
 def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema", origem: str = "Dashboard") -> bool:
     try:
+        print(f"[UPDATE_GRUPO] Atualizando grupo {grupo_id}. Usuario: {usuario}, Origem: {origem}")
         grupos = fetch_grupos(force_refresh=True)
 
         # Encontra índice do grupo
@@ -480,6 +490,7 @@ def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema",
                 break
 
         if grupo_idx is None:
+            print(f"[UPDATE_GRUPO] ERRO: Grupo {grupo_id} nao encontrado na lista de grupos")
             return False
 
         # Registra alteracoes para auditoria (com BACKUP dos valores antigos)
@@ -499,16 +510,25 @@ def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema",
             json.dump(grupos, f, ensure_ascii=False, indent=2)
 
         # Sincroniza com Google Sheets
-        if not sincronizar_grupo_ao_sheets(grupo_id, dados):
-            print(f"Aviso: Cache atualizado mas Google Sheets nao foi sincronizado para grupo {grupo_id}")
+        sync_result = sincronizar_grupo_ao_sheets(grupo_id, dados)
+        if not sync_result:
+            print(f"[AVISO] Cache atualizado mas Google Sheets nao foi sincronizado para grupo {grupo_id}")
+        else:
+            print(f"[UPDATE_GRUPO] Google Sheets sincronizado com sucesso para grupo {grupo_id}")
 
         # Registra auditoria com origem
         if mudancas:
+            print(f"[UPDATE_GRUPO] Registrando auditoria: {len(mudancas)} campos alterados")
             registrar_auditoria(usuario, "UPDATE", grupo_id, mudancas, origem)
+        else:
+            print(f"[UPDATE_GRUPO] Nenhuma mudança detectada (dados identicos)")
 
+        print(f"[UPDATE_GRUPO] ✅ Grupo {grupo_id} atualizado com sucesso!")
         return True
     except Exception as e:
-        print(f"Erro ao atualizar grupo: {e}")
+        print(f"[ERRO] Erro ao atualizar grupo: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
