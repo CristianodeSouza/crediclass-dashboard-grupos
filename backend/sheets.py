@@ -503,6 +503,7 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
 def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema", origem: str = "Dashboard") -> bool:
     try:
         print(f"[UPDATE_GRUPO] Atualizando grupo {grupo_id}. Usuario: {usuario}, Origem: {origem}")
+        print(f"[UPDATE_GRUPO] Dados RECEBIDOS: maior_credito={dados.get('maior_credito')}, menor_credito={dados.get('menor_credito')}, taxa_adm={dados.get('taxa_adm')}")
         grupos = fetch_grupos(force_refresh=True)
 
         # Encontra índice do grupo
