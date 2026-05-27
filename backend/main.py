@@ -553,7 +553,8 @@ def sincronizar_com_sheets(usuario: str = Query("operador")):
 def recarregar_de_sheets(usuario: str = Query("operador")):
     try:
         # Força refresh e sincroniza dados
-        grupos = fetch_grupos(force_refresh=True)
+        result = fetch_grupos(force_refresh=True)
+        grupos = result['grupos']
         timestamp_sincronizacao = datetime.now().isoformat()
         data_formatada = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
@@ -584,7 +585,8 @@ def obter_historico_grupo(grupo_id: str):
 @app.post("/api/refresh")
 def refresh_dados():
     try:
-        grupos = fetch_grupos(force_refresh=True)
+        result = fetch_grupos(force_refresh=True)
+        grupos = result['grupos']
         return {"message": "Dados atualizados", "total": len(grupos)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
