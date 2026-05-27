@@ -959,6 +959,12 @@ function dashboard() {
         }
         const data = await res.json();
         this.gerenciador.grupos = data.grupos || [];
+
+        // Deduplicar por combinação adm-grupo (remove duplicatas)
+        this.gerenciador.grupos = Array.from(
+          new Map(this.gerenciador.grupos.map(g => [`${g.adm}-${g.grupo}`, g])).values()
+        );
+
         this.gerenciador.totalGrupos = data.total || 0;
         this.gerenciador.paginaAtual = data.pagina || 1;
         this.gerenciador.totalPaginas = data.total_paginas || 0;
