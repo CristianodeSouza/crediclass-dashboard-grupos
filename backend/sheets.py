@@ -278,7 +278,7 @@ def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict =
                 # Adiciona linha à aba Auditoria
                 service.spreadsheets().values().append(
                     spreadsheetId=SPREADSHEET_ID,
-                    range="Auditoria!A:H",
+                    range="Auditoria!A2",
                     valueInputOption="USER_ENTERED",
                     body={"values": [linha]}
                 ).execute()
@@ -296,7 +296,7 @@ def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict =
             ]
             service.spreadsheets().values().append(
                 spreadsheetId=SPREADSHEET_ID,
-                range="Auditoria!A:H",
+                range="Auditoria!A2",
                 valueInputOption="USER_ENTERED",
                 body={"values": [linha]}
             ).execute()
@@ -322,6 +322,15 @@ def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict =
         auditoria.append(registro)
         with open(AUDIT_FILE, "w", encoding="utf-8") as f:
             json.dump(auditoria, f, ensure_ascii=False, indent=2)
+
+
+def indice_para_coluna(col_idx: int) -> str:
+    """Converte índice de coluna (0-based) para letra(s) Excel: A, B, ..., Z, AA, AB, ..."""
+    col_letra = ""
+    while col_idx >= 0:
+        col_letra = chr(65 + (col_idx % 26)) + col_letra
+        col_idx = col_idx // 26 - 1
+    return col_letra
 
 
 def mapa_campo_para_coluna() -> dict:
@@ -415,7 +424,7 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
                 continue
             if campo in campo_para_coluna:
                 col_idx = campo_para_coluna[campo]
-                col_letra = chr(65 + col_idx)  # A=65, B=66, etc
+                col_letra = indice_para_coluna(col_idx)
                 cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
 
                 # Formata o valor corretamente
@@ -460,21 +469,21 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
                 try:
                     if maior_key in headers:
                         col_idx = headers.index(maior_key)
-                        col_letra = chr(65 + col_idx)
+                        col_letra = indice_para_coluna(col_idx)
                         cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
                         valor_str = f"{maior_lance:.2f}".replace(".", ",") if maior_lance is not None else ""
                         updates.append({"range": cell_ref, "values": [[valor_str]]})
 
                     if menor_key in headers:
                         col_idx = headers.index(menor_key)
-                        col_letra = chr(65 + col_idx)
+                        col_letra = indice_para_coluna(col_idx)
                         cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
                         valor_str = f"{menor_lance:.2f}".replace(".", ",") if menor_lance is not None else ""
                         updates.append({"range": cell_ref, "values": [[valor_str]]})
 
                     if qtd_key in headers:
                         col_idx = headers.index(qtd_key)
-                        col_letra = chr(65 + col_idx)
+                        col_letra = indice_para_coluna(col_idx)
                         cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
                         valor_str = str(qtd) if qtd is not None else ""
                         updates.append({"range": cell_ref, "values": [[valor_str]]})
