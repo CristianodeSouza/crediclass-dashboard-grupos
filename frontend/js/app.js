@@ -1976,4 +1976,20 @@ function init() {
 // Registra init globalmente para Alpine.js acessar
 window.init = init;
 
+// Função global para obter resumo de meses com dados de histórico
+function obterResumoMesesCompletos() {
+  const grupoAtual = window.grupoEmEdicao;
+  if (!grupoAtual || !grupoAtual.historico) {
+    return 'Sem dados de histórico';
+  }
+
+  const mesesComDados = grupoAtual.historico.filter(h =>
+    h.maior_lance || h.menor_lance || h.qtd
+  ).length;
+
+  return `${mesesComDados} meses com dados registrados`;
+}
+
+window.obterResumoMesesCompletos = obterResumoMesesCompletos;
+
 console.log('[Alpine Init] dashboard() pronto');
