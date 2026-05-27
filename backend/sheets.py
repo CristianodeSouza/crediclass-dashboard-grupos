@@ -28,6 +28,7 @@ def get_service_account_credentials():
             import base64
             import json
             try:
+                print(f"[DEBUG] Tentando decodificar GOOGLE_SERVICE_ACCOUNT_B64 (length: {len(sa_b64)})")
                 sa_json = base64.b64decode(sa_b64).decode('utf-8')
                 sa_dict = json.loads(sa_json)
                 credentials = Credentials.from_service_account_info(
@@ -38,21 +39,30 @@ def get_service_account_credentials():
                 return credentials
             except Exception as e:
                 print(f"[AVISO] Erro ao decodificar GOOGLE_SERVICE_ACCOUNT_B64: {e}")
+                import traceback
+                traceback.print_exc()
 
         # Fallback: carrega do arquivo local (desenvolvimento)
         if os.path.exists(SERVICE_ACCOUNT_FILE):
+            print(f"[DEBUG] Carregando Service Account de arquivo: {SERVICE_ACCOUNT_FILE}")
             credentials = Credentials.from_service_account_file(
                 SERVICE_ACCOUNT_FILE,
                 scopes=["https://www.googleapis.com/auth/spreadsheets"]
             )
             print("[STARTUP] [OK] Service Account carregado de arquivo local")
             return credentials
+        else:
+            print(f"[DEBUG] Arquivo local NÃO encontrado: {SERVICE_ACCOUNT_FILE}")
     except Exception as e:
-        print(f"[AVISO] Nao conseguiu carregar Service Account: {e}")
+        print(f"[ERRO] Nao conseguiu carregar Service Account: {e}")
+        import traceback
+        traceback.print_exc()
+
+    print("[ERRO CRÍTICO] Service Account NÃO carregado! Sincronização com Google Sheets será impossível.")
     return None
 
 
-def get_service(use_write_permissions=False):
+def get_service(use_write_permissions: bool = False):
     """Retorna serviço Google Sheets com permissões apropriadas"""
     global _service_cache
 
@@ -62,9 +72,10 @@ def get_service(use_write_permissions=False):
         if credentials:
             return build("sheets", "v4", credentials=credentials)
         else:
-            print("Aviso: Service Account nao disponivel. Updates serao salvos apenas em cache local.")
+            print("[ERRO CRÍTICO] Service Account nao disponivel. Sincronizacao com Sheets impossível!")
+            return None  # ← CRÍTICO: Retornar None, não API_KEY de leitura!
 
-    # Fallback: API Key para leitura
+    # Fallback: API Key para leitura (somente leitura)
     return build("sheets", "v4", developerKey=API_KEY)
 
 
