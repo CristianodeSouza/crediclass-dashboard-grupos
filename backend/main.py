@@ -382,7 +382,8 @@ def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operad
         if not existe:
             raise HTTPException(status_code=404, detail="Grupo não encontrado")
 
-        dados = grupo.dict(exclude_none=True)
+        # Serializa Pydantic model corretamente (inclui historico como lista de dicts)
+        dados = json.loads(grupo.model_dump_json(exclude_none=True))
         dados["editado_em"] = datetime.now().isoformat()
 
         # OPÇÃO 4: Primeiro salva no cache, depois dispara sincronização assíncrona
