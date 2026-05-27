@@ -382,17 +382,42 @@ def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operad
         if not existe:
             raise HTTPException(status_code=404, detail="Grupo não encontrado")
 
-        # Serializa Pydantic model corretamente (inclui historico como lista de dicts)
-        # Usa model_dump sem exclude_none para preservar estrutura, depois filtra manualmente
-        dados_raw = grupo.model_dump()
+        # Construir dict manualmente para garantir que historico seja incluído
         dados = {}
-        for key, value in dados_raw.items():
-            if value is not None:  # Inclui historico mesmo se for lista vazia
-                if key == "historico" and isinstance(value, list):
-                    # Converte HistoricoData objects para dicts
-                    dados[key] = [h.model_dump() if hasattr(h, 'model_dump') else h for h in value]
-                else:
-                    dados[key] = value
+
+        # Verifica cada campo explicitamente
+        if grupo.adm is not None:
+            dados["adm"] = grupo.adm
+        if grupo.grupo is not None:
+            dados["grupo"] = grupo.grupo
+        if grupo.tipo_bem is not None:
+            dados["tipo_bem"] = grupo.tipo_bem
+        if grupo.maior_credito is not None:
+            dados["maior_credito"] = grupo.maior_credito
+        if grupo.menor_credito is not None:
+            dados["menor_credito"] = grupo.menor_credito
+        if grupo.taxa_adm is not None:
+            dados["taxa_adm"] = grupo.taxa_adm
+        if grupo.fundo_rsv is not None:
+            dados["fundo_rsv"] = grupo.fundo_rsv
+        if grupo.investidor is not None:
+            dados["investidor"] = grupo.investidor
+        if grupo.conservador_24m is not None:
+            dados["conservador_24m"] = grupo.conservador_24m
+        if grupo.moderado_12m is not None:
+            dados["moderado_12m"] = grupo.moderado_12m
+        if grupo.status is not None:
+            dados["status"] = grupo.status
+        if grupo.dados_adicionais is not None:
+            dados["dados_adicionais"] = grupo.dados_adicionais
+
+        # Garante que historico seja incluído (CRÍTICO)
+        if grupo.historico is not None:
+            dados["historico"] = [
+                h.model_dump() if hasattr(h, 'model_dump') else h
+                for h in grupo.historico
+            ]
+
         dados["editado_em"] = datetime.now().isoformat()
 
         # OPÇÃO 4: Primeiro salva no cache, depois dispara sincronização assíncrona
