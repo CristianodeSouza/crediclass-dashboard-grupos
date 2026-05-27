@@ -465,6 +465,10 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
 
         print(f"[DEBUG] Executando {len(updates)} updates para grupo {grupo_id}...")
 
+        # LOG DE DEBUG: mostra EXATAMENTE o que está sendo enviado
+        for idx, upd in enumerate(updates[:5]):  # mostra primeiros 5
+            print(f"[DEBUG_UPDATE_{idx}] Range: {upd.get('range')} → Value: {upd.get('values')}")
+
         # Executa batch update na API
         response = service.spreadsheets().values().batchUpdate(
             spreadsheetId=SPREADSHEET_ID,
