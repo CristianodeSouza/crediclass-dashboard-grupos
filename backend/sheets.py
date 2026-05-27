@@ -365,12 +365,14 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
             print(f"[DEBUG] ERRO: Sheets vazio!")
             return False
 
-        # Encontra a linha do grupo (linha 0 é header, então +1)
+        # Encontra a linha do grupo (rows[0]=header, rows[1]=linha 2, etc)
         grupo_row_idx = None
         print(f"[DEBUG] Procurando grupo {grupo_id} em {len(rows)} linhas do Sheets...")
-        for i, row in enumerate(rows[1:], start=1):
+        for i, row in enumerate(rows):
+            if i == 0:  # Skip header
+                continue
             if len(row) > 1 and str(row[1]) == str(grupo_id):
-                grupo_row_idx = i
+                grupo_row_idx = i + 1  # i é 0-based, +1 para converter a 1-based (linha do Sheets)
                 print(f"[DEBUG] Grupo encontrado na linha {grupo_row_idx}")
                 break
 
@@ -394,7 +396,7 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
             if campo in campo_para_coluna:
                 col_idx = campo_para_coluna[campo]
                 col_letra = indice_para_coluna(col_idx)
-                cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"
+                cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # grupo_row_idx já é linha 1-based
 
                 # Formata o valor corretamente
                 if valor is None:
@@ -439,21 +441,21 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
                     if maior_key in headers:
                         col_idx = headers.index(maior_key)
                         col_letra = indice_para_coluna(col_idx)
-                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"
+                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
                         valor_str = f"{maior_lance:.2f}".replace(".", ",") if maior_lance is not None else ""
                         updates.append({"range": cell_ref, "values": [[valor_str]]})
 
                     if menor_key in headers:
                         col_idx = headers.index(menor_key)
                         col_letra = indice_para_coluna(col_idx)
-                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"
+                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
                         valor_str = f"{menor_lance:.2f}".replace(".", ",") if menor_lance is not None else ""
                         updates.append({"range": cell_ref, "values": [[valor_str]]})
 
                     if qtd_key in headers:
                         col_idx = headers.index(qtd_key)
                         col_letra = indice_para_coluna(col_idx)
-                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"
+                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
                         valor_str = str(qtd) if qtd is not None else ""
                         updates.append({"range": cell_ref, "values": [[valor_str]]})
                 except (ValueError, IndexError):
