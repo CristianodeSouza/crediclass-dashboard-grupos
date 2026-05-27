@@ -53,6 +53,13 @@ async def startup_event():
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 
 
+class HistoricoData(BaseModel):
+    mes: str
+    maior_lance: Optional[float] = None
+    menor_lance: Optional[float] = None
+    qtd: Optional[int] = None
+
+
 class GrupoUpdate(BaseModel):
     adm: Optional[str] = None
     grupo: Optional[str] = None
@@ -66,6 +73,7 @@ class GrupoUpdate(BaseModel):
     moderado_12m: Optional[float] = None
     status: Optional[str] = None
     dados_adicionais: Optional[dict] = None
+    historico: Optional[list[HistoricoData]] = None
 
 
 class GrupoCreate(BaseModel):

@@ -272,6 +272,10 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
 
         # Prepara updates para a API
         updates = []
+
+        # Extrai historico se presente (para tratamento especial)
+        historico = dados.pop("historico", None)
+
         for campo, valor in dados.items():
             if campo in campo_para_coluna:
                 col_idx = campo_para_coluna[campo]
@@ -293,6 +297,53 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
                     "range": cell_ref,
                     "values": [[valor_str]]
                 })
+
+        # Processa historico (dados mensais)
+        if historico and isinstance(historico, list):
+            # Lê headers para encontrar colunas de histórico
+            result_headers = service.spreadsheets().values().get(
+                spreadsheetId=SPREADSHEET_ID,
+                range="Tabela de Grupos 3.0!A1:EF1"
+            ).execute()
+            headers = result_headers.get("values", [[]])[0]
+
+            for hist_item in historico:
+                mes = hist_item.get("mes")
+                maior_lance = hist_item.get("maior_lance")
+                menor_lance = hist_item.get("menor_lance")
+                qtd = hist_item.get("qtd")
+
+                if not mes:
+                    continue
+
+                # Procura colunas para este mês
+                maior_key = f"{mes}\nMaior Lance"
+                menor_key = f"{mes}\nMenor Lance"
+                qtd_key = f"{mes}\nQtd"
+
+                try:
+                    if maior_key in headers:
+                        col_idx = headers.index(maior_key)
+                        col_letra = chr(65 + col_idx)
+                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
+                        valor_str = f"{maior_lance:.2f}".replace(".", ",") if maior_lance is not None else ""
+                        updates.append({"range": cell_ref, "values": [[valor_str]]})
+
+                    if menor_key in headers:
+                        col_idx = headers.index(menor_key)
+                        col_letra = chr(65 + col_idx)
+                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
+                        valor_str = f"{menor_lance:.2f}".replace(".", ",") if menor_lance is not None else ""
+                        updates.append({"range": cell_ref, "values": [[valor_str]]})
+
+                    if qtd_key in headers:
+                        col_idx = headers.index(qtd_key)
+                        col_letra = chr(65 + col_idx)
+                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
+                        valor_str = str(qtd) if qtd is not None else ""
+                        updates.append({"range": cell_ref, "values": [[valor_str]]})
+                except (ValueError, IndexError):
+                    continue
 
         if not updates:
             return False

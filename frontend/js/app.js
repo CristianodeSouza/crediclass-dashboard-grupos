@@ -1161,6 +1161,56 @@ function dashboard() {
       }
     },
 
+    // Funções para gerenciar histórico mensal de lances
+    getMesesAno(ano) {
+      const meses = [];
+      const anos = [2024, 2025, 2026];
+      for (const a of anos) {
+        if (a === ano) {
+          for (let i = 1; i <= 12; i++) {
+            const mes = String(i).padStart(2, '0');
+            const mesFormatado = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][i - 1];
+            meses.push(`${mesFormatado}-${String(a).slice(-2)}`);
+          }
+        }
+      }
+      return meses;
+    },
+
+    getHistoricoField(mes, field) {
+      if (!this.gerenciador.formulario.historico) return null;
+      const registro = this.gerenciador.formulario.historico.find(h => h.mes === mes);
+      if (!registro) return null;
+      if (field === 'maior') return registro.maior_lance;
+      if (field === 'menor') return registro.menor_lance;
+      if (field === 'qtd') return registro.qtd;
+      return null;
+    },
+
+    setHistoricoField(mes, field, value) {
+      if (!this.gerenciador.formulario.historico) {
+        this.gerenciador.formulario.historico = [];
+      }
+      let registro = this.gerenciador.formulario.historico.find(h => h.mes === mes);
+      if (!registro) {
+        registro = { mes, maior_lance: null, menor_lance: null, qtd: null };
+        this.gerenciador.formulario.historico.push(registro);
+      }
+      const numValue = value ? parseFloat(value) : null;
+      if (field === 'maior') registro.maior_lance = numValue;
+      if (field === 'menor') registro.menor_lance = numValue;
+      if (field === 'qtd') registro.qtd = numValue ? parseInt(value) : null;
+    },
+
+    obterMesPendente(mes) {
+      const [mesAno, ano] = mes.split('-');
+      const mesNum = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"].indexOf(mesAno) + 1;
+      const anoFull = 2000 + parseInt(ano);
+      const hoje = new Date();
+      const mesFim = new Date(anoFull, mesNum, 0);
+      return mesFim < hoje;
+    },
+
     // CRITICAL 2: Validar formulário antes de salvar
     async salvarGrupo() {
       if (!this.validarFormulario()) {
