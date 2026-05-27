@@ -255,62 +255,30 @@ def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict =
     """
     from datetime import datetime
 
-    try:
-        service = get_service(use_write_permissions=True)
+    AUDIT_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "auditoria.json")
+    os.makedirs(os.path.dirname(AUDIT_FILE), exist_ok=True)
+    auditoria = []
+    if os.path.exists(AUDIT_FILE):
+        with open(AUDIT_FILE, "r", encoding="utf-8") as f:
+            auditoria = json.load(f)
 
-        # Para cada mudança, cria uma linha no log
-        if mudancas:
-            for campo, valores in mudancas.items():
-                valor_antes = valores.get("antes", "")
-                valor_depois = valores.get("depois", "")
+    if mudancas:
+        for campo, valores in mudancas.items():
+            valor_antes = valores.get("antes", "")
+            valor_depois = valores.get("depois", "")
 
-                linha = [
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # Timestamp
-                    usuario,                                         # Usuário
-                    str(grupo_id),                                  # Grupo ID
-                    campo,                                          # Campo alterado
-                    str(valor_antes),                              # Valor antigo (BACKUP)
-                    str(valor_depois),                             # Valor novo
-                    acao,                                          # Ação (INSERT/UPDATE/DELETE)
-                    origem                                         # Origem
-                ]
-
-                # Adiciona linha à aba Auditoria
-                service.spreadsheets().values().append(
-                    spreadsheetId=SPREADSHEET_ID,
-                    range="'Auditoria'!A:H",
-                    valueInputOption="USER_ENTERED",
-                    body={"values": [linha]}
-                ).execute()
-        else:
-            # Se não há mudanças específicas, registra ação genérica
-            linha = [
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                usuario,
-                str(grupo_id),
-                "-",
-                "-",
-                "-",
-                acao,
-                origem
-            ]
-            service.spreadsheets().values().append(
-                spreadsheetId=SPREADSHEET_ID,
-                range="'Auditoria'!A:H",
-                valueInputOption="USER_ENTERED",
-                body={"values": [linha]}
-            ).execute()
-
-    except Exception as e:
-        print(f"Aviso: Nao conseguiu registrar auditoria: {e}")
-        # Fallback: salva em JSON local também
-        AUDIT_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "auditoria.json")
-        os.makedirs(os.path.dirname(AUDIT_FILE), exist_ok=True)
-        auditoria = []
-        if os.path.exists(AUDIT_FILE):
-            with open(AUDIT_FILE, "r", encoding="utf-8") as f:
-                auditoria = json.load(f)
-
+            registro = {
+                "timestamp": datetime.now().isoformat(),
+                "usuario": usuario,
+                "acao": acao,
+                "grupo_id": str(grupo_id),
+                "origem": origem,
+                "campo": campo,
+                "valor_antes": str(valor_antes),
+                "valor_depois": str(valor_depois)
+            }
+            auditoria.append(registro)
+    else:
         registro = {
             "timestamp": datetime.now().isoformat(),
             "usuario": usuario,
@@ -320,8 +288,9 @@ def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict =
             "mudancas": mudancas or {}
         }
         auditoria.append(registro)
-        with open(AUDIT_FILE, "w", encoding="utf-8") as f:
-            json.dump(auditoria, f, ensure_ascii=False, indent=2)
+
+    with open(AUDIT_FILE, "w", encoding="utf-8") as f:
+        json.dump(auditoria, f, ensure_ascii=False, indent=2)
 
 
 def indice_para_coluna(col_idx: int) -> str:
