@@ -273,10 +273,13 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
         # Prepara updates para a API
         updates = []
 
-        # Extrai historico se presente (para tratamento especial)
-        historico = dados.pop("historico", None)
+        # Extrai historico se presente (para tratamento especial) - NÃO modifica dados original
+        historico = dados.get("historico", None)
 
         for campo, valor in dados.items():
+            # Pula historico (tratado separadamente)
+            if campo == "historico":
+                continue
             if campo in campo_para_coluna:
                 col_idx = campo_para_coluna[campo]
                 col_letra = chr(65 + col_idx)  # A=65, B=66, etc
