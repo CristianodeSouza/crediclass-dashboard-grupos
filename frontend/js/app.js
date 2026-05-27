@@ -1962,7 +1962,7 @@ function init() {
   }
 
   // Carrega grupos na inicialização
-  this.carregarGrupos();
+  this.loadGrupos();
 
   console.log('[init] ✓ Inicialização completa');
 }
