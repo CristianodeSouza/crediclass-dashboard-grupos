@@ -12,7 +12,7 @@ from .import_export import validar_arquivo_excel, extrair_dados_excel, validar_s
 from .analytics import calcular_summary_analytics, calcular_comparativo_adms, calcular_tendencias_mensais, calcular_distribuicao_creditos, calcular_estatisticas_detalhadas
 from .sync_queue import SyncQueue, processar_fila_sincronizacao
 from pydantic import BaseModel
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 import io
 import asyncio
 from fastapi.concurrency import run_in_threadpool
@@ -75,7 +75,7 @@ class GrupoUpdate(BaseModel):
     conservador_24m: Optional[float] = None
     moderado_12m: Optional[float] = None
     status: Optional[str] = None
-    dados_adicionais: Optional[dict] = None
+    dados_adicionais: Optional[Dict[str, Any]] = None
     historico: Optional[list[HistoricoData]] = None
 
 
@@ -108,16 +108,16 @@ def check_auth():
 
 @app.get("/api/grupos")
 def listar_grupos(
-    adm: str = Query(None),
-    tipo_bem: str = Query(None),
-    categoria: str = Query(None),
-    prazo_restante_min: int = Query(None),
-    prazo_restante_max: int = Query(None),
-    vida_min: float = Query(None),
-    vida_max: float = Query(None),
-    credito_min: float = Query(None),
-    busca: str = Query(None),
-):
+    adm: Optional[str] = Query(None),
+    tipo_bem: Optional[str] = Query(None),
+    categoria: Optional[str] = Query(None),
+    prazo_restante_min: Optional[int] = Query(None),
+    prazo_restante_max: Optional[int] = Query(None),
+    vida_min: Optional[float] = Query(None),
+    vida_max: Optional[float] = Query(None),
+    credito_min: Optional[float] = Query(None),
+    busca: Optional[str] = Query(None),
+) -> Dict[str, Any]:
     try:
         grupos = fetch_grupos()
     except Exception:
@@ -150,7 +150,7 @@ def listar_grupos(
 
 
 @app.get("/api/grupos/{grupo_id}")
-def detalhe_grupo(grupo_id: str):
+def detalhe_grupo(grupo_id: str) -> Dict[str, Any]:
     try:
         grupos = fetch_grupos()
     except Exception:
@@ -162,7 +162,7 @@ def detalhe_grupo(grupo_id: str):
 
 
 @app.get("/api/stats")
-def estatisticas():
+def estatisticas() -> Dict[str, Any]:
     try:
         grupos = fetch_grupos()
     except Exception:
@@ -375,7 +375,7 @@ def criar_novo_grupo(grupo: GrupoCreate, usuario: str = Query("operador")):
 
 
 @app.put("/api/grupos/{grupo_id}")
-def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operador")):
+def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operador")) -> Dict[str, Any]:
     """Edita grupo e dispara sincronização assíncrona com Google Sheets"""
     try:
         # CRÍTICO: Forçar refresh do cache para evitar dados desatualizados em Render
@@ -386,43 +386,22 @@ def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operad
         if not existe:
             raise HTTPException(status_code=404, detail="Grupo não encontrado")
 
-        # Construir dict manualmente para garantir que historico seja incluído
-        dados = {}
+        # REFATORADO: Usar model_dump() do Pydantic para extrair TODOS os campos não-None
+        # Isso garante que dados que vêm do request são enviados corretamente
+        dados: Dict[str, Any] = grupo.model_dump(exclude_none=True)
 
-        # Verifica cada campo explicitamente
-        if grupo.adm is not None:
-            dados["adm"] = grupo.adm
-        if grupo.grupo is not None:
-            dados["grupo"] = grupo.grupo
-        if grupo.tipo_bem is not None:
-            dados["tipo_bem"] = grupo.tipo_bem
-        if grupo.maior_credito is not None:
-            dados["maior_credito"] = grupo.maior_credito
-        if grupo.menor_credito is not None:
-            dados["menor_credito"] = grupo.menor_credito
-        if grupo.taxa_adm is not None:
-            dados["taxa_adm"] = grupo.taxa_adm
-        if grupo.fundo_rsv is not None:
-            dados["fundo_rsv"] = grupo.fundo_rsv
-        if grupo.investidor is not None:
-            dados["investidor"] = grupo.investidor
-        if grupo.conservador_24m is not None:
-            dados["conservador_24m"] = grupo.conservador_24m
-        if grupo.moderado_12m is not None:
-            dados["moderado_12m"] = grupo.moderado_12m
-        if grupo.status is not None:
-            dados["status"] = grupo.status
-        if grupo.dados_adicionais is not None:
-            dados["dados_adicionais"] = grupo.dados_adicionais
-
-        # Garante que historico seja incluído (CRÍTICO)
+        # Processamento especial de historico (converter modelos para dicts)
         if grupo.historico is not None:
             dados["historico"] = [
                 h.model_dump() if hasattr(h, 'model_dump') else h
                 for h in grupo.historico
             ]
 
+        # Adiciona timestamp de edição
         dados["editado_em"] = datetime.now().isoformat()
+
+        print(f"[EDITAR_GRUPO] Dados extraídos de GrupoUpdate para grupo {grupo_id}: {list(dados.keys())}")
+        print(f"[EDITAR_GRUPO] Valores: maior_credito={dados.get('maior_credito')}, menor_credito={dados.get('menor_credito')}")
 
         # OPÇÃO 4: Primeiro salva no cache, depois dispara sincronização assíncrona
         if atualizar_grupo_sheets(grupo_id, dados, usuario):

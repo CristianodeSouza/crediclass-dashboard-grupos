@@ -4,6 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
+from typing import Dict, Any, List, Optional
 
 load_dotenv()
 
@@ -122,7 +123,7 @@ def build_history(row: list, headers: list) -> list:
     return history
 
 
-def fetch_grupos(force_refresh: bool = False) -> list[dict]:
+def fetch_grupos(force_refresh: bool = False) -> List[Dict[str, Any]]:
     if not force_refresh and os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -335,7 +336,7 @@ def mapa_campo_para_coluna() -> dict:
     }
 
 
-def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
+def sincronizar_grupo_ao_sheets(grupo_id: str, dados: Dict[str, Any]) -> bool:
     """Sincroniza alterações de grupo com Google Sheets via API
 
     Tenta usar Service Account. Se nao disponivel, retorna False silenciosamente
@@ -343,7 +344,13 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
     """
     try:
         print(f"[DEBUG] Iniciando sincronizacao de grupo {grupo_id} com Google Sheets...")
-        print(f"[DEBUG] Dados recebidos para sincronizar: maior_credito={dados.get('maior_credito')}, menor_credito={dados.get('menor_credito')}, taxa_adm={dados.get('taxa_adm')}")
+        print(f"[DEBUG] Dados recebidos para sincronizar: {len(dados)} campos")
+        print(f"[DEBUG] Valores numéricos: maior_credito={dados.get('maior_credito')} (type: {type(dados.get('maior_credito')).__name__}), menor_credito={dados.get('menor_credito')} (type: {type(dados.get('menor_credito')).__name__})")
+
+        # VALIDAÇÃO: Garante que dados não estão vazios
+        if not dados:
+            print(f"[ERRO] Dados vazio para grupo {grupo_id}!")
+            return False
         service = get_service(use_write_permissions=True)
 
         # Verifica se conseguiu credenciais de escrita
@@ -500,7 +507,7 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
         return False
 
 
-def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema", origem: str = "Dashboard") -> bool:
+def atualizar_grupo_sheets(grupo_id: str, dados: Dict[str, Any], usuario: str = "sistema", origem: str = "Dashboard") -> bool:
     try:
         print(f"[UPDATE_GRUPO] Atualizando grupo {grupo_id}. Usuario: {usuario}, Origem: {origem}")
         print(f"[UPDATE_GRUPO] Dados RECEBIDOS: maior_credito={dados.get('maior_credito')}, menor_credito={dados.get('menor_credito')}, taxa_adm={dados.get('taxa_adm')}")
