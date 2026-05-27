@@ -1947,4 +1947,27 @@ if (typeof Alpine !== 'undefined' && typeof dashboard === 'function') {
   console.log('[Alpine Init] ✓ dashboard() registrada com Alpine');
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// GLOBAL INIT FUNCTION — CALLED BY ALPINE.JS VIA x-init="init()"
+// ══════════════════════════════════════════════════════════════════════════════
+
+function init() {
+  console.log('[init] Alpine.js inicializando...');
+
+  // Registra Service Worker para offline cache
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('[OfflineCache] Service Worker registrado:', reg))
+      .catch(err => console.warn('[OfflineCache] Falha ao registrar SW:', err));
+  }
+
+  // Carrega grupos na inicialização
+  this.carregarGrupos();
+
+  console.log('[init] ✓ Inicialização completa');
+}
+
+// Registra init globalmente para Alpine.js acessar
+window.init = init;
+
 console.log('[Alpine Init] dashboard() pronto');
