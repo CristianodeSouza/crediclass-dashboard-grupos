@@ -365,56 +365,61 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
             print(f"[DEBUG] ERRO: Sheets vazio!")
             return False
 
-        # Encontra a linha do grupo (rows[0]=header, rows[1]=linha 2, etc)
-        grupo_row_idx = None
+        # Encontra TODAS as linhas do grupo (pode haver duplicatas)
+        grupo_row_indices = []
         print(f"[DEBUG] Procurando grupo {grupo_id} em {len(rows)} linhas do Sheets...")
         for i, row in enumerate(rows):
             if i == 0:  # Skip header
                 continue
             if len(row) > 1 and str(row[1]) == str(grupo_id):
-                grupo_row_idx = i + 1  # i é 0-based, +1 para converter a 1-based (linha do Sheets)
-                print(f"[DEBUG] Grupo encontrado na linha {grupo_row_idx}")
-                break
+                row_idx = i + 1  # i é 0-based, +1 para converter a 1-based (linha do Sheets)
+                grupo_row_indices.append(row_idx)
+                print(f"[DEBUG] Grupo encontrado na linha {row_idx}")
 
-        if grupo_row_idx is None:
+        if not grupo_row_indices:
             print(f"[DEBUG] ERRO: Grupo {grupo_id} NÃO encontrado no Google Sheets!")
             return False
+
+        if len(grupo_row_indices) > 1:
+            print(f"[DEBUG] AVISO: Grupo {grupo_id} encontrado em {len(grupo_row_indices)} linhas. Atualizando todas.")
 
         # Mapeia campos para colunas
         campo_para_coluna = mapa_campo_para_coluna()
 
-        # Prepara updates para a API
+        # Prepara updates para a API (para TODAS as linhas encontradas)
         updates = []
 
         # Extrai historico se presente (para tratamento especial) - NÃO modifica dados original
         historico = dados.get("historico", None)
 
-        for campo, valor in dados.items():
-            # Pula historico (tratado separadamente)
-            if campo == "historico":
-                continue
-            if campo in campo_para_coluna:
-                col_idx = campo_para_coluna[campo]
-                col_letra = indice_para_coluna(col_idx)
-                cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # grupo_row_idx já é linha 1-based
+        # Itera por cada linha encontrada
+        for grupo_row_idx in grupo_row_indices:
+            for campo, valor in dados.items():
+                # Pula historico (tratado separadamente)
+                if campo == "historico":
+                    continue
+                if campo in campo_para_coluna:
+                    col_idx = campo_para_coluna[campo]
+                    col_letra = indice_para_coluna(col_idx)
+                    cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # grupo_row_idx já é linha 1-based
 
-                # Formata o valor corretamente
-                if valor is None:
-                    valor_str = ""
-                elif isinstance(valor, float):
-                    # Numeros: formatar com 2 casas decimais, usando virgula como separador
-                    valor_str = f"{valor:.2f}".replace(".", ",")
-                elif isinstance(valor, (int, bool)):
-                    valor_str = str(valor)
-                else:
-                    valor_str = str(valor)
+                    # Formata o valor corretamente
+                    if valor is None:
+                        valor_str = ""
+                    elif isinstance(valor, float):
+                        # Numeros: formatar com 2 casas decimais, usando virgula como separador
+                        valor_str = f"{valor:.2f}".replace(".", ",")
+                    elif isinstance(valor, (int, bool)):
+                        valor_str = str(valor)
+                    else:
+                        valor_str = str(valor)
 
-                updates.append({
-                    "range": cell_ref,
-                    "values": [[valor_str]]
-                })
+                    updates.append({
+                        "range": cell_ref,
+                        "values": [[valor_str]]
+                    })
 
-        # Processa historico (dados mensais)
+        # Processa historico (dados mensais) para TODAS as linhas
         if historico and isinstance(historico, list):
             # Lê headers para encontrar colunas de histórico
             result_headers = service.spreadsheets().values().get(
@@ -423,49 +428,50 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
             ).execute()
             headers = result_headers.get("values", [[]])[0]
 
-            for hist_item in historico:
-                mes = hist_item.get("mes")
-                maior_lance = hist_item.get("maior_lance")
-                menor_lance = hist_item.get("menor_lance")
-                qtd = hist_item.get("qtd")
+            for grupo_row_idx in grupo_row_indices:
+                for hist_item in historico:
+                    mes = hist_item.get("mes")
+                    maior_lance = hist_item.get("maior_lance")
+                    menor_lance = hist_item.get("menor_lance")
+                    qtd = hist_item.get("qtd")
 
-                if not mes:
-                    continue
+                    if not mes:
+                        continue
 
-                # Procura colunas para este mês
-                maior_key = f"{mes}\nMaior Lance"
-                menor_key = f"{mes}\nMenor Lance"
-                qtd_key = f"{mes}\nQtd"
+                    # Procura colunas para este mês
+                    maior_key = f"{mes}\nMaior Lance"
+                    menor_key = f"{mes}\nMenor Lance"
+                    qtd_key = f"{mes}\nQtd"
 
-                try:
-                    if maior_key in headers:
-                        col_idx = headers.index(maior_key)
-                        col_letra = indice_para_coluna(col_idx)
-                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
-                        valor_str = f"{maior_lance:.2f}".replace(".", ",") if maior_lance is not None else ""
-                        updates.append({"range": cell_ref, "values": [[valor_str]]})
+                    try:
+                        if maior_key in headers:
+                            col_idx = headers.index(maior_key)
+                            col_letra = indice_para_coluna(col_idx)
+                            cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
+                            valor_str = f"{maior_lance:.2f}".replace(".", ",") if maior_lance is not None else ""
+                            updates.append({"range": cell_ref, "values": [[valor_str]]})
 
-                    if menor_key in headers:
-                        col_idx = headers.index(menor_key)
-                        col_letra = indice_para_coluna(col_idx)
-                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
-                        valor_str = f"{menor_lance:.2f}".replace(".", ",") if menor_lance is not None else ""
-                        updates.append({"range": cell_ref, "values": [[valor_str]]})
+                        if menor_key in headers:
+                            col_idx = headers.index(menor_key)
+                            col_letra = indice_para_coluna(col_idx)
+                            cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
+                            valor_str = f"{menor_lance:.2f}".replace(".", ",") if menor_lance is not None else ""
+                            updates.append({"range": cell_ref, "values": [[valor_str]]})
 
-                    if qtd_key in headers:
-                        col_idx = headers.index(qtd_key)
-                        col_letra = indice_para_coluna(col_idx)
-                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
-                        valor_str = str(qtd) if qtd is not None else ""
-                        updates.append({"range": cell_ref, "values": [[valor_str]]})
-                except (ValueError, IndexError):
-                    continue
+                        if qtd_key in headers:
+                            col_idx = headers.index(qtd_key)
+                            col_letra = indice_para_coluna(col_idx)
+                            cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
+                            valor_str = str(qtd) if qtd is not None else ""
+                            updates.append({"range": cell_ref, "values": [[valor_str]]})
+                    except (ValueError, IndexError):
+                        continue
 
         if not updates:
             print(f"[DEBUG] Nenhum update a fazer para grupo {grupo_id}")
             return False
 
-        print(f"[DEBUG] Executando {len(updates)} updates para grupo {grupo_id}...")
+        print(f"[DEBUG] Executando {len(updates)} updates para grupo {grupo_id} ({len(grupo_row_indices)} linhas)...")
 
         # LOG DE DEBUG: mostra EXATAMENTE o que está sendo enviado
         for idx, upd in enumerate(updates[:5]):  # mostra primeiros 5
