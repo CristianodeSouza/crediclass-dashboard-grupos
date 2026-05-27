@@ -144,7 +144,7 @@ class FrontendValidator:
                     )
 
     def _check_script_order(self) -> None:
-        """Verifica se Alpine.js carrega ANTES de app.js"""
+        """Verifica se app.js carrega ANTES de Alpine.js (CRÍTICO para x-data funcionr)"""
         if not os.path.exists(self.html_file):
             return
 
@@ -157,10 +157,12 @@ class FrontendValidator:
         if alpine_pos == -1 or app_pos == -1:
             return  # Erro j reportado em _check_required_scripts
 
-        if alpine_pos > app_pos:
+        if alpine_pos < app_pos:
             self.errors.append(
-                " ORDEM ERRADA: app.js carrega ANTES de Alpine.js\n"
-                "    Mova Alpine.js para ANTES de app.js no <head>"
+                " ORDEM ERRADA: Alpine.js carrega ANTES de app.js\n"
+                "    CRITICO: app.js DEVE carregar ANTES de Alpine.js\n"
+                "    Motivo: Alpine.js precisa que dashboard() já esteja definido em window\n"
+                "    Mova app.js para ANTES de Alpine.js no <head>"
             )
 
     def _check_app_js_content(self) -> None:
