@@ -155,7 +155,7 @@ def listar_grupos(
     return {"total": len(grupos), "grupos": grupos}
 
 
-@router.get("/api/grupos/{grupo_id}")
+@router.get("/grupos/{grupo_id}")
 def detalhe_grupo(grupo_id: str):
     try:
         grupos = fetch_grupos()
@@ -167,7 +167,7 @@ def detalhe_grupo(grupo_id: str):
     raise HTTPException(status_code=404, detail="Grupo não encontrado")
 
 
-@router.get("/api/stats")
+@router.get("/stats")
 def estatisticas():
     try:
         grupos = fetch_grupos()
@@ -193,7 +193,7 @@ def estatisticas():
     }
 
 
-@router.get("/api/piperun/{deal_id}")
+@router.get("/piperun/{deal_id}")
 async def buscar_oportunidade(deal_id: str):
     try:
         data = await fetch_oportunidade(deal_id)
@@ -202,7 +202,7 @@ async def buscar_oportunidade(deal_id: str):
         raise HTTPException(status_code=400, detail=f"Erro ao buscar oportunidade: {str(e)}")
 
 
-@router.get("/api/teste-calculadora/{deal_id}")
+@router.get("/teste-calculadora/{deal_id}")
 async def testar_calculadora_com_piperun(deal_id: str):
     """Teste completo: busca Piperun + executa calculadora com dados reais"""
     try:
@@ -266,7 +266,7 @@ async def testar_calculadora_com_piperun(deal_id: str):
 
 # ===== GERENCIADOR DE GRUPOS =====
 
-@router.get("/api/grupos-gerenciador")
+@router.get("/grupos-gerenciador")
 def listar_grupos_gerenciador(
     adm: str = Query(None),
     status: str = Query(None),
@@ -330,7 +330,7 @@ def listar_grupos_gerenciador(
     }
 
 
-@router.get("/api/sync-queue/status")
+@router.get("/sync-queue/status")
 def status_fila_sincronizacao():
     """Retorna status da fila de sincronização com Google Sheets"""
     try:
@@ -344,7 +344,7 @@ def status_fila_sincronizacao():
         return {"pendentes": 0, "items": [], "erro": str(e)}
 
 
-@router.get("/api/administradoras")
+@router.get("/administradoras")
 def listar_todas_administradoras():
     try:
         grupos = fetch_grupos()
@@ -366,7 +366,7 @@ def listar_todas_administradoras():
     }
 
 
-@router.post("/api/grupos")
+@router.post("/grupos")
 def criar_novo_grupo(grupo: GrupoCreate, usuario: str = Query("operador")):
     try:
         dados = grupo.dict(exclude_none=True)
@@ -380,7 +380,7 @@ def criar_novo_grupo(grupo: GrupoCreate, usuario: str = Query("operador")):
         raise HTTPException(status_code=400, detail=f"Erro ao criar grupo: {str(e)}")
 
 
-@router.put("/api/grupos/{grupo_id}")
+@router.put("/grupos/{grupo_id}")
 def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operador")):
     """Edita grupo e dispara sincronização assíncrona com Google Sheets"""
     try:
@@ -412,7 +412,7 @@ def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operad
         raise HTTPException(status_code=400, detail=f"Erro ao editar grupo: {str(e)}")
 
 
-@router.delete("/api/grupos/{grupo_id}")
+@router.delete("/grupos/{grupo_id}")
 def apagar_grupo(grupo_id: str, usuario: str = Query("operador"), soft: bool = Query(True)):
     try:
         grupos = fetch_grupos()
@@ -432,7 +432,7 @@ def apagar_grupo(grupo_id: str, usuario: str = Query("operador"), soft: bool = Q
         raise HTTPException(status_code=400, detail=f"Erro ao deletar grupo: {str(e)}")
 
 
-@router.patch("/api/grupos/{grupo_id}/status")
+@router.patch("/grupos/{grupo_id}/status")
 def mudar_status_grupo(grupo_id: str, novo_status: str = Body(...), usuario: str = Query("operador")):
     try:
         # P2.4 — Status Avançado com validação de transições
@@ -485,7 +485,7 @@ def mudar_status_grupo(grupo_id: str, novo_status: str = Body(...), usuario: str
         raise HTTPException(status_code=400, detail=f"Erro ao mudar status: {str(e)}")
 
 
-@router.post("/api/grupos/{grupo_id}/duplicar")
+@router.post("/grupos/{grupo_id}/duplicar")
 def duplicar_novo_grupo(grupo_id: str, usuario: str = Query("operador")):
     try:
         grupos = fetch_grupos()
@@ -504,7 +504,7 @@ def duplicar_novo_grupo(grupo_id: str, usuario: str = Query("operador")):
         raise HTTPException(status_code=400, detail=f"Erro ao duplicar grupo: {str(e)}")
 
 
-@router.post("/api/sync-sheets")
+@router.post("/sync-sheets")
 def sincronizar_com_sheets(usuario: str = Query("operador")):
     try:
         # Força recarregamento do cache que sincroniza com sheets
@@ -523,7 +523,7 @@ def sincronizar_com_sheets(usuario: str = Query("operador")):
         raise HTTPException(status_code=500, detail=f"Erro ao sincronizar: {str(e)}")
 
 
-@router.post("/api/reload-sheets")
+@router.post("/reload-sheets")
 def recarregar_de_sheets(usuario: str = Query("operador")):
     try:
         # Força refresh e sincroniza dados
@@ -542,7 +542,7 @@ def recarregar_de_sheets(usuario: str = Query("operador")):
         raise HTTPException(status_code=500, detail=f"Erro ao recarregar: {str(e)}")
 
 
-@router.get("/api/grupos/{grupo_id}/auditoria")
+@router.get("/grupos/{grupo_id}/auditoria")
 def obter_historico_grupo(grupo_id: str):
     try:
         auditoria = obter_auditoria_grupo_detalhada(grupo_id)
@@ -555,7 +555,7 @@ def obter_historico_grupo(grupo_id: str):
         raise HTTPException(status_code=400, detail=f"Erro ao obter auditoria: {str(e)}")
 
 
-@router.post("/api/refresh")
+@router.post("/refresh")
 def refresh_dados():
     try:
         grupos = fetch_grupos(force_refresh=True)
@@ -564,7 +564,7 @@ def refresh_dados():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/debug/cache-status")
+@router.get("/debug/cache-status")
 def debug_cache_status():
     """Debug: Verifica status do cache e arquivo grupos.json"""
     import os
@@ -598,7 +598,7 @@ def debug_cache_status():
 
 # ===== IMPORTAÇÃO/EXPORTAÇÃO (P3.1) =====
 
-@router.post("/api/importar/preview")
+@router.post("/importar/preview")
 async def importar_preview(arquivo: UploadFile = File(...)):
     """Preview de dados do arquivo Excel antes de importar."""
     try:
@@ -627,7 +627,7 @@ async def importar_preview(arquivo: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=f"Erro ao processar arquivo: {str(e)}")
 
 
-@router.post("/api/importar/processar")
+@router.post("/importar/processar")
 async def importar_processar(
     arquivo: UploadFile = File(...),
     modo: str = Query("insert_update"),
@@ -676,7 +676,7 @@ async def importar_processar(
         raise HTTPException(status_code=400, detail=f"Erro ao importar: {str(e)}")
 
 
-@router.get("/api/exportar/completo")
+@router.get("/exportar/completo")
 def exportar_tudo():
     """Exportar todos os grupos em Excel."""
     try:
@@ -691,7 +691,7 @@ def exportar_tudo():
         raise HTTPException(status_code=500, detail=f"Erro ao exportar: {str(e)}")
 
 
-@router.get("/api/exportar/por-adm/{adm}")
+@router.get("/exportar/por-adm/{adm}")
 def exportar_adm(adm: str):
     """Exportar grupos filtrados por administradora."""
     try:
@@ -706,7 +706,7 @@ def exportar_adm(adm: str):
         raise HTTPException(status_code=500, detail=f"Erro ao exportar: {str(e)}")
 
 
-@router.get("/api/exportar/grupo/{grupo_id}")
+@router.get("/exportar/grupo/{grupo_id}")
 def exportar_detalhe(grupo_id: str, adm: str = Query(...)):
     """Exportar detalhes completos de um grupo."""
     try:
@@ -722,7 +722,7 @@ def exportar_detalhe(grupo_id: str, adm: str = Query(...)):
         raise HTTPException(status_code=500, detail=f"Erro ao exportar: {str(e)}")
 
 
-@router.get("/api/exportar/relatorio-adms")
+@router.get("/exportar/relatorio-adms")
 def exportar_relatorio():
     """Exportar relatório comparativo de administradoras."""
     try:
@@ -739,7 +739,7 @@ def exportar_relatorio():
 
 # ===== ANALYTICS — DASHBOARD ANALÍTICO (P3.2) =====
 
-@router.get("/api/analytics/summary")
+@router.get("/analytics/summary")
 def analytics_summary():
     """Retorna métricas resumidas para o dashboard."""
     try:
@@ -752,7 +752,7 @@ def analytics_summary():
         raise HTTPException(status_code=500, detail=f"Erro ao calcular summary: {str(e)}")
 
 
-@router.get("/api/analytics/adm-comparison")
+@router.get("/analytics/adm-comparison")
 def analytics_adm_comparison():
     """Retorna comparativo de métricas por administradora."""
     try:
@@ -765,7 +765,7 @@ def analytics_adm_comparison():
         raise HTTPException(status_code=500, detail=f"Erro ao calcular comparativo ADMs: {str(e)}")
 
 
-@router.get("/api/analytics/trends")
+@router.get("/analytics/trends")
 def analytics_trends():
     """Retorna tendências de histórico mensal (últimos 12 meses)."""
     try:
@@ -778,7 +778,7 @@ def analytics_trends():
         raise HTTPException(status_code=500, detail=f"Erro ao calcular tendências: {str(e)}")
 
 
-@router.get("/api/analytics/distribution")
+@router.get("/analytics/distribution")
 def analytics_distribution():
     """Retorna distribuição de créditos por faixa."""
     try:
@@ -791,7 +791,7 @@ def analytics_distribution():
         raise HTTPException(status_code=500, detail=f"Erro ao calcular distribuição: {str(e)}")
 
 
-@router.get("/api/analytics/statistics")
+@router.get("/analytics/statistics")
 def analytics_statistics():
     """Retorna estatísticas detalhadas de grupos."""
     try:
@@ -804,7 +804,7 @@ def analytics_statistics():
         raise HTTPException(status_code=500, detail=f"Erro ao calcular estatísticas: {str(e)}")
 
 
-@router.get("/api/health/frontend")
+@router.get("/health/frontend")
 def health_frontend():
     """
     Health check para validar integridade do frontend.

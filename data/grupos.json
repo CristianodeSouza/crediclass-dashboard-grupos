@@ -1,5 +1,5 @@
-{
-  "126": {
+[
+  {
     "adm": "ITAÚ",
     "grupo": "126",
     "tipo_bem": "Imóvel",
@@ -11,10 +11,10 @@
     "vida_grupo_pct": 74.0,
     "venc": "20",
     "menor_credito": 123934.03,
-    "maior_credito": 247868.04,
-    "taxa_adm": 24.0,
+    "maior_credito": 3.30662162061e+16,
+    "taxa_adm": 5.5,
     "taxa_promocao": null,
-    "fundo_rsv": 3.0,
+    "fundo_rsv": 4.5,
     "prestacao_integral": null,
     "meia_reduzida": null,
     "investidor": null,
@@ -156,10 +156,10 @@
       }
     ]
   },
-  "127": {
+  {
     "adm": "ITAÚ",
     "grupo": "127",
-    "tipo_bem": "Imóvel",
+    "tipo_bem": "Imovel",
     "primeira_assembleia": "5/20/2014",
     "prazo_grupo": 192,
     "prazo_restante": 50,
@@ -169,7 +169,7 @@
     "venc": "20",
     "menor_credito": 123934.03,
     "maior_credito": 247868.04,
-    "taxa_adm": 24.0,
+    "taxa_adm": 2.5,
     "taxa_promocao": null,
     "fundo_rsv": 3.0,
     "prestacao_integral": null,
@@ -313,7 +313,7 @@
       }
     ]
   },
-  "128": {
+  {
     "adm": "ITAÚ",
     "grupo": "128",
     "tipo_bem": "Imóvel",
@@ -470,7 +470,7 @@
       }
     ]
   },
-  "40001": {
+  {
     "adm": "ITAÚ",
     "grupo": "40001",
     "tipo_bem": "Imóvel",
@@ -627,7 +627,7 @@
       }
     ]
   },
-  "40002": {
+  {
     "adm": "ITAÚ",
     "grupo": "40002",
     "tipo_bem": "Imóvel",
@@ -784,7 +784,7 @@
       }
     ]
   },
-  "40003": {
+  {
     "adm": "ITAÚ",
     "grupo": "40003",
     "tipo_bem": "Imóvel",
@@ -941,7 +941,7 @@
       }
     ]
   },
-  "40004": {
+  {
     "adm": "ITAÚ",
     "grupo": "40004",
     "tipo_bem": "Imóvel",
@@ -1098,7 +1098,7 @@
       }
     ]
   },
-  "40005": {
+  {
     "adm": "ITAÚ",
     "grupo": "40005",
     "tipo_bem": "Imóvel",
@@ -1255,7 +1255,7 @@
       }
     ]
   },
-  "40006": {
+  {
     "adm": "ITAÚ",
     "grupo": "40006",
     "tipo_bem": "Imóvel",
@@ -1412,7 +1412,7 @@
       }
     ]
   },
-  "40007": {
+  {
     "adm": "ITAÚ",
     "grupo": "40007",
     "tipo_bem": "Imóvel",
@@ -1569,7 +1569,7 @@
       }
     ]
   },
-  "40008": {
+  {
     "adm": "ITAÚ",
     "grupo": "40008",
     "tipo_bem": "Imóvel",
@@ -1726,7 +1726,7 @@
       }
     ]
   },
-  "40009": {
+  {
     "adm": "ITAÚ",
     "grupo": "40009",
     "tipo_bem": "Imóvel",
@@ -1883,7 +1883,7 @@
       }
     ]
   },
-  "40010": {
+  {
     "adm": "ITAÚ",
     "grupo": "40010",
     "tipo_bem": "Imóvel",
@@ -2040,7 +2040,7 @@
       }
     ]
   },
-  "40011": {
+  {
     "adm": "ITAÚ",
     "grupo": "40011",
     "tipo_bem": "Imóvel",
@@ -2203,7 +2203,7 @@
       }
     ]
   },
-  "40012": {
+  {
     "adm": "ITAÚ",
     "grupo": "40012",
     "tipo_bem": "Imóvel",
@@ -2366,7 +2366,7 @@
       }
     ]
   },
-  "40022": {
+  {
     "adm": "ITAÚ",
     "grupo": "40022",
     "tipo_bem": "Imóvel",
@@ -2529,7 +2529,7 @@
       }
     ]
   },
-  "40023": {
+  {
     "adm": "ITAÚ",
     "grupo": "40023",
     "tipo_bem": "Imóvel",
@@ -2692,7 +2692,7 @@
       }
     ]
   },
-  "40024": {
+  {
     "adm": "ITAÚ",
     "grupo": "40024",
     "tipo_bem": "Imóvel",
@@ -2855,7 +2855,7 @@
       }
     ]
   },
-  "40025": {
+  {
     "adm": "ITAÚ",
     "grupo": "40025",
     "tipo_bem": "Imóvel",
@@ -3012,7 +3012,7 @@
       }
     ]
   },
-  "40026": {
+  {
     "adm": "ITAÚ",
     "grupo": "40026",
     "tipo_bem": "Imóvel",
@@ -3169,7 +3169,7 @@
       }
     ]
   },
-  "40027": {
+  {
     "adm": "ITAÚ",
     "grupo": "40027",
     "tipo_bem": "Imóvel",
@@ -3326,7 +3326,7 @@
       }
     ]
   },
-  "40028": {
+  {
     "adm": "ITAÚ",
     "grupo": "40028",
     "tipo_bem": "Imóvel",
@@ -3483,7 +3483,7 @@
       }
     ]
   },
-  "40029": {
+  {
     "adm": "ITAÚ",
     "grupo": "40029",
     "tipo_bem": "Imóvel",
@@ -3628,7 +3628,7 @@
       }
     ]
   },
-  "40030": {
+  {
     "adm": "ITAÚ",
     "grupo": "40030",
     "tipo_bem": "Imóvel",
@@ -3779,7 +3779,7 @@
       }
     ]
   },
-  "40031": {
+  {
     "adm": "ITAÚ",
     "grupo": "40031",
     "tipo_bem": "Imóvel",
@@ -3936,7 +3936,7 @@
       }
     ]
   },
-  "40032": {
+  {
     "adm": "ITAÚ",
     "grupo": "40032",
     "tipo_bem": "Imóvel",
@@ -4081,7 +4081,7 @@
       }
     ]
   },
-  "40033": {
+  {
     "adm": "ITAÚ",
     "grupo": "40033",
     "tipo_bem": "Imóvel",
@@ -4238,7 +4238,7 @@
       }
     ]
   },
-  "40034": {
+  {
     "adm": "ITAÚ",
     "grupo": "40034",
     "tipo_bem": "Imóvel",
@@ -4395,7 +4395,7 @@
       }
     ]
   },
-  "40035": {
+  {
     "adm": "ITAÚ",
     "grupo": "40035",
     "tipo_bem": "Imóvel",
@@ -4546,7 +4546,7 @@
       }
     ]
   },
-  "40036": {
+  {
     "adm": "ITAÚ",
     "grupo": "40036",
     "tipo_bem": "Imóvel",
@@ -4697,7 +4697,7 @@
       }
     ]
   },
-  "40037": {
+  {
     "adm": "ITAÚ",
     "grupo": "40037",
     "tipo_bem": "Imóvel",
@@ -4848,7 +4848,7 @@
       }
     ]
   },
-  "40038": {
+  {
     "adm": "ITAÚ",
     "grupo": "40038",
     "tipo_bem": "Imóvel",
@@ -5011,7 +5011,7 @@
       }
     ]
   },
-  "40039": {
+  {
     "adm": "ITAÚ",
     "grupo": "40039",
     "tipo_bem": "Imóvel",
@@ -5162,7 +5162,7 @@
       }
     ]
   },
-  "40040": {
+  {
     "adm": "ITAÚ",
     "grupo": "40040",
     "tipo_bem": "Imóvel",
@@ -5307,7 +5307,7 @@
       }
     ]
   },
-  "40041": {
+  {
     "adm": "ITAÚ",
     "grupo": "40041",
     "tipo_bem": "Imóvel",
@@ -5464,7 +5464,7 @@
       }
     ]
   },
-  "40042": {
+  {
     "adm": "ITAÚ",
     "grupo": "40042",
     "tipo_bem": "Imóvel",
@@ -5609,7 +5609,7 @@
       }
     ]
   },
-  "40043": {
+  {
     "adm": "ITAÚ",
     "grupo": "40043",
     "tipo_bem": "Imóvel",
@@ -5766,7 +5766,7 @@
       }
     ]
   },
-  "40044": {
+  {
     "adm": "ITAÚ",
     "grupo": "40044",
     "tipo_bem": "Imóvel",
@@ -5917,7 +5917,7 @@
       }
     ]
   },
-  "40045": {
+  {
     "adm": "ITAÚ",
     "grupo": "40045",
     "tipo_bem": "Imóvel",
@@ -6080,7 +6080,7 @@
       }
     ]
   },
-  "40046": {
+  {
     "adm": "ITAÚ",
     "grupo": "40046",
     "tipo_bem": "Imóvel",
@@ -6237,7 +6237,7 @@
       }
     ]
   },
-  "40047": {
+  {
     "adm": "ITAÚ",
     "grupo": "40047",
     "tipo_bem": "Imóvel",
@@ -6388,7 +6388,7 @@
       }
     ]
   },
-  "40048": {
+  {
     "adm": "ITAÚ",
     "grupo": "40048",
     "tipo_bem": "Imóvel",
@@ -6539,7 +6539,7 @@
       }
     ]
   },
-  "40049": {
+  {
     "adm": "ITAÚ",
     "grupo": "40049",
     "tipo_bem": "Imóvel",
@@ -6690,7 +6690,7 @@
       }
     ]
   },
-  "40050": {
+  {
     "adm": "ITAÚ",
     "grupo": "40050",
     "tipo_bem": "Imóvel",
@@ -6829,7 +6829,7 @@
       }
     ]
   },
-  "40051": {
+  {
     "adm": "ITAÚ",
     "grupo": "40051",
     "tipo_bem": "Imóvel",
@@ -6962,7 +6962,7 @@
       }
     ]
   },
-  "40052": {
+  {
     "adm": "ITAÚ",
     "grupo": "40052",
     "tipo_bem": "Imóvel",
@@ -7119,7 +7119,7 @@
       }
     ]
   },
-  "40053": {
+  {
     "adm": "ITAÚ",
     "grupo": "40053",
     "tipo_bem": "Imóvel",
@@ -7282,7 +7282,7 @@
       }
     ]
   },
-  "40054": {
+  {
     "adm": "ITAÚ",
     "grupo": "40054",
     "tipo_bem": "Imóvel",
@@ -7445,7 +7445,7 @@
       }
     ]
   },
-  "40055": {
+  {
     "adm": "ITAÚ",
     "grupo": "40055",
     "tipo_bem": "Imóvel",
@@ -7602,7 +7602,7 @@
       }
     ]
   },
-  "40056": {
+  {
     "adm": "ITAÚ",
     "grupo": "40056",
     "tipo_bem": "Imóvel",
@@ -7759,7 +7759,7 @@
       }
     ]
   },
-  "40057": {
+  {
     "adm": "ITAÚ",
     "grupo": "40057",
     "tipo_bem": "Imóvel",
@@ -7922,7 +7922,7 @@
       }
     ]
   },
-  "40058": {
+  {
     "adm": "ITAÚ",
     "grupo": "40058",
     "tipo_bem": "Imóvel",
@@ -8079,7 +8079,7 @@
       }
     ]
   },
-  "40059": {
+  {
     "adm": "ITAÚ",
     "grupo": "40059",
     "tipo_bem": "Imóvel",
@@ -8224,7 +8224,7 @@
       }
     ]
   },
-  "40060": {
+  {
     "adm": "ITAÚ",
     "grupo": "40060",
     "tipo_bem": "Imóvel",
@@ -8381,7 +8381,7 @@
       }
     ]
   },
-  "40061": {
+  {
     "adm": "ITAÚ",
     "grupo": "40061",
     "tipo_bem": "Imóvel",
@@ -8544,7 +8544,7 @@
       }
     ]
   },
-  "40062": {
+  {
     "adm": "ITAÚ",
     "grupo": "40062",
     "tipo_bem": "Imóvel",
@@ -8701,7 +8701,7 @@
       }
     ]
   },
-  "1006": {
+  {
     "adm": "CAIXA",
     "grupo": "1006",
     "tipo_bem": "Imóvel",
@@ -8804,7 +8804,7 @@
       }
     ]
   },
-  "1011": {
+  {
     "adm": "CAIXA",
     "grupo": "1011",
     "tipo_bem": "Imóvel",
@@ -8955,7 +8955,7 @@
       }
     ]
   },
-  "1019": {
+  {
     "adm": "CAIXA",
     "grupo": "1019",
     "tipo_bem": "Imóvel",
@@ -9100,7 +9100,7 @@
       }
     ]
   },
-  "1025": {
+  {
     "adm": "CAIXA",
     "grupo": "1025",
     "tipo_bem": "Imóvel",
@@ -9251,7 +9251,7 @@
       }
     ]
   },
-  "1026": {
+  {
     "adm": "CAIXA",
     "grupo": "1026",
     "tipo_bem": "Imóvel",
@@ -9402,7 +9402,7 @@
       }
     ]
   },
-  "1027": {
+  {
     "adm": "CAIXA",
     "grupo": "1027",
     "tipo_bem": "Imóvel",
@@ -9553,7 +9553,7 @@
       }
     ]
   },
-  "1029": {
+  {
     "adm": "CAIXA",
     "grupo": "1029",
     "tipo_bem": "Imóvel",
@@ -9704,7 +9704,7 @@
       }
     ]
   },
-  "1030": {
+  {
     "adm": "CAIXA",
     "grupo": "1030",
     "tipo_bem": "Imóvel",
@@ -9855,7 +9855,7 @@
       }
     ]
   },
-  "1031": {
+  {
     "adm": "CAIXA",
     "grupo": "1031",
     "tipo_bem": "Imóvel",
@@ -10006,7 +10006,7 @@
       }
     ]
   },
-  "1032": {
+  {
     "adm": "CAIXA",
     "grupo": "1032",
     "tipo_bem": "Imóvel",
@@ -10157,7 +10157,7 @@
       }
     ]
   },
-  "1033": {
+  {
     "adm": "CAIXA",
     "grupo": "1033",
     "tipo_bem": "Imóvel",
@@ -10308,7 +10308,7 @@
       }
     ]
   },
-  "1034": {
+  {
     "adm": "CAIXA",
     "grupo": "1034",
     "tipo_bem": "Imóvel",
@@ -10459,7 +10459,7 @@
       }
     ]
   },
-  "1035": {
+  {
     "adm": "CAIXA",
     "grupo": "1035",
     "tipo_bem": "Imóvel",
@@ -10610,7 +10610,7 @@
       }
     ]
   },
-  "1036": {
+  {
     "adm": "CAIXA",
     "grupo": "1036",
     "tipo_bem": "Imóvel",
@@ -10761,7 +10761,7 @@
       }
     ]
   },
-  "1037": {
+  {
     "adm": "CAIXA",
     "grupo": "1037",
     "tipo_bem": "Imóvel",
@@ -10912,7 +10912,7 @@
       }
     ]
   },
-  "1038": {
+  {
     "adm": "CAIXA",
     "grupo": "1038",
     "tipo_bem": "Imóvel",
@@ -11063,7 +11063,7 @@
       }
     ]
   },
-  "1039": {
+  {
     "adm": "CAIXA",
     "grupo": "1039",
     "tipo_bem": "Imóvel",
@@ -11214,7 +11214,7 @@
       }
     ]
   },
-  "1040": {
+  {
     "adm": "CAIXA",
     "grupo": "1040",
     "tipo_bem": "Imóvel",
@@ -11365,7 +11365,7 @@
       }
     ]
   },
-  "1041": {
+  {
     "adm": "CAIXA",
     "grupo": "1041",
     "tipo_bem": "Imóvel",
@@ -11516,7 +11516,7 @@
       }
     ]
   },
-  "1042": {
+  {
     "adm": "CAIXA",
     "grupo": "1042",
     "tipo_bem": "Imóvel",
@@ -11667,7 +11667,7 @@
       }
     ]
   },
-  "545": {
+  {
     "adm": "CAOA",
     "grupo": "545",
     "tipo_bem": "Imóvel",
@@ -11782,7 +11782,7 @@
       }
     ]
   },
-  "558": {
+  {
     "adm": "CAOA",
     "grupo": "558",
     "tipo_bem": "Imóvel",
@@ -11921,7 +11921,7 @@
       }
     ]
   },
-  "585": {
+  {
     "adm": "CAOA",
     "grupo": "585",
     "tipo_bem": "Imóvel",
@@ -12036,7 +12036,7 @@
       }
     ]
   },
-  "595": {
+  {
     "adm": "CAOA",
     "grupo": "595",
     "tipo_bem": "Imóvel",
@@ -12181,7 +12181,7 @@
       }
     ]
   },
-  "8000": {
+  {
     "adm": "CAOA",
     "grupo": "8000",
     "tipo_bem": "Imóvel",
@@ -12332,7 +12332,7 @@
       }
     ]
   },
-  "I136": {
+  {
     "adm": "PORTO",
     "grupo": "I136",
     "tipo_bem": "Imóvel",
@@ -12375,7 +12375,7 @@
       }
     ]
   },
-  "I138": {
+  {
     "adm": "PORTO",
     "grupo": "I138",
     "tipo_bem": "Imóvel",
@@ -12412,7 +12412,7 @@
       }
     ]
   },
-  "I139": {
+  {
     "adm": "PORTO",
     "grupo": "I139",
     "tipo_bem": "Imóvel",
@@ -12455,7 +12455,7 @@
       }
     ]
   },
-  "I140": {
+  {
     "adm": "PORTO",
     "grupo": "I140",
     "tipo_bem": "Imóvel",
@@ -12485,7 +12485,7 @@
     "parcela_inicial": 3882.093989,
     "historico": []
   },
-  "I141": {
+  {
     "adm": "PORTO",
     "grupo": "I141",
     "tipo_bem": "Imóvel",
@@ -12534,7 +12534,7 @@
       }
     ]
   },
-  "I142": {
+  {
     "adm": "PORTO",
     "grupo": "I142",
     "tipo_bem": "Imóvel",
@@ -12595,7 +12595,7 @@
       }
     ]
   },
-  "I143": {
+  {
     "adm": "PORTO",
     "grupo": "I143",
     "tipo_bem": "Imóvel",
@@ -12650,7 +12650,7 @@
       }
     ]
   },
-  "I144": {
+  {
     "adm": "PORTO",
     "grupo": "I144",
     "tipo_bem": "Imóvel",
@@ -12693,7 +12693,7 @@
       }
     ]
   },
-  "I145": {
+  {
     "adm": "PORTO",
     "grupo": "I145",
     "tipo_bem": "Imóvel",
@@ -12748,7 +12748,7 @@
       }
     ]
   },
-  "I146": {
+  {
     "adm": "PORTO",
     "grupo": "I146",
     "tipo_bem": "Imóvel",
@@ -12803,7 +12803,7 @@
       }
     ]
   },
-  "I147": {
+  {
     "adm": "PORTO",
     "grupo": "I147",
     "tipo_bem": "Imóvel",
@@ -12852,7 +12852,7 @@
       }
     ]
   },
-  "I148": {
+  {
     "adm": "PORTO",
     "grupo": "I148",
     "tipo_bem": "Imóvel",
@@ -12907,7 +12907,7 @@
       }
     ]
   },
-  "I149": {
+  {
     "adm": "PORTO",
     "grupo": "I149",
     "tipo_bem": "Imóvel",
@@ -12968,7 +12968,7 @@
       }
     ]
   },
-  "I150": {
+  {
     "adm": "PORTO",
     "grupo": "I150",
     "tipo_bem": "Imóvel",
@@ -13011,7 +13011,7 @@
       }
     ]
   },
-  "I151": {
+  {
     "adm": "PORTO",
     "grupo": "I151",
     "tipo_bem": "Imóvel",
@@ -13054,7 +13054,7 @@
       }
     ]
   },
-  "I152": {
+  {
     "adm": "PORTO",
     "grupo": "I152",
     "tipo_bem": "Imóvel",
@@ -13091,7 +13091,7 @@
       }
     ]
   },
-  "I153": {
+  {
     "adm": "PORTO",
     "grupo": "I153",
     "tipo_bem": "Imóvel",
@@ -13128,7 +13128,7 @@
       }
     ]
   },
-  "I154": {
+  {
     "adm": "PORTO",
     "grupo": "I154",
     "tipo_bem": "Imóvel",
@@ -13165,7 +13165,7 @@
       }
     ]
   },
-  "I155": {
+  {
     "adm": "PORTO",
     "grupo": "I155",
     "tipo_bem": "Imóvel",
@@ -13202,7 +13202,7 @@
       }
     ]
   },
-  "I156": {
+  {
     "adm": "PORTO",
     "grupo": "I156",
     "tipo_bem": "Imóvel",
@@ -13239,7 +13239,7 @@
       }
     ]
   },
-  "I157": {
+  {
     "adm": "PORTO",
     "grupo": "I157",
     "tipo_bem": "Imóvel",
@@ -13276,7 +13276,7 @@
       }
     ]
   },
-  "I158": {
+  {
     "adm": "PORTO",
     "grupo": "I158",
     "tipo_bem": "Imóvel",
@@ -13313,7 +13313,7 @@
       }
     ]
   },
-  "I159": {
+  {
     "adm": "PORTO",
     "grupo": "I159",
     "tipo_bem": "Imóvel",
@@ -13350,7 +13350,7 @@
       }
     ]
   },
-  "I160": {
+  {
     "adm": "PORTO",
     "grupo": "I160",
     "tipo_bem": "Imóvel",
@@ -13387,7 +13387,7 @@
       }
     ]
   },
-  "I161": {
+  {
     "adm": "PORTO",
     "grupo": "I161",
     "tipo_bem": "Imóvel",
@@ -13424,7 +13424,7 @@
       }
     ]
   },
-  "I162": {
+  {
     "adm": "PORTO",
     "grupo": "I162",
     "tipo_bem": "Imóvel",
@@ -13461,7 +13461,7 @@
       }
     ]
   },
-  "I163": {
+  {
     "adm": "PORTO",
     "grupo": "I163",
     "tipo_bem": "Imóvel",
@@ -13498,7 +13498,7 @@
       }
     ]
   },
-  "I164": {
+  {
     "adm": "PORTO",
     "grupo": "I164",
     "tipo_bem": "Imóvel",
@@ -13535,7 +13535,7 @@
       }
     ]
   },
-  "I165": {
+  {
     "adm": "PORTO",
     "grupo": "I165",
     "tipo_bem": "Imóvel",
@@ -13565,7 +13565,7 @@
     "parcela_inicial": 851.0588445,
     "historico": []
   },
-  "I166": {
+  {
     "adm": "PORTO",
     "grupo": "I166",
     "tipo_bem": "Imóvel",
@@ -13602,7 +13602,7 @@
       }
     ]
   },
-  "I167": {
+  {
     "adm": "PORTO",
     "grupo": "I167",
     "tipo_bem": "Imóvel",
@@ -13639,7 +13639,7 @@
       }
     ]
   },
-  "I168": {
+  {
     "adm": "PORTO",
     "grupo": "I168",
     "tipo_bem": "Imóvel",
@@ -13676,7 +13676,7 @@
       }
     ]
   },
-  "I169": {
+  {
     "adm": "PORTO",
     "grupo": "I169",
     "tipo_bem": "Imóvel",
@@ -13706,7 +13706,7 @@
     "parcela_inicial": 3726.986378,
     "historico": []
   },
-  "I170": {
+  {
     "adm": "PORTO",
     "grupo": "I170",
     "tipo_bem": "Imóvel",
@@ -13743,7 +13743,7 @@
       }
     ]
   },
-  "I171": {
+  {
     "adm": "PORTO",
     "grupo": "I171",
     "tipo_bem": "Imóvel",
@@ -13780,7 +13780,7 @@
       }
     ]
   },
-  "I172": {
+  {
     "adm": "PORTO",
     "grupo": "I172",
     "tipo_bem": "Imóvel",
@@ -13817,7 +13817,7 @@
       }
     ]
   },
-  "I173": {
+  {
     "adm": "PORTO",
     "grupo": "I173",
     "tipo_bem": "Imóvel",
@@ -13854,7 +13854,7 @@
       }
     ]
   },
-  "I174": {
+  {
     "adm": "PORTO",
     "grupo": "I174",
     "tipo_bem": "Imóvel",
@@ -13891,7 +13891,7 @@
       }
     ]
   },
-  "I175": {
+  {
     "adm": "PORTO",
     "grupo": "I175",
     "tipo_bem": "Imóvel",
@@ -13928,7 +13928,7 @@
       }
     ]
   },
-  "I176": {
+  {
     "adm": "PORTO",
     "grupo": "I176",
     "tipo_bem": "Imóvel",
@@ -13965,7 +13965,7 @@
       }
     ]
   },
-  "I177": {
+  {
     "adm": "PORTO",
     "grupo": "I177",
     "tipo_bem": "Imóvel",
@@ -14002,7 +14002,7 @@
       }
     ]
   },
-  "I178": {
+  {
     "adm": "PORTO",
     "grupo": "I178",
     "tipo_bem": "Imóvel",
@@ -14039,7 +14039,7 @@
       }
     ]
   },
-  "I179": {
+  {
     "adm": "PORTO",
     "grupo": "I179",
     "tipo_bem": "Imóvel",
@@ -14076,7 +14076,7 @@
       }
     ]
   },
-  "I180": {
+  {
     "adm": "PORTO",
     "grupo": "I180",
     "tipo_bem": "Imóvel",
@@ -14113,7 +14113,7 @@
       }
     ]
   },
-  "I181": {
+  {
     "adm": "PORTO",
     "grupo": "I181",
     "tipo_bem": "Imóvel",
@@ -14150,7 +14150,7 @@
       }
     ]
   },
-  "I182": {
+  {
     "adm": "PORTO",
     "grupo": "I182",
     "tipo_bem": "Imóvel",
@@ -14187,7 +14187,7 @@
       }
     ]
   },
-  "I183": {
+  {
     "adm": "PORTO",
     "grupo": "I183",
     "tipo_bem": "Imóvel",
@@ -14224,7 +14224,7 @@
       }
     ]
   },
-  "I184": {
+  {
     "adm": "PORTO",
     "grupo": "I184",
     "tipo_bem": "Imóvel",
@@ -14261,7 +14261,7 @@
       }
     ]
   },
-  "I185": {
+  {
     "adm": "PORTO",
     "grupo": "I185",
     "tipo_bem": "Imóvel",
@@ -14298,7 +14298,7 @@
       }
     ]
   },
-  "I186": {
+  {
     "adm": "PORTO",
     "grupo": "I186",
     "tipo_bem": "Imóvel",
@@ -14335,7 +14335,7 @@
       }
     ]
   },
-  "I187": {
+  {
     "adm": "PORTO",
     "grupo": "I187",
     "tipo_bem": "Imóvel",
@@ -14372,7 +14372,7 @@
       }
     ]
   },
-  "I188": {
+  {
     "adm": "PORTO",
     "grupo": "I188",
     "tipo_bem": "Imóvel",
@@ -14409,7 +14409,7 @@
       }
     ]
   },
-  "I189": {
+  {
     "adm": "PORTO",
     "grupo": "I189",
     "tipo_bem": "Imóvel",
@@ -14446,7 +14446,7 @@
       }
     ]
   },
-  "I190": {
+  {
     "adm": "PORTO",
     "grupo": "I190",
     "tipo_bem": "Imóvel",
@@ -14483,7 +14483,7 @@
       }
     ]
   },
-  "I191": {
+  {
     "adm": "PORTO",
     "grupo": "I191",
     "tipo_bem": "Imóvel",
@@ -14520,7 +14520,7 @@
       }
     ]
   },
-  "I192": {
+  {
     "adm": "PORTO",
     "grupo": "I192",
     "tipo_bem": "Imóvel",
@@ -14557,7 +14557,7 @@
       }
     ]
   },
-  "I193": {
+  {
     "adm": "PORTO",
     "grupo": "I193",
     "tipo_bem": "Imóvel",
@@ -14594,7 +14594,7 @@
       }
     ]
   },
-  "I194": {
+  {
     "adm": "PORTO",
     "grupo": "I194",
     "tipo_bem": "Imóvel",
@@ -14631,7 +14631,7 @@
       }
     ]
   },
-  "I195": {
+  {
     "adm": "PORTO",
     "grupo": "I195",
     "tipo_bem": "Imóvel",
@@ -14668,7 +14668,7 @@
       }
     ]
   },
-  "I196": {
+  {
     "adm": "PORTO",
     "grupo": "I196",
     "tipo_bem": "Imóvel",
@@ -14705,7 +14705,7 @@
       }
     ]
   },
-  "I197": {
+  {
     "adm": "PORTO",
     "grupo": "I197",
     "tipo_bem": "Imóvel",
@@ -14742,7 +14742,7 @@
       }
     ]
   },
-  "I198": {
+  {
     "adm": "PORTO",
     "grupo": "I198",
     "tipo_bem": "Imóvel",
@@ -14779,7 +14779,7 @@
       }
     ]
   },
-  "I199": {
+  {
     "adm": "PORTO",
     "grupo": "I199",
     "tipo_bem": "Imóvel",
@@ -14816,7 +14816,7 @@
       }
     ]
   },
-  "I200": {
+  {
     "adm": "PORTO",
     "grupo": "I200",
     "tipo_bem": "Imóvel",
@@ -14853,7 +14853,7 @@
       }
     ]
   },
-  "I201": {
+  {
     "adm": "PORTO",
     "grupo": "I201",
     "tipo_bem": "Imóvel",
@@ -14890,7 +14890,7 @@
       }
     ]
   },
-  "I202": {
+  {
     "adm": "PORTO",
     "grupo": "I202",
     "tipo_bem": "Imóvel",
@@ -14927,7 +14927,7 @@
       }
     ]
   },
-  "I203": {
+  {
     "adm": "PORTO",
     "grupo": "I203",
     "tipo_bem": "Imóvel",
@@ -14957,7 +14957,7 @@
     "parcela_inicial": 3081.870975,
     "historico": []
   },
-  "I204": {
+  {
     "adm": "PORTO",
     "grupo": "I204",
     "tipo_bem": "Imóvel",
@@ -14987,7 +14987,7 @@
     "parcela_inicial": 693.8580083,
     "historico": []
   },
-  "I205": {
+  {
     "adm": "PORTO",
     "grupo": "I205",
     "tipo_bem": "Imóvel",
@@ -15017,7 +15017,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "I206": {
+  {
     "adm": "PORTO",
     "grupo": "I206",
     "tipo_bem": "Imóvel",
@@ -15047,7 +15047,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "I207": {
+  {
     "adm": "PORTO",
     "grupo": "I207",
     "tipo_bem": "Imóvel",
@@ -15077,7 +15077,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "I208": {
+  {
     "adm": "PORTO",
     "grupo": "I208",
     "tipo_bem": "Imóvel",
@@ -15107,7 +15107,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "I209": {
+  {
     "adm": "PORTO",
     "grupo": "I209",
     "tipo_bem": "Imóvel",
@@ -15137,7 +15137,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "I210": {
+  {
     "adm": "PORTO",
     "grupo": "I210",
     "tipo_bem": "Imóvel",
@@ -15167,7 +15167,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "I211": {
+  {
     "adm": "PORTO",
     "grupo": "I211",
     "tipo_bem": "Imóvel",
@@ -15197,7 +15197,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "I212": {
+  {
     "adm": "PORTO",
     "grupo": "I212",
     "tipo_bem": "Imóvel",
@@ -15227,7 +15227,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "I214": {
+  {
     "adm": "PORTO",
     "grupo": "I214",
     "tipo_bem": "Imóvel",
@@ -15257,7 +15257,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA01": {
+  {
     "adm": "PORTO",
     "grupo": "CA01",
     "tipo_bem": "Imóvel",
@@ -15287,7 +15287,7 @@
     "parcela_inicial": 3318.311537,
     "historico": []
   },
-  "CA02": {
+  {
     "adm": "PORTO",
     "grupo": "CA02",
     "tipo_bem": "Imóvel",
@@ -15317,7 +15317,7 @@
     "parcela_inicial": 3188.201855,
     "historico": []
   },
-  "CA03": {
+  {
     "adm": "PORTO",
     "grupo": "CA03",
     "tipo_bem": "Imóvel",
@@ -15347,7 +15347,7 @@
     "parcela_inicial": 3197.103752,
     "historico": []
   },
-  "CA04": {
+  {
     "adm": "PORTO",
     "grupo": "CA04",
     "tipo_bem": "Imóvel",
@@ -15377,7 +15377,7 @@
     "parcela_inicial": 3199.013676,
     "historico": []
   },
-  "CA05": {
+  {
     "adm": "PORTO",
     "grupo": "CA05",
     "tipo_bem": "Imóvel",
@@ -15407,7 +15407,7 @@
     "parcela_inicial": 3207.750326,
     "historico": []
   },
-  "CA06": {
+  {
     "adm": "PORTO",
     "grupo": "CA06",
     "tipo_bem": "Imóvel",
@@ -15437,7 +15437,7 @@
     "parcela_inicial": 3203.481126,
     "historico": []
   },
-  "CA07": {
+  {
     "adm": "PORTO",
     "grupo": "CA07",
     "tipo_bem": "Imóvel",
@@ -15467,7 +15467,7 @@
     "parcela_inicial": 3204.43037,
     "historico": []
   },
-  "CA08": {
+  {
     "adm": "PORTO",
     "grupo": "CA08",
     "tipo_bem": "Imóvel",
@@ -15497,7 +15497,7 @@
     "parcela_inicial": 3203.151815,
     "historico": []
   },
-  "CA09": {
+  {
     "adm": "PORTO",
     "grupo": "CA09",
     "tipo_bem": "Imóvel",
@@ -15527,7 +15527,7 @@
     "parcela_inicial": 3090.791063,
     "historico": []
   },
-  "CA10": {
+  {
     "adm": "PORTO",
     "grupo": "CA10",
     "tipo_bem": "Imóvel",
@@ -15557,7 +15557,7 @@
     "parcela_inicial": 3082.780463,
     "historico": []
   },
-  "CA11": {
+  {
     "adm": "PORTO",
     "grupo": "CA11",
     "tipo_bem": "Imóvel",
@@ -15587,7 +15587,7 @@
     "parcela_inicial": 3079.095113,
     "historico": []
   },
-  "CA12": {
+  {
     "adm": "PORTO",
     "grupo": "CA12",
     "tipo_bem": "Imóvel",
@@ -15617,7 +15617,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA13": {
+  {
     "adm": "PORTO",
     "grupo": "CA13",
     "tipo_bem": "Imóvel",
@@ -15647,7 +15647,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA14": {
+  {
     "adm": "PORTO",
     "grupo": "CA14",
     "tipo_bem": "Imóvel",
@@ -15677,7 +15677,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA15": {
+  {
     "adm": "PORTO",
     "grupo": "CA15",
     "tipo_bem": "Imóvel",
@@ -15707,7 +15707,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA16": {
+  {
     "adm": "PORTO",
     "grupo": "CA16",
     "tipo_bem": "Imóvel",
@@ -15737,7 +15737,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA17": {
+  {
     "adm": "PORTO",
     "grupo": "CA17",
     "tipo_bem": "Imóvel",
@@ -15767,7 +15767,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA18": {
+  {
     "adm": "PORTO",
     "grupo": "CA18",
     "tipo_bem": "Imóvel",
@@ -15797,7 +15797,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA19": {
+  {
     "adm": "PORTO",
     "grupo": "CA19",
     "tipo_bem": "Imóvel",
@@ -15827,7 +15827,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA20": {
+  {
     "adm": "PORTO",
     "grupo": "CA20",
     "tipo_bem": "Imóvel",
@@ -15857,7 +15857,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "CA21": {
+  {
     "adm": "PORTO",
     "grupo": "CA21",
     "tipo_bem": "Imóvel",
@@ -15887,7 +15887,7 @@
     "parcela_inicial": 2962.5,
     "historico": []
   },
-  "1740": {
+  {
     "adm": "RODOBENS",
     "grupo": "1740",
     "tipo_bem": "",
@@ -15917,7 +15917,7 @@
     "parcela_inicial": 4841.666667,
     "historico": []
   },
-  "1741": {
+  {
     "adm": "RODOBENS",
     "grupo": "1741",
     "tipo_bem": "",
@@ -15947,7 +15947,7 @@
     "parcela_inicial": 1097.777778,
     "historico": []
   },
-  "1742": {
+  {
     "adm": "RODOBENS",
     "grupo": "1742",
     "tipo_bem": "",
@@ -15977,7 +15977,7 @@
     "parcela_inicial": 1097.777778,
     "historico": []
   },
-  "1743": {
+  {
     "adm": "RODOBENS",
     "grupo": "1743",
     "tipo_bem": "",
@@ -16007,7 +16007,7 @@
     "parcela_inicial": 1097.777778,
     "historico": []
   },
-  "1744": {
+  {
     "adm": "RODOBENS",
     "grupo": "1744",
     "tipo_bem": "",
@@ -16037,7 +16037,7 @@
     "parcela_inicial": 1097.777778,
     "historico": []
   },
-  "1745": {
+  {
     "adm": "RODOBENS",
     "grupo": "1745",
     "tipo_bem": "",
@@ -16067,7 +16067,7 @@
     "parcela_inicial": 1097.777778,
     "historico": []
   },
-  "1746": {
+  {
     "adm": "RODOBENS",
     "grupo": "1746",
     "tipo_bem": "",
@@ -16097,7 +16097,7 @@
     "parcela_inicial": 1097.777778,
     "historico": []
   },
-  "1750": {
+  {
     "adm": "RODOBENS",
     "grupo": "1750",
     "tipo_bem": "",
@@ -16127,7 +16127,7 @@
     "parcela_inicial": 4841.666667,
     "historico": []
   },
-  "1760": {
+  {
     "adm": "RODOBENS",
     "grupo": "1760",
     "tipo_bem": "",
@@ -16157,7 +16157,7 @@
     "parcela_inicial": 4841.666667,
     "historico": []
   },
-  "1761": {
+  {
     "adm": "RODOBENS",
     "grupo": "1761",
     "tipo_bem": "",
@@ -16187,7 +16187,7 @@
     "parcela_inicial": 980.0,
     "historico": []
   },
-  "1762": {
+  {
     "adm": "RODOBENS",
     "grupo": "1762",
     "tipo_bem": "",
@@ -16217,7 +16217,7 @@
     "parcela_inicial": 2100.0,
     "historico": []
   },
-  "1763": {
+  {
     "adm": "RODOBENS",
     "grupo": "1763",
     "tipo_bem": "",
@@ -16247,7 +16247,7 @@
     "parcela_inicial": 980.0,
     "historico": []
   },
-  "1764": {
+  {
     "adm": "RODOBENS",
     "grupo": "1764",
     "tipo_bem": "",
@@ -16277,7 +16277,7 @@
     "parcela_inicial": 2100.0,
     "historico": []
   },
-  "1765": {
+  {
     "adm": "RODOBENS",
     "grupo": "1765",
     "tipo_bem": "",
@@ -16307,7 +16307,7 @@
     "parcela_inicial": 980.0,
     "historico": []
   },
-  "1766": {
+  {
     "adm": "RODOBENS",
     "grupo": "1766",
     "tipo_bem": "",
@@ -16337,7 +16337,7 @@
     "parcela_inicial": 2730.0,
     "historico": []
   },
-  "1767": {
+  {
     "adm": "RODOBENS",
     "grupo": "1767",
     "tipo_bem": "",
@@ -16367,7 +16367,7 @@
     "parcela_inicial": 980.0,
     "historico": []
   },
-  "1768": {
+  {
     "adm": "RODOBENS",
     "grupo": "1768",
     "tipo_bem": "",
@@ -16397,7 +16397,7 @@
     "parcela_inicial": 2100.0,
     "historico": []
   },
-  "1769": {
+  {
     "adm": "RODOBENS",
     "grupo": "1769",
     "tipo_bem": "",
@@ -16427,7 +16427,7 @@
     "parcela_inicial": 980.0,
     "historico": []
   },
-  "1770": {
+  {
     "adm": "RODOBENS",
     "grupo": "1770",
     "tipo_bem": "",
@@ -16457,7 +16457,7 @@
     "parcela_inicial": 5600.0,
     "historico": []
   },
-  "1771": {
+  {
     "adm": "RODOBENS",
     "grupo": "1771",
     "tipo_bem": "",
@@ -16487,7 +16487,7 @@
     "parcela_inicial": 980.0,
     "historico": []
   },
-  "1772": {
+  {
     "adm": "RODOBENS",
     "grupo": "1772",
     "tipo_bem": "",
@@ -16517,7 +16517,7 @@
     "parcela_inicial": 2100.0,
     "historico": []
   },
-  "1773": {
+  {
     "adm": "RODOBENS",
     "grupo": "1773",
     "tipo_bem": "",
@@ -16547,7 +16547,7 @@
     "parcela_inicial": 980.0,
     "historico": []
   },
-  "1774": {
+  {
     "adm": "RODOBENS",
     "grupo": "1774",
     "tipo_bem": "",
@@ -16577,7 +16577,7 @@
     "parcela_inicial": 2100.0,
     "historico": []
   },
-  "1775": {
+  {
     "adm": "RODOBENS",
     "grupo": "1775",
     "tipo_bem": "",
@@ -16607,7 +16607,7 @@
     "parcela_inicial": 980.0,
     "historico": []
   },
-  "1777": {
+  {
     "adm": "RODOBENS",
     "grupo": "1777",
     "tipo_bem": "",
@@ -16637,7 +16637,7 @@
     "parcela_inicial": 864.7058824,
     "historico": []
   },
-  "1778": {
+  {
     "adm": "RODOBENS",
     "grupo": "1778",
     "tipo_bem": "",
@@ -16667,7 +16667,7 @@
     "parcela_inicial": 1889.705882,
     "historico": []
   },
-  "1779": {
+  {
     "adm": "RODOBENS",
     "grupo": "1779",
     "tipo_bem": "",
@@ -16697,7 +16697,7 @@
     "parcela_inicial": 864.7058824,
     "historico": []
   },
-  "1780": {
+  {
     "adm": "RODOBENS",
     "grupo": "1780",
     "tipo_bem": "",
@@ -16727,7 +16727,7 @@
     "parcela_inicial": 4900.0,
     "historico": []
   },
-  "1781": {
+  {
     "adm": "RODOBENS",
     "grupo": "1781",
     "tipo_bem": "",
@@ -16757,7 +16757,7 @@
     "parcela_inicial": 881.8627451,
     "historico": []
   },
-  "1782": {
+  {
     "adm": "RODOBENS",
     "grupo": "1782",
     "tipo_bem": "",
@@ -16787,7 +16787,7 @@
     "parcela_inicial": 1889.705882,
     "historico": []
   },
-  "1783": {
+  {
     "adm": "RODOBENS",
     "grupo": "1783",
     "tipo_bem": "",
@@ -16817,7 +16817,7 @@
     "parcela_inicial": 1007.843137,
     "historico": []
   },
-  "1786": {
+  {
     "adm": "RODOBENS",
     "grupo": "1786",
     "tipo_bem": "",
@@ -16847,7 +16847,7 @@
     "parcela_inicial": 2141.666667,
     "historico": []
   },
-  "1790": {
+  {
     "adm": "RODOBENS",
     "grupo": "1790",
     "tipo_bem": "",
@@ -16877,7 +16877,7 @@
     "parcela_inicial": 4409.313725,
     "historico": []
   },
-  "1810": {
+  {
     "adm": "RODOBENS",
     "grupo": "1810",
     "tipo_bem": "",
@@ -16907,7 +16907,7 @@
     "parcela_inicial": 4409.313725,
     "historico": []
   },
-  "1820": {
+  {
     "adm": "RODOBENS",
     "grupo": "1820",
     "tipo_bem": "",
@@ -16937,7 +16937,7 @@
     "parcela_inicial": 5039.215686,
     "historico": []
   },
-  "1902": {
+  {
     "adm": "RODOBENS",
     "grupo": "1902",
     "tipo_bem": "",
@@ -16967,7 +16967,7 @@
     "parcela_inicial": 3402.777778,
     "historico": []
   },
-  "I215": {
+  {
     "adm": "PORTO",
     "grupo": "I215",
     "tipo_bem": "Imóvel",
@@ -16997,7 +16997,7 @@
     "parcela_inicial": 3318.0,
     "historico": []
   },
-  "I216": {
+  {
     "adm": "PORTO",
     "grupo": "I216",
     "tipo_bem": "Imóvel",
@@ -17027,7 +17027,7 @@
     "parcela_inicial": 3318.0,
     "historico": []
   },
-  "I217": {
+  {
     "adm": "PORTO",
     "grupo": "I217",
     "tipo_bem": "Imóvel",
@@ -17057,7 +17057,7 @@
     "parcela_inicial": 3346.0,
     "historico": []
   },
-  "I218": {
+  {
     "adm": "PORTO",
     "grupo": "I218",
     "tipo_bem": "Imóvel",
@@ -17087,7 +17087,7 @@
     "parcela_inicial": 3346.0,
     "historico": []
   },
-  "I219": {
+  {
     "adm": "PORTO",
     "grupo": "I219",
     "tipo_bem": "Imóvel",
@@ -17117,7 +17117,7 @@
     "parcela_inicial": 3346.0,
     "historico": []
   },
-  "I220": {
+  {
     "adm": "PORTO",
     "grupo": "I220",
     "tipo_bem": "Imóvel",
@@ -17147,7 +17147,7 @@
     "parcela_inicial": 3318.0,
     "historico": []
   },
-  "l226": {
+  {
     "adm": "PORTO",
     "grupo": "l226",
     "tipo_bem": "Imóvel",
@@ -17177,7 +17177,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "I227": {
+  {
     "adm": "PORTO",
     "grupo": "I227",
     "tipo_bem": "Imóvel",
@@ -17207,7 +17207,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "I228": {
+  {
     "adm": "PORTO",
     "grupo": "I228",
     "tipo_bem": "Imóvel",
@@ -17237,7 +17237,7 @@
     "parcela_inicial": 668.25,
     "historico": []
   },
-  "40063": {
+  {
     "adm": "ITAÚ",
     "grupo": "40063",
     "tipo_bem": "Imóvel",
@@ -17382,7 +17382,7 @@
       }
     ]
   },
-  "40065": {
+  {
     "adm": "ITAÚ",
     "grupo": "40065",
     "tipo_bem": "Imóvel",
@@ -17545,7 +17545,7 @@
       }
     ]
   },
-  "40067": {
+  {
     "adm": "ITAÚ",
     "grupo": "40067",
     "tipo_bem": "Imóvel",
@@ -17708,7 +17708,7 @@
       }
     ]
   },
-  "40069": {
+  {
     "adm": "ITAÚ",
     "grupo": "40069",
     "tipo_bem": "Imóvel",
@@ -17859,7 +17859,7 @@
       }
     ]
   },
-  "40071": {
+  {
     "adm": "ITAÚ",
     "grupo": "40071",
     "tipo_bem": "Imóvel",
@@ -18016,7 +18016,7 @@
       }
     ]
   },
-  "40073": {
+  {
     "adm": "ITAÚ",
     "grupo": "40073",
     "tipo_bem": "Imóvel",
@@ -18179,7 +18179,7 @@
       }
     ]
   },
-  "40075": {
+  {
     "adm": "ITAÚ",
     "grupo": "40075",
     "tipo_bem": "Imóvel",
@@ -18342,7 +18342,7 @@
       }
     ]
   },
-  "40076": {
+  {
     "adm": "ITAÚ",
     "grupo": "40076",
     "tipo_bem": "Imóvel",
@@ -18505,7 +18505,7 @@
       }
     ]
   },
-  "40079": {
+  {
     "adm": "ITAÚ",
     "grupo": "40079",
     "tipo_bem": "Imóvel",
@@ -18668,7 +18668,7 @@
       }
     ]
   },
-  "40083": {
+  {
     "adm": "ITAÚ",
     "grupo": "40083",
     "tipo_bem": "Imóvel",
@@ -18831,7 +18831,7 @@
       }
     ]
   },
-  "1043": {
+  {
     "adm": "CAIXA",
     "grupo": "1043",
     "tipo_bem": "Imóvel",
@@ -18982,7 +18982,7 @@
       }
     ]
   },
-  "1044": {
+  {
     "adm": "CAIXA",
     "grupo": "1044",
     "tipo_bem": "Imóvel",
@@ -19091,7 +19091,7 @@
       }
     ]
   },
-  "40085": {
+  {
     "adm": "ITAÚ",
     "grupo": "40085",
     "tipo_bem": "Imóvel",
@@ -19236,7 +19236,7 @@
       }
     ]
   },
-  "40086": {
+  {
     "adm": "ITAÚ",
     "grupo": "40086",
     "tipo_bem": "Imóvel",
@@ -19393,7 +19393,7 @@
       }
     ]
   },
-  "40087": {
+  {
     "adm": "ITAÚ",
     "grupo": "40087",
     "tipo_bem": "Imóvel",
@@ -19550,7 +19550,7 @@
       }
     ]
   },
-  "40090": {
+  {
     "adm": "ITAÚ",
     "grupo": "40090",
     "tipo_bem": "Imóvel",
@@ -19707,7 +19707,7 @@
       }
     ]
   },
-  "40091": {
+  {
     "adm": "ITAÚ",
     "grupo": "40091",
     "tipo_bem": "Imóvel",
@@ -19870,7 +19870,7 @@
       }
     ]
   },
-  "40092": {
+  {
     "adm": "ITAÚ",
     "grupo": "40092",
     "tipo_bem": "Imóvel",
@@ -20033,7 +20033,7 @@
       }
     ]
   },
-  "40094": {
+  {
     "adm": "ITAÚ",
     "grupo": "40094",
     "tipo_bem": "Imóvel",
@@ -20190,7 +20190,7 @@
       }
     ]
   },
-  "40096": {
+  {
     "adm": "ITAÚ",
     "grupo": "40096",
     "tipo_bem": "Imóvel",
@@ -20335,7 +20335,7 @@
       }
     ]
   },
-  "40097": {
+  {
     "adm": "ITAÚ",
     "grupo": "40097",
     "tipo_bem": "Imóvel",
@@ -20468,7 +20468,7 @@
       }
     ]
   },
-  "40098": {
+  {
     "adm": "ITAÚ",
     "grupo": "40098",
     "tipo_bem": "Imóvel",
@@ -20607,7 +20607,7 @@
       }
     ]
   },
-  "40100": {
+  {
     "adm": "ITAÚ",
     "grupo": "40100",
     "tipo_bem": "Imóvel",
@@ -20740,7 +20740,7 @@
       }
     ]
   },
-  "40102": {
+  {
     "adm": "ITAÚ",
     "grupo": "40102",
     "tipo_bem": "Imóvel",
@@ -20849,7 +20849,7 @@
       }
     ]
   },
-  "40103": {
+  {
     "adm": "ITAÚ",
     "grupo": "40103",
     "tipo_bem": "Imóvel",
@@ -20958,7 +20958,7 @@
       }
     ]
   },
-  "40105": {
+  {
     "adm": "ITAÚ",
     "grupo": "40105",
     "tipo_bem": "Imóvel",
@@ -21115,7 +21115,7 @@
       }
     ]
   },
-  "40106": {
+  {
     "adm": "ITAÚ",
     "grupo": "40106",
     "tipo_bem": "Imóvel",
@@ -21236,7 +21236,7 @@
       }
     ]
   },
-  "40111": {
+  {
     "adm": "ITAÚ",
     "grupo": "40111",
     "tipo_bem": "Imóvel",
@@ -21363,7 +21363,7 @@
       }
     ]
   },
-  "40113": {
+  {
     "adm": "ITAÚ",
     "grupo": "40113",
     "tipo_bem": "Imóvel",
@@ -21496,7 +21496,7 @@
       }
     ]
   },
-  "40115": {
+  {
     "adm": "ITAÚ",
     "grupo": "40115",
     "tipo_bem": "Imóvel",
@@ -21599,7 +21599,7 @@
       }
     ]
   },
-  "40116": {
+  {
     "adm": "ITAÚ",
     "grupo": "40116",
     "tipo_bem": "Imóvel",
@@ -21726,7 +21726,7 @@
       }
     ]
   },
-  "40121": {
+  {
     "adm": "ITAÚ",
     "grupo": "40121",
     "tipo_bem": "Imóvel",
@@ -21847,7 +21847,7 @@
       }
     ]
   },
-  "40122": {
+  {
     "adm": "ITAÚ",
     "grupo": "40122",
     "tipo_bem": "Imóvel",
@@ -21944,7 +21944,7 @@
       }
     ]
   },
-  "40123": {
+  {
     "adm": "ITAÚ",
     "grupo": "40123",
     "tipo_bem": "Imóvel",
@@ -22089,7 +22089,7 @@
       }
     ]
   },
-  "40124": {
+  {
     "adm": "ITAÚ",
     "grupo": "40124",
     "tipo_bem": "Imóvel",
@@ -22210,7 +22210,7 @@
       }
     ]
   },
-  "40125": {
+  {
     "adm": "ITAÚ",
     "grupo": "40125",
     "tipo_bem": "Imóvel",
@@ -22349,7 +22349,7 @@
       }
     ]
   },
-  "40126": {
+  {
     "adm": "ITAÚ",
     "grupo": "40126",
     "tipo_bem": "Imóvel",
@@ -22488,7 +22488,7 @@
       }
     ]
   },
-  "40127": {
+  {
     "adm": "ITAÚ",
     "grupo": "40127",
     "tipo_bem": "Imóvel",
@@ -22609,7 +22609,7 @@
       }
     ]
   },
-  "40129": {
+  {
     "adm": "ITAÚ",
     "grupo": "40129",
     "tipo_bem": "Imóvel",
@@ -22742,7 +22742,7 @@
       }
     ]
   },
-  "40130": {
+  {
     "adm": "ITAÚ",
     "grupo": "40130",
     "tipo_bem": "Imóvel",
@@ -22851,7 +22851,7 @@
       }
     ]
   },
-  "40131": {
+  {
     "adm": "ITAÚ",
     "grupo": "40131",
     "tipo_bem": "Imóvel",
@@ -22996,7 +22996,7 @@
       }
     ]
   },
-  "40132": {
+  {
     "adm": "ITAÚ",
     "grupo": "40132",
     "tipo_bem": "Imóvel",
@@ -23147,7 +23147,7 @@
       }
     ]
   },
-  "40133": {
+  {
     "adm": "ITAÚ",
     "grupo": "40133",
     "tipo_bem": "Imóvel",
@@ -23298,7 +23298,7 @@
       }
     ]
   },
-  "40135": {
+  {
     "adm": "ITAÚ",
     "grupo": "40135",
     "tipo_bem": "Imóvel",
@@ -23455,7 +23455,7 @@
       }
     ]
   },
-  "40136": {
+  {
     "adm": "ITAÚ",
     "grupo": "40136",
     "tipo_bem": "Imóvel",
@@ -23570,7 +23570,7 @@
       }
     ]
   },
-  "40137": {
+  {
     "adm": "ITAÚ",
     "grupo": "40137",
     "tipo_bem": "Imóvel",
@@ -23685,7 +23685,7 @@
       }
     ]
   },
-  "40138": {
+  {
     "adm": "ITAÚ",
     "grupo": "40138",
     "tipo_bem": "Imóvel",
@@ -23842,7 +23842,7 @@
       }
     ]
   },
-  "40139": {
+  {
     "adm": "ITAÚ",
     "grupo": "40139",
     "tipo_bem": "Imóvel",
@@ -23951,7 +23951,7 @@
       }
     ]
   },
-  "40141": {
+  {
     "adm": "ITAÚ",
     "grupo": "40141",
     "tipo_bem": "Imóvel",
@@ -24060,7 +24060,7 @@
       }
     ]
   },
-  "40142": {
+  {
     "adm": "ITAÚ",
     "grupo": "40142",
     "tipo_bem": "Imóvel",
@@ -24145,7 +24145,7 @@
       }
     ]
   },
-  "40143": {
+  {
     "adm": "ITAÚ",
     "grupo": "40143",
     "tipo_bem": "Imóvel",
@@ -24302,7 +24302,7 @@
       }
     ]
   },
-  "40144": {
+  {
     "adm": "ITAÚ",
     "grupo": "40144",
     "tipo_bem": "Imóvel",
@@ -24447,7 +24447,7 @@
       }
     ]
   },
-  "40145": {
+  {
     "adm": "ITAÚ",
     "grupo": "40145",
     "tipo_bem": "Imóvel",
@@ -24586,7 +24586,7 @@
       }
     ]
   },
-  "40147": {
+  {
     "adm": "ITAÚ",
     "grupo": "40147",
     "tipo_bem": "Imóvel",
@@ -24707,7 +24707,7 @@
       }
     ]
   },
-  "40148": {
+  {
     "adm": "ITAÚ",
     "grupo": "40148",
     "tipo_bem": "Imóvel",
@@ -24846,7 +24846,7 @@
       }
     ]
   },
-  "40150": {
+  {
     "adm": "ITAÚ",
     "grupo": "40150",
     "tipo_bem": "Imóvel",
@@ -24925,7 +24925,7 @@
       }
     ]
   },
-  "40151": {
+  {
     "adm": "ITAÚ",
     "grupo": "40151",
     "tipo_bem": "Imóvel",
@@ -24986,7 +24986,7 @@
       }
     ]
   },
-  "40152": {
+  {
     "adm": "ITAÚ",
     "grupo": "40152",
     "tipo_bem": "Imóvel",
@@ -25137,7 +25137,7 @@
       }
     ]
   },
-  "40154": {
+  {
     "adm": "ITAÚ",
     "grupo": "40154",
     "tipo_bem": "Imóvel",
@@ -25252,7 +25252,7 @@
       }
     ]
   },
-  "40155": {
+  {
     "adm": "ITAÚ",
     "grupo": "40155",
     "tipo_bem": "Imóvel",
@@ -25409,7 +25409,7 @@
       }
     ]
   },
-  "40156": {
+  {
     "adm": "ITAÚ",
     "grupo": "40156",
     "tipo_bem": "Imóvel",
@@ -25518,7 +25518,7 @@
       }
     ]
   },
-  "40158": {
+  {
     "adm": "ITAÚ",
     "grupo": "40158",
     "tipo_bem": "Imóvel",
@@ -25681,7 +25681,7 @@
       }
     ]
   },
-  "40159": {
+  {
     "adm": "ITAÚ",
     "grupo": "40159",
     "tipo_bem": "Imóvel",
@@ -25826,7 +25826,7 @@
       }
     ]
   },
-  "40160": {
+  {
     "adm": "ITAÚ",
     "grupo": "40160",
     "tipo_bem": "Imóvel",
@@ -25965,7 +25965,7 @@
       }
     ]
   },
-  "40162": {
+  {
     "adm": "ITAÚ",
     "grupo": "40162",
     "tipo_bem": "Imóvel",
@@ -26116,7 +26116,7 @@
       }
     ]
   },
-  "40163": {
+  {
     "adm": "ITAÚ",
     "grupo": "40163",
     "tipo_bem": "Imóvel",
@@ -26261,7 +26261,7 @@
       }
     ]
   },
-  "40164": {
+  {
     "adm": "ITAÚ",
     "grupo": "40164",
     "tipo_bem": "Imóvel",
@@ -26412,7 +26412,7 @@
       }
     ]
   },
-  "40166": {
+  {
     "adm": "ITAÚ",
     "grupo": "40166",
     "tipo_bem": "Imóvel",
@@ -26563,7 +26563,7 @@
       }
     ]
   },
-  "40167": {
+  {
     "adm": "ITAÚ",
     "grupo": "40167",
     "tipo_bem": "Imóvel",
@@ -26714,7 +26714,7 @@
       }
     ]
   },
-  "40168": {
+  {
     "adm": "ITAÚ",
     "grupo": "40168",
     "tipo_bem": "Imóvel",
@@ -26853,7 +26853,7 @@
       }
     ]
   },
-  "40170": {
+  {
     "adm": "ITAÚ",
     "grupo": "40170",
     "tipo_bem": "Imóvel",
@@ -26992,7 +26992,7 @@
       }
     ]
   },
-  "40173": {
+  {
     "adm": "ITAÚ",
     "grupo": "40173",
     "tipo_bem": "Imóvel",
@@ -27125,7 +27125,7 @@
       }
     ]
   },
-  "40112": {
+  {
     "adm": "ITAÚ",
     "grupo": "40112",
     "tipo_bem": "Imóvel",
@@ -27270,7 +27270,7 @@
       }
     ]
   },
-  "40118": {
+  {
     "adm": "ITAÚ",
     "grupo": "40118",
     "tipo_bem": "Imóvel",
@@ -27409,7 +27409,7 @@
       }
     ]
   },
-  "40174": {
+  {
     "adm": "ITAÚ",
     "grupo": "40174",
     "tipo_bem": "Imóvel",
@@ -27524,7 +27524,7 @@
       }
     ]
   },
-  "40175": {
+  {
     "adm": "ITAÚ",
     "grupo": "40175",
     "tipo_bem": "Imóvel",
@@ -27675,7 +27675,7 @@
       }
     ]
   },
-  "40176": {
+  {
     "adm": "ITAÚ",
     "grupo": "40176",
     "tipo_bem": "Imóvel",
@@ -27826,7 +27826,7 @@
       }
     ]
   },
-  "40179": {
+  {
     "adm": "ITAÚ",
     "grupo": "40179",
     "tipo_bem": "Imóvel",
@@ -27977,7 +27977,7 @@
       }
     ]
   },
-  "6600": {
+  {
     "adm": "CANOPUS",
     "grupo": "6600",
     "tipo_bem": "Imóvel",
@@ -28116,7 +28116,7 @@
       }
     ]
   },
-  "20300": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20300",
     "tipo_bem": "Auto",
@@ -28261,7 +28261,7 @@
       }
     ]
   },
-  "20301": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20301",
     "tipo_bem": "Auto",
@@ -28406,7 +28406,7 @@
       }
     ]
   },
-  "20307": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20307",
     "tipo_bem": "Auto",
@@ -28551,7 +28551,7 @@
       }
     ]
   },
-  "20311": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20311",
     "tipo_bem": "Auto",
@@ -28696,7 +28696,7 @@
       }
     ]
   },
-  "20315": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20315",
     "tipo_bem": "Auto",
@@ -28841,7 +28841,7 @@
       }
     ]
   },
-  "20321": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20321",
     "tipo_bem": "Auto",
@@ -28986,7 +28986,7 @@
       }
     ]
   },
-  "20324": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20324",
     "tipo_bem": "Auto",
@@ -29131,7 +29131,7 @@
       }
     ]
   },
-  "20328": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20328",
     "tipo_bem": "Auto",
@@ -29276,7 +29276,7 @@
       }
     ]
   },
-  "20339": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20339",
     "tipo_bem": "Auto",
@@ -29421,7 +29421,7 @@
       }
     ]
   },
-  "20363": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20363",
     "tipo_bem": "Auto",
@@ -29566,7 +29566,7 @@
       }
     ]
   },
-  "20370": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20370",
     "tipo_bem": "Auto",
@@ -29711,7 +29711,7 @@
       }
     ]
   },
-  "20375": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20375",
     "tipo_bem": "Auto",
@@ -29856,7 +29856,7 @@
       }
     ]
   },
-  "20383": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20383",
     "tipo_bem": "Auto",
@@ -30001,7 +30001,7 @@
       }
     ]
   },
-  "20386": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20386",
     "tipo_bem": "Auto",
@@ -30152,7 +30152,7 @@
       }
     ]
   },
-  "20387": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20387",
     "tipo_bem": "Auto",
@@ -30297,7 +30297,7 @@
       }
     ]
   },
-  "20390": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20390",
     "tipo_bem": "Auto",
@@ -30448,7 +30448,7 @@
       }
     ]
   },
-  "20393": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20393",
     "tipo_bem": "Auto",
@@ -30593,7 +30593,7 @@
       }
     ]
   },
-  "20399": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20399",
     "tipo_bem": "Auto",
@@ -30744,7 +30744,7 @@
       }
     ]
   },
-  "20401": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20401",
     "tipo_bem": "Auto",
@@ -30889,7 +30889,7 @@
       }
     ]
   },
-  "20403": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20403",
     "tipo_bem": "Auto",
@@ -31040,7 +31040,7 @@
       }
     ]
   },
-  "20406": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20406",
     "tipo_bem": "Auto",
@@ -31185,7 +31185,7 @@
       }
     ]
   },
-  "20408": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20408",
     "tipo_bem": "Auto",
@@ -31336,7 +31336,7 @@
       }
     ]
   },
-  "20416": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20416",
     "tipo_bem": "Auto",
@@ -31487,7 +31487,7 @@
       }
     ]
   },
-  "20418": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20418",
     "tipo_bem": "Auto",
@@ -31632,7 +31632,7 @@
       }
     ]
   },
-  "20425": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20425",
     "tipo_bem": "Auto",
@@ -31783,7 +31783,7 @@
       }
     ]
   },
-  "20427": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20427",
     "tipo_bem": "Auto",
@@ -31934,7 +31934,7 @@
       }
     ]
   },
-  "20431": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20431",
     "tipo_bem": "Auto",
@@ -32079,7 +32079,7 @@
       }
     ]
   },
-  "20433": {
+  {
     "adm": "AUTO-ITAÚ",
     "grupo": "20433",
     "tipo_bem": "Auto",
@@ -32230,7 +32230,7 @@
       }
     ]
   },
-  "7003": {
+  {
     "adm": "AUTO-CAOA",
     "grupo": "7003",
     "tipo_bem": "Auto",
@@ -32375,7 +32375,7 @@
       }
     ]
   },
-  "7004": {
+  {
     "adm": "AUTO-CAOA",
     "grupo": "7004",
     "tipo_bem": "Auto",
@@ -32532,7 +32532,7 @@
       }
     ]
   },
-  "7005": {
+  {
     "adm": "AUTO-CAOA",
     "grupo": "7005",
     "tipo_bem": "Auto",
@@ -32689,7 +32689,7 @@
       }
     ]
   },
-  "7006": {
+  {
     "adm": "AUTO-CAOA",
     "grupo": "7006",
     "tipo_bem": "Auto",
@@ -32846,7 +32846,7 @@
       }
     ]
   },
-  "7007": {
+  {
     "adm": "AUTO-CAOA",
     "grupo": "7007",
     "tipo_bem": "Auto",
@@ -32979,7 +32979,7 @@
       }
     ]
   },
-  "6000": {
+  {
     "adm": "AUTO-CAOA",
     "grupo": "6000",
     "tipo_bem": "Auto",
@@ -33136,7 +33136,7 @@
       }
     ]
   },
-  "2125": {
+  {
     "adm": "AUTO-CAIXA",
     "grupo": "2125",
     "tipo_bem": "Auto",
@@ -33275,7 +33275,7 @@
       }
     ]
   },
-  "2126": {
+  {
     "adm": "AUTO-CAIXA",
     "grupo": "2126",
     "tipo_bem": "Auto",
@@ -33414,7 +33414,7 @@
       }
     ]
   },
-  "2127": {
+  {
     "adm": "AUTO-CAIXA",
     "grupo": "2127",
     "tipo_bem": "Auto",
@@ -33529,7 +33529,7 @@
       }
     ]
   },
-  "6601": {
+  {
     "adm": "CANOPUS",
     "grupo": "6601",
     "tipo_bem": "Imóvel",
@@ -33632,7 +33632,7 @@
       }
     ]
   },
-  "6650": {
+  {
     "adm": "CANOPUS",
     "grupo": "6650",
     "tipo_bem": "Imóvel",
@@ -33764,61 +33764,5 @@
         "qtd": 16
       }
     ]
-  },
-  "777": {
-    "grupo": "777",
-    "adm": "ITAU",
-    "tipo_bem": "Automovel",
-    "maior_credito": 100000.0,
-    "menor_credito": 30000.0,
-    "taxa_adm": 2.5,
-    "fundo_rsv": 1.5,
-    "investidor": 0.5,
-    "conservador_24m": 5.0,
-    "moderado_12m": 3.5,
-    "status": "ativo",
-    "criado_em": "2026-05-26T17:36:17.127176"
-  },
-  "666": {
-    "grupo": "666",
-    "adm": "CAOA",
-    "tipo_bem": "Automovel",
-    "maior_credito": 100000.0,
-    "menor_credito": 30000.0,
-    "taxa_adm": 2.5,
-    "fundo_rsv": 0.0,
-    "investidor": 0.0,
-    "conservador_24m": 0.0,
-    "moderado_12m": 0.0,
-    "status": "ativo",
-    "criado_em": "2026-05-26T17:36:27.751821"
-  },
-  "555": {
-    "grupo": "555",
-    "adm": "PORTO",
-    "tipo_bem": "Imovel",
-    "maior_credito": 0.0,
-    "menor_credito": 0.0,
-    "taxa_adm": 0.0,
-    "fundo_rsv": 0.0,
-    "investidor": 0.0,
-    "conservador_24m": 0.0,
-    "moderado_12m": 0.0,
-    "status": "ativo",
-    "criado_em": "2026-05-26T17:38:29.742050"
-  },
-  "333": {
-    "grupo": "333",
-    "adm": "EMBRACON",
-    "tipo_bem": "Automovel",
-    "maior_credito": 50000.0,
-    "menor_credito": 20000.0,
-    "taxa_adm": 2.5,
-    "fundo_rsv": 1.0,
-    "investidor": 0.5,
-    "conservador_24m": 4.0,
-    "moderado_12m": 3.0,
-    "status": "ativo",
-    "criado_em": "2026-05-26T17:39:18.879528"
   }
-}
+]

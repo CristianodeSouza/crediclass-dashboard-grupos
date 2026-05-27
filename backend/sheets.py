@@ -106,7 +106,12 @@ def build_history(row: list, headers: list) -> list:
 def fetch_grupos(force_refresh: bool = False) -> list[dict]:
     if not force_refresh and os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            # Se o cache é um dict (formato antigo com chave ID), converte para lista
+            if isinstance(data, dict):
+                return list(data.values())
+            # Se é uma lista (formato novo), retorna como está
+            return data if isinstance(data, list) else []
 
     try:
         service = get_service()
