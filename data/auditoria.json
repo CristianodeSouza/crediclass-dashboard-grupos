@@ -74,5 +74,18 @@
         "depois": "Imovel"
       }
     }
+  },
+  {
+    "timestamp": "2026-05-27T11:25:08.879803",
+    "usuario": "teste_validacao",
+    "acao": "TEST",
+    "grupo_id": "2125",
+    "origem": "ValidacaoAutomatica",
+    "mudancas": {
+      "teste": {
+        "antes": "valor1",
+        "depois": "valor2"
+      }
+    }
   }
 ]
