@@ -70,13 +70,29 @@ def get_service(use_write_permissions: bool = False):
         # Tenta usar Service Account para escrita
         credentials = get_service_account_credentials()
         if credentials:
-            return build("sheets", "v4", credentials=credentials)
+            try:
+                service = build("sheets", "v4", credentials=credentials)
+                print("[OK] Service com write permissions criado")
+                return service
+            except Exception as e:
+                print(f"[ERRO CRÍTICO] Falha ao criar service com write permissions: {e}")
+                import traceback
+                traceback.print_exc()
+                return None
         else:
             print("[ERRO CRÍTICO] Service Account nao disponivel. Sincronizacao com Sheets impossível!")
             return None  # ← CRÍTICO: Retornar None, não API_KEY de leitura!
 
     # Fallback: API Key para leitura (somente leitura)
-    return build("sheets", "v4", developerKey=API_KEY)
+    try:
+        service = build("sheets", "v4", developerKey=API_KEY)
+        print("[OK] Service com API Key criado")
+        return service
+    except Exception as e:
+        print(f"[ERRO CRÍTICO] Falha ao criar service com API Key: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
 def parse_percent(value: str) -> float | None:
@@ -543,7 +559,18 @@ def atualizar_grupo_sheets(grupo_id: str, dados: Dict[str, Any], usuario: str = 
                 # BACKUP: registra valor antigo como backup
                 mudancas[chave] = {"antes": valor_antigo, "depois": valor}
 
-        # Atualiza grupo em cache
+        # ⚠️ CRÍTICO (PROB-007): SINCRONIZAR COM GOOGLE SHEETS PRIMEIRO
+        # Não salve em cache até validar que a sincronização foi bem-sucedida
+        print(f"[UPDATE_GRUPO] [1/3] Sincronizando com Google Sheets...")
+        sync_result = sincronizar_grupo_ao_sheets(grupo_id, dados)
+
+        if not sync_result:
+            print(f"[ERRO CRÍTICO] Sincronização com Google Sheets FALHOU. Cache NÃO será atualizado.")
+            return False
+
+        print(f"[UPDATE_GRUPO] [2/3] Google Sheets sincronizado com sucesso!")
+
+        # ✓ Só agora atualiza cache (após validação de sucesso)
         grupos[grupo_idx].update(dados)
 
         # Salva cache atualizado
@@ -551,12 +578,7 @@ def atualizar_grupo_sheets(grupo_id: str, dados: Dict[str, Any], usuario: str = 
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(grupos, f, ensure_ascii=False, indent=2)
 
-        # Sincroniza com Google Sheets
-        sync_result = sincronizar_grupo_ao_sheets(grupo_id, dados)
-        if not sync_result:
-            print(f"[AVISO] Cache atualizado mas Google Sheets nao foi sincronizado para grupo {grupo_id}")
-        else:
-            print(f"[UPDATE_GRUPO] Google Sheets sincronizado com sucesso para grupo {grupo_id}")
+        print(f"[UPDATE_GRUPO] [3/3] Cache local atualizado")
 
         # Registra auditoria com origem
         if mudancas:
