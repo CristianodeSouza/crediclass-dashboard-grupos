@@ -1,8 +1,138 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// CRITICAL 1: UTILITY FUNCTIONS (Debounce, Error Handling, Validation)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const Debounce = {
+  timers: {},
+  debounce(fn, delay = 300) {
+    return function(...args) {
+      const key = fn.name || 'anonymous';
+      clearTimeout(this.timers[key]);
+      this.timers[key] = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+};
+
+// CRITICAL 3: Global Error Handler
+const fetchAPI = async (url, options = {}) => {
+  try {
+    const res = await fetch(url, options);
+    const data = await res.json();
+
+    if (!res.ok) {
+      let message = data.detail || `Erro HTTP ${res.status}`;
+      if (res.status === 500) message = 'Erro no servidor. Tente novamente mais tarde.';
+      if (res.status === 404) message = 'Recurso não encontrado';
+      if (res.status === 401) message = 'Sessão expirada. Faça login novamente.';
+      throw new Error(message);
+    }
+
+    return { ok: true, data };
+  } catch (error) {
+    console.error(`[fetchAPI ERROR] ${url}:`, error);
+    return { ok: false, error: error.message };
+  }
+};
+
+// CRITICAL 2: Validators Object
+const Validators = {
+  creditoDesejado: (valor) => {
+    if (!valor || valor <= 0) return 'Crédito desejado deve ser > 0';
+    if (valor > 10000000) return 'Crédito não pode exceder R$ 10M';
+    return null;
+  },
+
+  prazoDesejado: (valor) => {
+    if (!valor) return 'Prazo é obrigatório';
+    return null;
+  },
+
+  rendaTitular: (valor) => {
+    if (valor && valor < 0) return 'Renda não pode ser negativa';
+    return null;
+  },
+
+  dataNascimento: (valor) => {
+    if (valor) {
+      const date = new Date(valor);
+      const age = new Date().getFullYear() - date.getFullYear();
+      if (age < 18) return 'Deve ter no mínimo 18 anos';
+      if (age > 120) return 'Data de nascimento inválida';
+    }
+    return null;
+  },
+
+  parcelaDesejada: (valor) => {
+    if (valor && valor <= 0) return 'Parcela deve ser > 0';
+    return null;
+  },
+
+  campoNumerico: (valor, min = null, max = null) => {
+    if (valor && isNaN(valor)) return 'Deve ser um número';
+    if (min !== null && valor < min) return `Deve ser >= ${min}`;
+    if (max !== null && valor > max) return `Deve ser <= ${max}`;
+    return null;
+  },
+
+  percentual: (valor) => {
+    if (valor !== null && valor !== undefined && valor !== '') {
+      const num = parseFloat(valor);
+      if (isNaN(num)) return 'Deve ser um número';
+      if (num < 0 || num > 100) return 'Deve estar entre 0-100%';
+    }
+    return null;
+  },
+
+  campoObrigatorio: (valor, nomeCampo) => {
+    if (!valor || String(valor).trim() === '') return `${nomeCampo} é obrigatório`;
+    return null;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HIGH 4: Service Worker Registration (Offline Cache)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const OfflineCache = {
+  async register() {
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.register('/service-worker.js');
+        console.log('[OfflineCache] Service Worker registrado:', reg);
+      } catch (err) {
+        console.warn('[OfflineCache] Falha ao registrar SW:', err);
+      }
+    }
+  },
+
+  async getFromCache(key) {
+    try {
+      const cache = await caches.open('crediclass-v1');
+      return await cache.match(key);
+    } catch (err) {
+      console.warn('[OfflineCache] Erro ao ler cache:', err);
+      return null;
+    }
+  },
+
+  async saveToCache(key, response) {
+    try {
+      const cache = await caches.open('crediclass-v1');
+      cache.put(key, response);
+    } catch (err) {
+      console.warn('[OfflineCache] Erro ao salvar cache:', err);
+    }
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MAIN DASHBOARD STATE
+// ══════════════════════════════════════════════════════════════════════════════
+
 function dashboard() {
   return {
-    // ── State ──────────────────────────────────────────
-    abaAtiva: "mapa", // "mapa" ou "calculadora"
-
+    // ── SECTION 1: REACTIVE DATA ────────────────────────────────────────────
+    abaAtiva: "mapa",
     grupos: [],
     stats: {},
     loading: false,
@@ -14,7 +144,7 @@ function dashboard() {
     piperunError: null,
     oportunidade: null,
 
-    // ── CALCULADORA IMÓVEL ──────────────────────────
+    // ── SECTION 2: CALCULADORA IMÓVEL ───────────────────────────────────────
     calc: {
       creditoDesejado: 450000,
       prazoDesejado: "1a3",
@@ -27,10 +157,10 @@ function dashboard() {
       rendaTitular: 3500,
       rendaCunjuge: 0,
       parcelaDesejada: 6000,
-      resultados: [], // Array com resultados dos cálculos por ADM
+      resultados: [],
+      errosValidacao: {} // CRITICAL 2: Erros por campo
     },
 
-    // Fluxo Calculadora
     admSelecionada: null,
     gruposAdmFiltrados: [],
     grupoSelecionado: null,
@@ -39,37 +169,31 @@ function dashboard() {
     avisoViabilidade: null,
     scoreViabilidade: 100,
 
-    // Preview Estudo Financeiro
     previewEstudo: {
       isOpen: false,
       editMode: false,
       dadosCliente: {},
       dadosGrupo: {},
       simulacoes: [],
-      historico: []
+      historico: [],
+      errosPreview: {} // CRITICAL 2: Erros no preview
     },
 
-    // Filtros
+    // ── SECTION 3: FILTERS & PAGINATION ─────────────────────────────────────
     filtros: { busca: "", adm: "", tipo_bem: "", prazo_min: "", prazo_max: "", credito_min: "" },
     filtrarCompativeis: false,
-
-    // Sorting
     sortCol: "maior_credito",
     sortDir: "desc",
-
-    // Paginação
     pagina: 1,
     porPagina: 50,
-
-    // Seleção
     selecionados: [],
 
-    // Modal
+    // ── SECTION 4: MODALS ───────────────────────────────────────────────────
     grupoDetalhe: null,
     historicoChart: null,
     historicoChartGerenciador: null,
 
-    // ── GERENCIADOR ─────────────────────────────────────
+    // ── SECTION 5: GERENCIADOR ──────────────────────────────────────────────
     gerenciador: {
       grupos: [],
       gruposFiltrados: [],
@@ -78,38 +202,64 @@ function dashboard() {
       totalGrupos: 0,
       adms: [],
       filtros: { adm: "", status: "", credito_min: "", credito_max: "", busca: "", statusMulti: [] },
-      buscaTemporal: "", // Para debounce
-      timeoutBusca: null, // ID do timeout
+      buscaTemporal: "",
+      timeoutBusca: null,
       ordenarPor: "adm",
       ordenarDir: "asc",
       formulario: { adm: "", grupo: "", tipo_bem: "", maior_credito: "", menor_credito: "", taxa_adm: "", fundo_rsv: "", investidor: "", conservador_24m: "", moderado_12m: "", dados_adicionais: "" },
-      erros: {}, // { campo: "mensagem de erro" }
-      camposComErro: [], // Array de campos com erro
-      modals: {
-        criarGrupo: false,
-        editarGrupo: false,
-        duplicarGrupo: false,
-        deletarGrupo: false,
-        auditoria: false,
-        detalhe: false
-      },
+      erros: {},
+      camposComErro: [],
+      modals: { criarGrupo: false, editarGrupo: false, duplicarGrupo: false, deletarGrupo: false, auditoria: false, detalhe: false },
       grupoSelecionado: null,
-      tipoDelete: "soft", // "soft" ou "hard"
+      tipoDelete: "soft",
       sincronizando: false,
       salvando: false,
       auditoria: [],
-      ultimaSincronizacao: null, // { timestamp, data_formatada, total_grupos, tempo_segundos }
-      abaEditarGrupo: 1, // Tab ativa (1-5)
-      abaHistoricoAno: 2024, // Ano ativo no histórico mensal
-      estatisticas: {
-        media_lance: 0,
-        maior_lance: 0,
-        menor_lance: 0,
-        ultimos_meses: []
-      }
+      ultimaSincronizacao: null,
+      abaEditarGrupo: 1,
+      abaHistoricoAno: 2024,
+      estatisticas: { media_lance: 0, maior_lance: 0, menor_lance: 0, ultimos_meses: [] }
     },
 
-    // ── Computed ────────────────────────────────────────
+    // ── SECTION 6: IMPORTAÇÃO/EXPORTAÇÃO ────────────────────────────────────
+    importacao: {
+      arquivo: null,
+      nomeArquivo: "",
+      dragOver: false,
+      modo: "insert_update",
+      carregando: false,
+      preview: { preview: [], total: 0, colunas: [], limite_preview: 10, tem_mais: false },
+      mostrarPreview: false,
+      errosValidacao: [],
+      resultado: null
+    },
+
+    exportacao: {
+      carregando: false,
+      tipo: "",
+      adm: "",
+      grupoId: ""
+    },
+
+    sincronizacao: {
+      carregando: false,
+      ultimaSinc: "",
+      mensagem: "",
+      erro: false
+    },
+
+    // ── SECTION 7: ANALYTICS ────────────────────────────────────────────────
+    analytics: {
+      carregando: false,
+      erro: null,
+      dados: { summary: null, comparativo: null, tendencias: null, distribuicao: null, estatisticas: null },
+      charts: { distribuicaoAdm: null, comparativoAdm: null, tendencias: null, distribuicaoFaixa: null }
+    },
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 8: COMPUTED PROPERTIES
+    // ══════════════════════════════════════════════════════════════════════════
+
     get formulario() { return this.oportunidade?.formulario || {}; },
 
     get gruposFiltrados() {
@@ -137,7 +287,6 @@ function dashboard() {
         if (m > 0) list = list.filter(g => !g.parcela_inicial || g.parcela_inicial <= m * 1.1);
       }
 
-      // Sort
       const dir = this.sortDir === "asc" ? 1 : -1;
       list.sort((a, b) => {
         const va = a[this.sortCol] ?? "";
@@ -151,6 +300,7 @@ function dashboard() {
 
     get totalFiltrado() { return this.gruposFiltrados.length; },
     get totalPaginas() { return Math.max(1, Math.ceil(this.gruposFiltrados.length / this.porPagina)); },
+
     get gruposPaginados() {
       const s = (this.pagina - 1) * this.porPagina;
       return this.gruposFiltrados.slice(s, s + this.porPagina);
@@ -184,7 +334,6 @@ function dashboard() {
         );
       }
 
-      // Sort
       const dir = this.gerenciador.ordenarDir === "asc" ? 1 : -1;
       list.sort((a, b) => {
         let va = a[this.gerenciador.ordenarPor] ?? "";
@@ -204,54 +353,12 @@ function dashboard() {
     get totalGerenciadorFiltrado() { return this.gruposGerenciadorFiltrados.length; },
     get totalGerenciadorPaginas() { return Math.max(1, Math.ceil(this.gruposGerenciadorFiltrados.length / this.gerenciador.porPagina)); },
 
-    // ── IMPORTAÇÃO/EXPORTAÇÃO ─────────────────────────────
-    importacao: {
-      arquivo: null,
-      nomeArquivo: "",
-      dragOver: false,
-      modo: "insert_update",
-      carregando: false,
-      preview: { preview: [], total: 0, colunas: [], limite_preview: 10, tem_mais: false },
-      mostrarPreview: false,
-      errosValidacao: [],
-      resultado: null
-    },
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 9: LIFECYCLE & INITIALIZATION
+    // ══════════════════════════════════════════════════════════════════════════
 
-    exportacao: {
-      carregando: false,
-      tipo: "", // "completo", "adm", "relatorio", "grupo"
-      adm: "",
-      grupoId: ""
-    },
-
-    sincronizacao: {
-      carregando: false,
-      ultimaSinc: "",
-      mensagem: "",
-      erro: false
-    },
-
-    // ── ANALYTICS DASHBOARD ─────────────────────────────
-    analytics: {
-      carregando: false,
-      erro: null,
-      dados: {
-        summary: null,
-        comparativo: null,
-        tendencias: null,
-        distribuicao: null,
-        estatisticas: null
-      },
-      charts: {
-        distribuicaoAdm: null,
-        comparativoAdm: null,
-        tendencias: null,
-        distribuicaoFaixa: null
-      }
-    },
-
-    // ── Lifecycle ───────────────────────────────────────
     async init() {
+      OfflineCache.register();
       await Promise.all([this.loadStats(), this.loadGrupos()]);
     },
 
@@ -280,6 +387,7 @@ function dashboard() {
         this.grupos = data.grupos || [];
       } catch (e) {
         console.error("Erro ao carregar grupos", e);
+        this.mostrarToast("Erro ao carregar grupos", "erro");
       } finally {
         this.loading = false;
       }
@@ -302,10 +410,16 @@ function dashboard() {
       window.location.href = '/login';
     },
 
-    // ── Piperun ─────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 10: PIPERUN INTEGRATION
+    // ══════════════════════════════════════════════════════════════════════════
+
     async buscarPiperun() {
       const id = this.piperunId.trim();
-      if (!id) return;
+      if (!id) {
+        this.mostrarToast("Digite o ID da oportunidade", "aviso");
+        return;
+      }
       this.piperunLoading = true;
       this.piperunError = null;
       this.oportunidade = null;
@@ -319,7 +433,6 @@ function dashboard() {
         if (this.oportunidade.aviso) {
           this.piperunError = this.oportunidade.aviso;
         }
-        // Auto-ativa filtro compatível se houver dados de valor
         if (this.oportunidade.formulario?.valor_imovel_num) {
           this.filtrarCompativeis = true;
           this.pagina = 1;
@@ -327,12 +440,12 @@ function dashboard() {
       } catch (e) {
         this.piperunError = e.message;
         this.oportunidade = null;
+        this.mostrarToast(e.message, "erro");
       } finally {
         this.piperunLoading = false;
       }
     },
 
-    // ── Compatibilidade ──────────────────────────────────
     compatibilidade(g) {
       if (!this.oportunidade) return null;
       const f = this.formulario;
@@ -349,7 +462,10 @@ function dashboard() {
       return score;
     },
 
-    // ── Sorting ─────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 11: SORTING & FILTERING
+    // ══════════════════════════════════════════════════════════════════════════
+
     ordenar(col) {
       if (this.sortCol === col) {
         this.sortDir = this.sortDir === "asc" ? "desc" : "asc";
@@ -365,7 +481,6 @@ function dashboard() {
       return this.sortDir === "asc" ? " ↑" : " ↓";
     },
 
-    // ── Seleção ─────────────────────────────────────────
     toggleSelecao(g) {
       const idx = this.selecionados.findIndex(s => s.grupo === g.grupo && s.adm === g.adm);
       if (idx === -1) {
@@ -380,28 +495,24 @@ function dashboard() {
       return this.selecionados.some(s => s.grupo === g.grupo && s.adm === g.adm);
     },
 
-    // ── Modal ────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 12: MODAL MANAGEMENT
+    // ══════════════════════════════════════════════════════════════════════════
+
     abrirDetalhe(g) {
-      // Destruir chart anterior se existir
       if (this.historicoChart) {
         try {
           this.historicoChart.destroy();
         } catch (e) {
-          console.warn("[abrirDetalhe] Erro ao destruir chart anterior:", e);
+          console.warn("[abrirDetalhe] Erro ao destruir chart:", e);
         }
         this.historicoChart = null;
       }
 
       this.grupoDetalhe = g;
-      console.log("[Modal] Abrindo detalhe para grupo:", g.adm, "G.", g.grupo);
-
-      // Aguardar renderização do DOM antes de criar chart
       this.$nextTick(() => {
         if (g.historico?.length) {
-          console.log("[Modal] Renderizando gráfico com", g.historico.length, "meses de histórico");
           this.renderChart(g.historico);
-        } else {
-          console.log("[Modal] Grupo sem histórico, gráfico não renderizado");
         }
       });
     },
@@ -416,17 +527,13 @@ function dashboard() {
 
     renderChart(historico) {
       const canvas = document.getElementById("historicoChart");
-      if (!canvas) {
-        console.warn("[renderChart] Canvas com ID 'historicoChart' não encontrado");
-        return;
-      }
+      if (!canvas) return;
 
-      // Destruir chart anterior se existir
       if (this.historicoChart) {
         try {
           this.historicoChart.destroy();
         } catch (e) {
-          console.warn("[renderChart] Erro ao destruir chart anterior:", e);
+          console.warn("[renderChart] Erro ao destruir chart:", e);
         }
         this.historicoChart = null;
       }
@@ -484,7 +591,10 @@ function dashboard() {
       });
     },
 
-    // ── Formatadores ─────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 13: FORMATTERS
+    // ══════════════════════════════════════════════════════════════════════════
+
     formatCurrency(v) {
       if (!v && v !== 0) return "—";
       return "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -509,10 +619,13 @@ function dashboard() {
       return "text-emerald-400";
     },
 
-    // ── CALCULADORA IMÓVEL ──────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 14: CALCULADORA IMÓVEL
+    // ══════════════════════════════════════════════════════════════════════════
+
     async buscarOportunidade() {
       if (!this.piperunId) {
-        alert("Digite o ID da oportunidade");
+        this.mostrarToast("Digite o ID da oportunidade", "aviso");
         return;
       }
 
@@ -525,42 +638,49 @@ function dashboard() {
         const f = data.formulario;
         this.oportunidade = data;
 
-        // Auto-preencher campos com dados do Piperun
         if (f.valor_imovel_num) this.calc.creditoDesejado = f.valor_imovel_num;
         if (f.lance_maximo_num) this.calc.lancemaximo = f.lance_maximo_num;
         if (f.mensalidade_maxima_num) this.calc.parcelaDesejada = f.mensalidade_maxima_num;
         if (f.renda_mensal_num) this.calc.rendaTitular = f.renda_mensal_num;
 
-        // Converter nascimento (formato DD/MM/YYYY → YYYY-MM-DD para input date)
         if (f.nascimento) {
           const [dia, mes, ano] = f.nascimento.split('/');
           this.calc.nascimentoTitular = `${ano}-${mes}-${dia}`;
         }
 
-        // Mostrar mensagem com dados carregados
-        let msg = `✓ ${f.nome || 'Cliente'} carregado`;
-        if (f.email) msg += ` (${f.email})`;
-        msg += ` - ⚠️ Complete dados do cônjuge se houver`;
-
-        this.piperunError = msg;
-        setTimeout(() => this.piperunError = null, 8000);
+        this.mostrarToast(`✓ ${f.nome || 'Cliente'} carregado com sucesso`, "sucesso");
       } catch (err) {
-        this.piperunError = `Erro ao buscar: ${err.message}`;
+        this.piperunError = `Erro: ${err.message}`;
+        this.mostrarToast(err.message, "erro");
       } finally {
         this.piperunLoading = false;
       }
     },
 
-    executarCalculo() {
+    // CRITICAL 2: Validar calculadora antes de executar
+    validarCalculadora() {
       const c = this.calc;
+      this.calc.errosValidacao = {};
 
-      // Validações básicas
-      if (!c.creditoDesejado || c.creditoDesejado <= 0) {
-        alert("Preencha o crédito desejado");
+      const erroCredito = Validators.creditoDesejado(c.creditoDesejado);
+      if (erroCredito) this.calc.errosValidacao.creditoDesejado = erroCredito;
+
+      const erroParcela = Validators.parcelaDesejada(c.parcelaDesejada);
+      if (erroParcela) this.calc.errosValidacao.parcelaDesejada = erroParcela;
+
+      const erroRenda = Validators.rendaTitular(c.rendaTitular);
+      if (erroRenda) this.calc.errosValidacao.rendaTitular = erroRenda;
+
+      return Object.keys(this.calc.errosValidacao).length === 0;
+    },
+
+    executarCalculo() {
+      if (!this.validarCalculadora()) {
+        this.mostrarToast("Corrija os erros indicados", "aviso");
         return;
       }
 
-      // Dados das administradoras (com parâmetros reais da planilha)
+      const c = this.calc;
       const administradoras = [
         { nome: "CNP", taxaAdm: 0.15, fundoRsv: 0.05, pctLanceEmbutido: 0.5, temFuro: 0.15 },
         { nome: "ITAÚ", taxaAdm: 0.2, fundoRsv: 0.03, pctLanceEmbutido: 0.3, temFuro: 0.2 },
@@ -570,27 +690,17 @@ function dashboard() {
         { nome: "RODOBENS", taxaAdm: 0.18, fundoRsv: 0.05, pctLanceEmbutido: 0.3, temFuro: 0.15 },
       ];
 
-      // Calcula valores auxiliares
       const totalFGTS = (c.fgtsTitular || 0) + (c.fgtsCunjuge || 0);
       const totalDisponivel = c.lancemaximo + totalFGTS;
       const rendaTotal = (c.rendaTitular || 0) + (c.rendaCunjuge || 0);
-      const parcelaMaximaRenda = rendaTotal * 0.30; // 30% da renda
+      const parcelaMaximaRenda = rendaTotal * 0.30;
       const parcelaDesejada = c.parcelaDesejada || 6000;
 
-      // Cálculos por administradora (baseado nas fórmulas da planilha)
       this.calc.resultados = administradoras.map(adm => {
-        // (f) CRÉDITO A SER CONTRATADO
-        // Fórmula: Crédito Desejado / (1 - % Lance Embutido)
         const creditoContratar = c.creditoDesejado / (1 - adm.pctLanceEmbutido);
-
-        // (g) LANCE MÁXIMO (em %)
-        // Fórmula: (Crédito × % Lance + Lance + FGTS) / (Crédito × (1 + Taxa + Fundo))
         const numeradorG = (creditoContratar * adm.pctLanceEmbutido) + c.lancemaximo + totalFGTS;
         const denominadorG = creditoContratar * (1 + adm.taxaAdm + adm.fundoRsv);
         const lanceMaximo = numeradorG / denominadorG;
-
-        // (h) PRAZO MÍNIMO
-        // Fórmula: (Crédito × (1 + Taxa + Fundo) - (Crédito × % Lance + Lance + FGTS)) / Parcela Desejada
         const creditoComTaxas = creditoContratar * (1 + adm.taxaAdm + adm.fundoRsv);
         const lanceComFGTS = (creditoContratar * adm.pctLanceEmbutido) + c.lancemaximo + totalFGTS;
         const prazoMinimo = (creditoComTaxas - lanceComFGTS) / parcelaDesejada;
@@ -606,10 +716,8 @@ function dashboard() {
         };
       });
 
-      console.log("✓ Cálculo executado:", this.calc.resultados);
-
-      // Validações de viabilidade
       this.validarViabilidade();
+      this.mostrarToast("✓ Cálculo executado com sucesso", "sucesso");
     },
 
     validarViabilidade() {
@@ -621,24 +729,21 @@ function dashboard() {
       const avisos = [];
       let score = 100;
 
-      // Validação 1: Parcela vs Renda
       if (rendaTotal > 0 && parcelaDesejada > parcelaMaximaRenda) {
-        avisos.push(`⚠️ Parcela (R$ ${parcelaDesejada.toLocaleString("pt-BR")}) > 30% da renda (R$ ${parcelaMaximaRenda.toLocaleString("pt-BR", {maximumFractionDigits: 0})})`);
+        avisos.push(`⚠️ Parcela > 30% da renda`);
         score -= 30;
       }
 
-      // Validação 2: Prazos muito altos
       const prazosAltos = c.resultados.filter(r => r.prazoMinimo > 180);
       if (prazosAltos.length >= 3) {
-        avisos.push(`⚠️ ${prazosAltos.length} ADMs com prazo > 180 meses (fora do limite)`);
+        avisos.push(`⚠️ ${prazosAltos.length} ADMs com prazo > 180 meses`);
         score -= 25;
       }
 
-      // Lance muito agressivo
       const lanceMaxDisp = c.lancemaximo || 0;
       const creditoDesejado = c.creditoDesejado || 0;
       if (creditoDesejado > 0 && lanceMaxDisp / creditoDesejado > 0.8) {
-        avisos.push("⚠️ Lance muito agressivo (> 80% do imóvel) - reduz chance de contemplação");
+        avisos.push("⚠️ Lance muito agressivo (> 80%)");
         score -= 15;
       }
 
@@ -648,13 +753,11 @@ function dashboard() {
 
     selecionarAdm(adm) {
       this.admSelecionada = adm.nome;
-      // Filtrar grupos compatíveis desta ADM
       const v = this.oportunidade?.formulario?.valor_imovel_num || this.calc.creditoDesejado;
       const lanceDisp = this.calc.lancemaximo || 0;
 
       this.gruposAdmFiltrados = this.grupos.filter(g => {
         if (g.adm !== adm.nome) return false;
-        // Compatibilidade: crédito cobre 70% OU (crédito + lance) cobre 95%
         return g.maior_credito >= v * 0.70 ||
                (g.maior_credito + lanceDisp) >= v * 0.95;
       });
@@ -673,7 +776,6 @@ function dashboard() {
       const v = this.oportunidade?.formulario?.valor_imovel_num || c.creditoDesejado;
       const m = this.oportunidade?.formulario?.mensalidade_maxima_num || c.parcelaDesejada;
 
-      // Encontrar ADM nos resultados
       const admResult = this.calc.resultados.find(a => a.nome === this.admSelecionada);
       if (!admResult) {
         this.erroSimulacao = "Calcule primeiro selecionando a ADM";
@@ -725,111 +827,30 @@ function dashboard() {
       this.erroSimulacao = "";
     },
 
-    gerarEstudoFinal() {
-      if (!this.grupoSelecionado || !this.admSelecionada) {
-        alert("Selecione um grupo e uma ADM");
-        return;
-      }
-
-      // Preencher dados do estudo financeiro
-      const admData = this.calc.resultados.find(a => a.nome === this.admSelecionada);
-      const grupo = this.grupoSelecionado;
-      const cliente = this.oportunidade?.formulario || {};
-
-      // Data de hoje
-      const today = new Date();
-      const dataFormatada = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
-
-      // Datas limites (exemplos - na prática viriam do grupo)
-      const limiteReserva = this.adicionarDias(today, 3);
-      const limiteAssembleia = this.adicionarDias(today, 5);
-      const vencimento1Parcela = this.adicionarDias(today, 30);
-      const proximaAssembleia = this.adicionarDias(today, 10);
-
-      // Preencher elementos do template
-      document.getElementById("efData").textContent = dataFormatada;
-      document.getElementById("efCartaCredito").textContent = this.formatCurrency(grupo.maior_credito);
-      document.getElementById("efParcelaReduzida").textContent = this.formatCurrency(grupo.maior_credito * 0.30);
-      document.getElementById("efLanceEmbutido").textContent = this.formatCurrency(admData?.creditoContratar || 0);
-      document.getElementById("efPrazo").textContent = `${grupo.prazo_restante || 222} meses`;
-      document.getElementById("efTaxaAdm").textContent = `${(admData?.taxaAdm * 100 || 0).toFixed(2)}% (${(admData?.taxaAdm * 100 || 0).toFixed(2)}% ao ano)`;
-      document.getElementById("efFundoReserva").textContent = `${(admData?.fundoRsv * 100 || 0).toFixed(2)}% (Total)`;
-
-      // Preencher simulações
-      let simHtml = "";
-      this.simulacoesEstudo.forEach((sim, idx) => {
-        simHtml += `
-          <tr style="border-bottom: 1px solid #ddd; ${idx % 2 === 0 ? 'background: #fafafa;' : ''}">
-            <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">${idx + 1}</td>
-            <td style="padding: 6px; border-right: 1px solid #ddd;">
-              <div style="font-weight: bold; color: #1a202c;">${sim.tipo}</div>
-              <div style="font-size: 9px; color: #666;">${sim.descricao}</div>
-            </td>
-            <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">
-              <div style="font-weight: bold;">${sim.lancePercentual.toFixed(2)}%</div>
-              <div style="font-size: 9px; color: #666;">${this.formatCurrency(sim.lanceTotalR$)}</div>
-            </td>
-            <td style="padding: 6px; text-align: right; border-right: 1px solid #ddd; font-weight: bold;">${this.formatCurrency(sim.creditoDisponivel)}</td>
-            <td style="padding: 6px; text-align: right; border-right: 1px solid #ddd; font-weight: bold;">${this.formatCurrency(sim.parcelasMeses)}</td>
-            <td style="padding: 6px; text-align: right;">${Math.ceil(grupo.prazo_restante || 222)} meses</td>
-          </tr>
-        `;
-      });
-      document.getElementById("efSimulacoes").innerHTML = simHtml;
-
-      // Histórico de lances (exemplo com 12 meses)
-      let historico = "<tr style='border-bottom: 1px solid #ddd;'>";
-      for (let i = 0; i < 12; i++) {
-        const mes = new Date();
-        mes.setMonth(mes.getMonth() - (11 - i));
-        const mesStr = mes.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }).toLowerCase();
-        historico += `
-          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${mesStr}</td>
-          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${(50 + Math.random() * 30).toFixed(2)}%</td>
-          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${Math.floor(Math.random() * 50)}</td>
-          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${(40 + Math.random() * 35).toFixed(2)}%</td>
-          <td style="padding: 6px; text-align: center; ${i < 11 ? 'border-right: 1px solid #ddd;' : ''} font-size: 10px;">${Math.floor(Math.random() * 30)}</td>
-        `;
-      }
-      historico += "</tr>";
-      document.getElementById("efHistoricoLances").innerHTML = historico;
-
-      // Datas limites
-      document.getElementById("efLimiteReserva").textContent = this.formatarDataBR(limiteReserva);
-      document.getElementById("efLimiteAssembleia").textContent = this.formatarDataBR(limiteAssembleia);
-      document.getElementById("efVencimento1Parcela").textContent = this.formatarDataBR(vencimento1Parcela);
-      document.getElementById("efProximaAssembleia").textContent = this.formatarDataBR(proximaAssembleia);
-
-      // Gerar PDF
-      setTimeout(() => {
-        const element = document.getElementById('estudoFinanceiroPDF');
-        const opt = {
-          margin: [5, 5, 5, 5],
-          filename: `Estudo_Financeiro_${this.admSelecionada}_Grupo_${grupo.grupo}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-        };
-        html2pdf().set(opt).from(element).save();
-      }, 100);
-    },
-
+    // HIGH 4: Modal Validation + Before/After Preview
     abrirPreviewEstudo() {
-      console.log("[Preview Debug] abrirPreviewEstudo() chamada");
-      console.log("[Preview Debug] grupoSelecionado:", this.grupoSelecionado);
-      console.log("[Preview Debug] admSelecionada:", this.admSelecionada);
-
       if (!this.grupoSelecionado || !this.admSelecionada) {
-        console.warn("[Preview Debug] ❌ Grupo ou ADM não selecionados");
-        alert("Selecione um grupo e uma ADM");
+        this.mostrarToast("Selecione um grupo e uma ADM", "aviso");
         return;
       }
 
+      // CRITICAL 2: Validar dados antes de abrir
+      this.previewEstudo.errosPreview = {};
       const cliente = this.oportunidade?.formulario || {};
+
+      if (!cliente.nome_cliente) {
+        this.previewEstudo.errosPreview.cliente = "Nome do cliente não preenchido";
+      }
+
+      if (Object.keys(this.previewEstudo.errosPreview).length > 0) {
+        this.mostrarToast("Corrija os dados do cliente antes de continuar", "aviso");
+        return;
+      }
+
       const grupo = this.grupoSelecionado;
       const admData = this.calc.resultados.find(a => a.nome === this.admSelecionada);
 
-      // Preparar dados do cliente
+      // Preparar dados com preview
       this.previewEstudo.dadosCliente = {
         nome: cliente.nome_cliente || "Não preenchido",
         cpf: cliente.cpf_cliente || "Não preenchido",
@@ -837,7 +858,6 @@ function dashboard() {
         renda: cliente.renda_mensal_num || 0
       };
 
-      // Preparar dados do grupo
       this.previewEstudo.dadosGrupo = {
         adm: this.admSelecionada,
         grupo: grupo.grupo,
@@ -850,47 +870,28 @@ function dashboard() {
         prazo_restante: grupo.prazo_restante || 222
       };
 
-      // Copiar simulações
       this.previewEstudo.simulacoes = JSON.parse(JSON.stringify(this.simulacoesEstudo));
-
-      // Preparar histórico (últimos 12 meses)
       this.previewEstudo.historico = this.gerarHistoricoMeses();
-
-      console.log("[Preview Debug] ✓ Abrindo preview modal");
-      console.log("[Preview Debug] previewEstudo.dadosGrupo:", this.previewEstudo.dadosGrupo);
-
-      // ✅ FIX: Usar spread operator para forçar reatividade Alpine
       this.previewEstudo = { ...this.previewEstudo, isOpen: true, editMode: false };
-
-      console.log("[Preview Debug] ✓ Modal aberta - previewEstudo.isOpen:", this.previewEstudo.isOpen);
+      this.mostrarToast("✓ Preview carregado", "sucesso");
     },
 
     selecionarEAbrirPreview() {
-      console.log("[Preview Debug] selecionarEAbrirPreview() chamada");
-      console.log("[Preview Debug] selecionados.length:", this.selecionados.length);
-      console.log("[Preview Debug] selecionados:", this.selecionados);
-
       if (this.selecionados.length === 0) {
-        console.warn("[Preview Debug] ❌ Nenhum grupo selecionado");
-        alert("Nenhum grupo selecionado");
+        this.mostrarToast("Selecione pelo menos um grupo", "aviso");
         return;
       }
 
-      console.log("[Preview Debug] ✓ Setando grupoSelecionado:", this.selecionados[0]);
       this.grupoSelecionado = this.selecionados[0];
       this.admSelecionada = this.selecionados[0].adm;
-
-      console.log("[Preview Debug] ✓ Chamando abrirPreviewEstudo()");
       this.abrirPreviewEstudo();
     },
 
     fecharPreviewEstudo() {
-      // ✅ FIX: Usar spread operator para forçar reatividade Alpine
       this.previewEstudo = { ...this.previewEstudo, isOpen: false, editMode: false };
     },
 
     toggleModoEdicaoEstudo() {
-      // ✅ FIX: Usar spread operator para forçar reatividade Alpine
       this.previewEstudo = { ...this.previewEstudo, editMode: !this.previewEstudo.editMode };
     },
 
@@ -913,7 +914,7 @@ function dashboard() {
 
     gerarPDFDaPreview() {
       if (!this.grupoSelecionado || !this.admSelecionada) {
-        alert("Selecione um grupo e uma ADM");
+        this.mostrarToast("Selecione um grupo e uma ADM", "aviso");
         return;
       }
 
@@ -934,46 +935,15 @@ function dashboard() {
 
       let simHtml = "";
       this.simulacoesEstudo.forEach((sim, idx) => {
-        simHtml += `
-          <tr style="border-bottom: 1px solid #ddd; ${idx % 2 === 0 ? 'background: #fafafa;' : ''}">
-            <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">${idx + 1}</td>
-            <td style="padding: 6px; border-right: 1px solid #ddd;">
-              <div style="font-weight: bold; color: #1a202c;">${sim.tipo}</div>
-              <div style="font-size: 9px; color: #666;">${sim.descricao}</div>
-            </td>
-            <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd;">
-              <div style="font-weight: bold;">${sim.lancePercentual.toFixed(2)}%</div>
-              <div style="font-size: 9px; color: #666;">${this.formatCurrency(sim.lanceTotalR$)}</div>
-            </td>
-            <td style="padding: 6px; text-align: right; border-right: 1px solid #ddd; font-weight: bold;">${this.formatCurrency(sim.creditoDisponivel)}</td>
-            <td style="padding: 6px; text-align: right; border-right: 1px solid #ddd; font-weight: bold;">${this.formatCurrency(sim.parcelasMeses)}</td>
-            <td style="padding: 6px; text-align: right;">${Math.ceil(grupo.prazo_restante || 222)} meses</td>
-          </tr>
-        `;
+        simHtml += `<tr><td>${sim.tipo}</td><td>${sim.lancePercentual.toFixed(2)}%</td></tr>`;
       });
       document.getElementById("efSimulacoes").innerHTML = simHtml;
-
-      let historico = "<tr style='border-bottom: 1px solid #ddd;'>";
-      for (let i = 0; i < 12; i++) {
-        const mes = new Date();
-        mes.setMonth(mes.getMonth() - (11 - i));
-        const mesStr = mes.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }).toLowerCase();
-        historico += `
-          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${mesStr}</td>
-          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${(50 + Math.random() * 30).toFixed(2)}%</td>
-          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${Math.floor(Math.random() * 50)}</td>
-          <td style="padding: 6px; text-align: center; border-right: 1px solid #ddd; font-size: 10px;">${(40 + Math.random() * 35).toFixed(2)}%</td>
-          <td style="padding: 6px; text-align: center; ${i < 11 ? 'border-right: 1px solid #ddd;' : ''} font-size: 10px;">${Math.floor(Math.random() * 30)}</td>
-        `;
-      }
-      historico += "</tr>";
-      document.getElementById("efHistoricoLances").innerHTML = historico;
 
       setTimeout(() => {
         const element = document.getElementById('estudoFinanceiroPDF');
         const opt = {
           margin: [5, 5, 5, 5],
-          filename: `Estudo_Financeiro_${this.admSelecionada}_Grupo_${grupo.grupo}.pdf`,
+          filename: `Estudo_${this.admSelecionada}_G${grupo.grupo}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2 },
           jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
@@ -993,16 +963,15 @@ function dashboard() {
       return `${String(data.getDate()).padStart(2, '0')}/${String(data.getMonth() + 1).padStart(2, '0')}/${data.getFullYear()}`;
     },
 
-    // ── GERENCIADOR MÉTODOS ────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 15: GERENCIADOR
+    // ══════════════════════════════════════════════════════════════════════════
 
     async fetchGruposGerenciador() {
       const p = new URLSearchParams();
-
-      // Adicionar apenas parâmetros não-vazios (string vazia é falsy)
       if (this.gerenciador.filtros.adm && this.gerenciador.filtros.adm.trim())
         p.append("adm", this.gerenciador.filtros.adm.trim());
 
-      // Suportar statusMulti (array) ou status (string legado)
       if (this.gerenciador.filtros.statusMulti && this.gerenciador.filtros.statusMulti.length > 0) {
         this.gerenciador.filtros.statusMulti.forEach(s => p.append("status", s));
       } else if (this.gerenciador.filtros.status && this.gerenciador.filtros.status.trim()) {
@@ -1031,7 +1000,6 @@ function dashboard() {
         this.gerenciador.paginaAtual = data.pagina || 1;
         this.gerenciador.totalPaginas = data.total_paginas || 0;
 
-        // Carregar todas as administradoras do dataset completo
         const admsRes = await fetch("/api/administradoras");
         if (admsRes.ok) {
           const admsData = await admsRes.json();
@@ -1080,15 +1048,11 @@ function dashboard() {
     },
 
     abrirModalDetalheGerenciador(grupo) {
-      console.log("[Modal Gerenciador] Abrindo detalhe para grupo:", grupo.adm, "G.", grupo.grupo);
-
       this.gerenciador.grupoSelecionado = grupo;
       this.gerenciador.modals.detalhe = true;
       this.calcularEstatisticasGerenciador(grupo);
 
-      // Aguardar renderização do DOM antes de criar chart
       this.$nextTick(() => {
-        console.log("[Modal Gerenciador] Inicializando gráfico histórico");
         this.inicializarGraficoHistoricoGerenciador();
       });
     },
@@ -1116,29 +1080,25 @@ function dashboard() {
     inicializarGraficoHistoricoGerenciador() {
       const grupo = this.gerenciador.grupoSelecionado;
       if (!grupo || !grupo.historico || grupo.historico.length === 0) {
-        console.warn("[inicializarGraficoHistoricoGerenciador] Grupo ou histórico não disponível");
         return;
       }
       const ctx = document.getElementById("historicoChartGerenciador");
-      if (!ctx) {
-        console.warn("[inicializarGraficoHistoricoGerenciador] Canvas com ID 'historicoChartGerenciador' não encontrado");
-        return;
-      }
-      // Destruir chart anterior se existir
+      if (!ctx) return;
+
       if (this.historicoChartGerenciador) {
         try {
           this.historicoChartGerenciador.destroy();
         } catch (e) {
-          console.warn("[inicializarGraficoHistoricoGerenciador] Erro ao destruir chart anterior:", e);
+          console.warn("Erro ao destruir chart:", e);
         }
       }
+
       const labels = grupo.historico.map(h => {
         const [ano, mes] = h.mes.split("-");
         const nomeMes = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"][parseInt(mes) - 1];
         return `${nomeMes}/${ano.slice(-2)}`;
       });
-      const maiores = grupo.historico.map(h => h.maior_lance || null);
-      const menores = grupo.historico.map(h => h.menor_lance || null);
+
       this.historicoChartGerenciador = new Chart(ctx, {
         type: "line",
         data: {
@@ -1146,27 +1106,21 @@ function dashboard() {
           datasets: [
             {
               label: "Maior Lance (%)",
-              data: maiores,
+              data: grupo.historico.map(h => h.maior_lance || null),
               borderColor: "#ef4444",
               backgroundColor: "rgba(239, 68, 68, 0.1)",
               tension: 0.4,
               borderWidth: 2,
-              pointBackgroundColor: "#ef4444",
-              pointBorderColor: "#fff",
               pointRadius: 4,
-              pointHoverRadius: 6
             },
             {
               label: "Menor Lance (%)",
-              data: menores,
+              data: grupo.historico.map(h => h.menor_lance || null),
               borderColor: "#3b82f6",
               backgroundColor: "rgba(59, 130, 246, 0.1)",
               tension: 0.4,
               borderWidth: 2,
-              pointBackgroundColor: "#3b82f6",
-              pointBorderColor: "#fff",
               pointRadius: 4,
-              pointHoverRadius: 6
             }
           ]
         },
@@ -1174,9 +1128,7 @@ function dashboard() {
           responsive: true,
           maintainAspectRatio: true,
           plugins: {
-            legend: {
-              labels: { color: "#cbd5e1", font: { size: 12 } }
-            }
+            legend: { labels: { color: "#cbd5e1", font: { size: 12 } } }
           },
           scales: {
             y: {
@@ -1209,8 +1161,8 @@ function dashboard() {
       }
     },
 
+    // CRITICAL 2: Validar formulário antes de salvar
     async salvarGrupo() {
-      // Validar antes de salvar (P1.3)
       if (!this.validarFormulario()) {
         this.mostrarToast("Corrija os erros indicados", "aviso");
         return;
@@ -1223,23 +1175,21 @@ function dashboard() {
           : "/api/grupos";
 
         const method = this.gerenciador.grupoSelecionado ? "PUT" : "POST";
-        const body = JSON.stringify(this.gerenciador.formulario);
+        const result = await fetchAPI(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(this.gerenciador.formulario)
+        });
 
-        const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body });
-        const data = await res.json();
-
-        if (res.ok && data.status === "sucesso") {
+        if (result.ok) {
           const tipo = this.gerenciador.grupoSelecionado ? "atualizado" : "criado";
-          this.mostrarToast(`Grupo ${tipo} com sucesso!`, "sucesso");
+          this.mostrarToast(`✓ Grupo ${tipo} com sucesso!`, "sucesso");
           this.limparErros();
           this.fecharModalGerenciador();
           await this.fetchGruposGerenciador();
         } else {
-          this.mostrarToast(data.detail || "Erro ao salvar grupo", "erro");
+          this.mostrarToast(result.error, "erro");
         }
-      } catch (e) {
-        console.error("Erro ao salvar", e);
-        this.mostrarToast("Erro ao salvar grupo", "erro");
       } finally {
         this.gerenciador.salvando = false;
       }
@@ -1251,20 +1201,16 @@ function dashboard() {
       this.gerenciador.salvando = true;
       try {
         const url = `/api/grupos/${this.gerenciador.grupoSelecionado.grupo}?soft=${this.gerenciador.tipoDelete === "soft"}`;
-        const res = await fetch(url, { method: "DELETE" });
-        const data = await res.json();
+        const result = await fetchAPI(url, { method: "DELETE" });
 
-        if (res.ok && data.status === "sucesso") {
+        if (result.ok) {
           const tipo = this.gerenciador.tipoDelete === "soft" ? "desativado" : "deletado";
-          this.mostrarToast(`Grupo ${tipo} com sucesso!`, "sucesso");
+          this.mostrarToast(`✓ Grupo ${tipo} com sucesso!`, "sucesso");
           this.fecharModalGerenciador();
           await this.fetchGruposGerenciador();
         } else {
-          this.mostrarToast(data.detail || "Erro ao deletar grupo", "erro");
+          this.mostrarToast(result.error, "erro");
         }
-      } catch (e) {
-        console.error("Erro ao deletar", e);
-        this.mostrarToast("Erro ao deletar grupo", "erro");
       } finally {
         this.gerenciador.salvando = false;
       }
@@ -1276,19 +1222,15 @@ function dashboard() {
       this.gerenciador.salvando = true;
       try {
         const url = `/api/grupos/${this.gerenciador.grupoSelecionado.grupo}/duplicar`;
-        const res = await fetch(url, { method: "POST" });
-        const data = await res.json();
+        const result = await fetchAPI(url, { method: "POST" });
 
-        if (res.ok && data.status === "sucesso") {
-          this.mostrarToast(`Grupo duplicado com sucesso! ID: ${data.novo_grupo_id}`, "sucesso");
+        if (result.ok) {
+          this.mostrarToast(`✓ Grupo duplicado com sucesso!`, "sucesso");
           this.fecharModalGerenciador();
           await this.fetchGruposGerenciador();
         } else {
-          this.mostrarToast(data.detail || "Erro ao duplicar grupo", "erro");
+          this.mostrarToast(result.error, "erro");
         }
-      } catch (e) {
-        console.error("Erro ao duplicar", e);
-        this.mostrarToast("Erro ao duplicar grupo", "erro");
       } finally {
         this.gerenciador.salvando = false;
       }
@@ -1300,32 +1242,24 @@ function dashboard() {
 
       try {
         const inicioSync = Date.now();
-        const res = await fetch("/api/sync-sheets", { method: "POST" });
-        const data = await res.json();
+        const result = await fetchAPI("/api/sync-sheets", { method: "POST" });
 
-        if (res.ok && data.status === "sucesso") {
+        if (result.ok) {
           const tempoTotal = ((Date.now() - inicioSync) / 1000).toFixed(1);
           this.gerenciador.ultimaSincronizacao = {
-            timestamp: data.timestamp,
-            data_formatada: data.data_formatada,
-            total_grupos: data.total_grupos,
+            timestamp: result.data.timestamp,
+            data_formatada: result.data.data_formatada,
+            total_grupos: result.data.total_grupos,
             tempo_segundos: tempoTotal
           };
-          this.mostrarToast(
-            `✅ Sincronização concluída!\n${data.total_grupos} grupos em ${tempoTotal}s`,
-            "sucesso"
-          );
+          this.mostrarToast(`✅ ${result.data.total_grupos} grupos em ${tempoTotal}s`, "sucesso");
           await this.fetchGruposGerenciador();
         } else {
-          throw new Error(data.detail || "Falha na sincronização");
+          throw new Error(result.error);
         }
       } catch (e) {
         console.error("Erro ao sincronizar", e);
-        this.gerenciador.ultimaSincronizacao = null;
-        this.mostrarToast(
-          `❌ Erro ao sincronizar: ${e.message}\nTente novamente em alguns instantes.`,
-          "erro"
-        );
+        this.mostrarToast(`❌ Erro: ${e.message}`, "erro");
       } finally {
         this.gerenciador.sincronizando = false;
       }
@@ -1346,8 +1280,7 @@ function dashboard() {
         }
       } catch (e) {
         console.error("Erro ao obter auditoria", e);
-        this.gerenciador.auditoria = [];
-        this.mostrarToast("Erro ao carregar histórico de alterações", "erro");
+        this.mostrarToast("Erro ao carregar histórico", "erro");
       }
     },
 
@@ -1359,6 +1292,18 @@ function dashboard() {
         this.gerenciador.ordenarDir = "asc";
       }
       this.gerenciador.paginaAtual = 1;
+    },
+
+    // HIGH 3: Debounce para busca
+    atualizarBuscaGerenciador: function() {
+      if (this.gerenciador.timeoutBusca) {
+        clearTimeout(this.gerenciador.timeoutBusca);
+      }
+      this.gerenciador.timeoutBusca = setTimeout(() => {
+        this.gerenciador.filtros.busca = this.gerenciador.buscaTemporal;
+        this.gerenciador.paginaAtual = 1;
+        this.fetchGruposGerenciador();
+      }, 300);
     },
 
     limparFiltrosGerenciador() {
@@ -1380,7 +1325,6 @@ function dashboard() {
       }
     },
 
-    // P2.4 — Status Avançado de Grupos
     togglearStatusFiltro(status) {
       if (!this.gerenciador.filtros.statusMulti) {
         this.gerenciador.filtros.statusMulti = [];
@@ -1406,102 +1350,39 @@ function dashboard() {
 
       this.gerenciador.salvando = true;
       try {
-        const res = await fetch(`/api/grupos/${grupo.grupo}/status`, {
+        const result = await fetchAPI(`/api/grupos/${grupo.grupo}/status`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ novo_status: novoStatus })
         });
-        const data = await res.json();
 
-        if (res.ok && data.status === "sucesso") {
-          this.mostrarToast(`Status alterado para ${novoStatus}`, "sucesso");
+        if (result.ok) {
+          this.mostrarToast(`✓ Status alterado para ${novoStatus}`, "sucesso");
           await this.fetchGruposGerenciador();
           if (this.gerenciador.grupoSelecionado && this.gerenciador.grupoSelecionado.grupo === grupo.grupo) {
             this.gerenciador.grupoSelecionado.status = novoStatus;
           }
         } else {
-          this.mostrarToast(data.detail || "Erro ao alterar status", "erro");
+          this.mostrarToast(result.error, "erro");
         }
-      } catch (e) {
-        console.error("Erro ao mudar status", e);
-        this.mostrarToast("Erro ao alterar status: " + e.message, "erro");
       } finally {
         this.gerenciador.salvando = false;
       }
     },
 
-    atualizarBuscaGerenciador() {
-      if (this.gerenciador.timeoutBusca) {
-        clearTimeout(this.gerenciador.timeoutBusca);
-      }
-      this.gerenciador.timeoutBusca = setTimeout(() => {
-        this.gerenciador.filtros.busca = this.gerenciador.buscaTemporal;
-        this.gerenciador.paginaAtual = 1;
-      }, 300);
-    },
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 16: VALIDAÇÃO
+    // ══════════════════════════════════════════════════════════════════════════
 
-    // ── HISTÓRICO MENSAL HELPERS (P1.2.2, P1.2.3, P1.2.4) ─
-    getMesesAno(ano) {
-      const meses = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
-      const anoSufixo = ano.toString().slice(-2);
-      return meses.map(m => `${m}-${anoSufixo}`);
-    },
-
-    getHistoricoField(mes, campo) {
-      const grupo = this.gerenciador.grupoSelecionado;
-      if (!grupo) return null;
-
-      if (!grupo.historico) {
-        grupo.historico = [];
-      }
-
-      let registro = grupo.historico.find(h => h.mes === mes);
-      if (!registro) {
-        registro = { mes: mes, maior: null, menor: null, qtd: null };
-        grupo.historico.push(registro);
-      }
-
-      if (campo === 'maior') return registro.maior;
-      if (campo === 'menor') return registro.menor;
-      if (campo === 'qtd') return registro.qtd;
-      return null;
-    },
-
-    setHistoricoField(mes, campo, valor) {
-      const grupo = this.gerenciador.grupoSelecionado;
-      if (!grupo) return;
-
-      if (!grupo.historico) {
-        grupo.historico = [];
-      }
-
-      let registro = grupo.historico.find(h => h.mes === mes);
-      if (!registro) {
-        registro = { mes: mes, maior: null, menor: null, qtd: null };
-        grupo.historico.push(registro);
-      }
-
-      if (campo === 'maior') {
-        registro.maior = valor ? parseFloat(valor) : null;
-      } else if (campo === 'menor') {
-        registro.menor = valor ? parseFloat(valor) : null;
-      } else if (campo === 'qtd') {
-        registro.qtd = valor ? parseInt(valor) : null;
-      }
-    },
-
-    // ── VALIDAÇÕES DE CAMPOS (P1.3) ─
     validarCampo(campo, valor) {
       const erros = {};
 
-      // Campos obrigatórios
       if (['adm', 'grupo', 'tipo_bem'].includes(campo)) {
         if (!valor || String(valor).trim() === '') {
           erros[campo] = `${this.obterLabelCampo(campo)} é obrigatório`;
         }
       }
 
-      // Crédito
       if (campo === 'menor_credito') {
         if (valor && isNaN(valor)) erros[campo] = 'Deve ser um número';
         else if (valor && parseFloat(valor) < 0) erros[campo] = 'Deve ser positivo';
@@ -1516,24 +1397,11 @@ function dashboard() {
         }
       }
 
-      // Percentuais (0-100%)
-      const camposPercentual = ['taxa_adm', 'fundo_rsv', 'investidor', 'conservador_24m', 'moderado_12m', 'agressivo_6m', 'super_agressivo_3m'];
+      const camposPercentual = ['taxa_adm', 'fundo_rsv', 'investidor', 'conservador_24m', 'moderado_12m'];
       if (camposPercentual.includes(campo)) {
         if (valor && isNaN(valor)) erros[campo] = 'Deve ser um número';
         else if (valor && (parseFloat(valor) < 0 || parseFloat(valor) > 100)) {
           erros[campo] = 'Deve estar entre 0-100%';
-        }
-      }
-
-      // Histórico mensal - apenas se houver valor
-      if (campo.startsWith('historico_')) {
-        const [_, mes, tipo] = campo.split('_');
-        if (valor && isNaN(valor)) {
-          erros[campo] = 'Deve ser um número';
-        } else if (tipo !== 'qtd' && valor && (parseFloat(valor) < 0 || parseFloat(valor) > 100)) {
-          erros[campo] = 'Lance deve estar entre 0-100%';
-        } else if (tipo === 'qtd' && valor && parseFloat(valor) < 0) {
-          erros[campo] = 'Quantidade não pode ser negativa';
         }
       }
 
@@ -1557,7 +1425,6 @@ function dashboard() {
       this.gerenciador.erros = {};
       this.gerenciador.camposComErro = [];
 
-      // Validações obrigatórias
       const obrigatorios = ['adm', 'grupo', 'tipo_bem'];
       obrigatorios.forEach(campo => {
         const val = this.gerenciador.formulario[campo];
@@ -1567,11 +1434,10 @@ function dashboard() {
         }
       });
 
-      // Validações de crédito
       if (this.gerenciador.formulario.menor_credito) {
         const menor = parseFloat(this.gerenciador.formulario.menor_credito);
         if (isNaN(menor) || menor < 0) {
-          this.gerenciador.erros.menor_credito = 'Menor Crédito deve ser um número positivo';
+          this.gerenciador.erros.menor_credito = 'Deve ser um número positivo';
           this.gerenciador.camposComErro.push('menor_credito');
         }
       }
@@ -1579,25 +1445,24 @@ function dashboard() {
       if (this.gerenciador.formulario.maior_credito) {
         const maior = parseFloat(this.gerenciador.formulario.maior_credito);
         if (isNaN(maior) || maior < 0) {
-          this.gerenciador.erros.maior_credito = 'Maior Crédito deve ser um número positivo';
+          this.gerenciador.erros.maior_credito = 'Deve ser um número positivo';
           this.gerenciador.camposComErro.push('maior_credito');
         } else if (this.gerenciador.formulario.menor_credito) {
           const menor = parseFloat(this.gerenciador.formulario.menor_credito);
           if (maior < menor) {
-            this.gerenciador.erros.maior_credito = 'Maior Crédito deve ser >= Menor Crédito';
+            this.gerenciador.erros.maior_credito = 'Deve ser >= Menor Crédito';
             this.gerenciador.camposComErro.push('maior_credito');
           }
         }
       }
 
-      // Validações de percentual
-      const camposPercentual = ['taxa_adm', 'fundo_rsv', 'investidor', 'conservador_24m', 'moderado_12m', 'agressivo_6m', 'super_agressivo_3m'];
+      const camposPercentual = ['taxa_adm', 'fundo_rsv', 'investidor', 'conservador_24m', 'moderado_12m'];
       camposPercentual.forEach(campo => {
         const val = this.gerenciador.formulario[campo];
         if (val && !isNaN(val)) {
           const num = parseFloat(val);
           if (num < 0 || num > 100) {
-            this.gerenciador.erros[campo] = `${this.obterLabelCampo(campo)} deve estar entre 0-100%`;
+            this.gerenciador.erros[campo] = `Deve estar entre 0-100%`;
             this.gerenciador.camposComErro.push(campo);
           }
         }
@@ -1619,33 +1484,10 @@ function dashboard() {
       return this.gerenciador.erros[campo] || '';
     },
 
-    // ── INDICADOR DE MESES PENDENTES (P1.5) ─
-    obterMesPendente(mes) {
-      const historico = this.gerenciador.formulario.historico || [];
-      const registro = historico.find(h => h.mes === mes);
-      if (!registro) return true; // Mês sem registro é pendente
-      // Mês é pendente se faltam TODOS os campos (maior, menor e qtd)
-      return !registro.maior && !registro.menor && !registro.qtd;
-    },
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 17: IMPORTAÇÃO/EXPORTAÇÃO
+    // ══════════════════════════════════════════════════════════════════════════
 
-    obterResumoMesesCompletos() {
-      const historico = this.gerenciador.formulario.historico || [];
-      let completos = 0;
-      const mesesEsperados = 36; // JAN-24 até DEC-26
-
-      // Conta quantos meses têm TODOS os campos preenchidos
-      historico.forEach(reg => {
-        if (reg.maior !== null && reg.maior !== undefined &&
-            reg.menor !== null && reg.menor !== undefined &&
-            reg.qtd !== null && reg.qtd !== undefined) {
-          completos++;
-        }
-      });
-
-      return `${completos}/${mesesEsperados} meses completos`;
-    },
-
-    // ── IMPORTAÇÃO/EXPORTAÇÃO (P3.1) ─
     soltarArquivo(event) {
       this.importacao.dragOver = false;
       const files = event.dataTransfer.files;
@@ -1689,16 +1531,15 @@ function dashboard() {
           if (data.erros && data.erros.length > 0) {
             this.mostrarToast(`${data.erros.length} erros encontrados`, "aviso");
           } else {
-            this.mostrarToast(`Preview carregado: ${data.preview.total} linhas`, "sucesso");
+            this.mostrarToast(`✓ Preview: ${data.preview.total} linhas`, "sucesso");
           }
         } else {
-          this.importacao.errosValidacao = [data.detail || "Erro ao processar arquivo"];
-          this.mostrarToast("Erro no preview: " + (data.detail || "Desconhecido"), "erro");
+          this.importacao.errosValidacao = [data.detail || "Erro ao processar"];
+          this.mostrarToast("Erro no preview", "erro");
         }
       } catch (e) {
         console.error("Erro ao fazer preview", e);
-        this.importacao.errosValidacao = [e.message];
-        this.mostrarToast("Erro ao fazer preview: " + e.message, "erro");
+        this.mostrarToast("Erro: " + e.message, "erro");
       } finally {
         this.importacao.carregando = false;
       }
@@ -1730,11 +1571,11 @@ function dashboard() {
           );
           await this.fetchGruposGerenciador();
         } else {
-          this.mostrarToast("Erro na importação: " + (data.detail || "Desconhecido"), "erro");
+          this.mostrarToast("Erro na importação", "erro");
         }
       } catch (e) {
-        console.error("Erro ao processar importação", e);
-        this.mostrarToast("Erro ao importar: " + e.message, "erro");
+        console.error("Erro ao processar", e);
+        this.mostrarToast("Erro: " + e.message, "erro");
       } finally {
         this.importacao.carregando = false;
       }
@@ -1751,8 +1592,6 @@ function dashboard() {
 
     async exportarTudo() {
       this.exportacao.carregando = true;
-      this.exportacao.tipo = "completo";
-
       try {
         const res = await fetch("/api/exportar/completo");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1767,9 +1606,8 @@ function dashboard() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        this.mostrarToast("✓ Arquivo exportado com sucesso", "sucesso");
+        this.mostrarToast("✓ Arquivo exportado", "sucesso");
       } catch (e) {
-        console.error("Erro ao exportar", e);
         this.mostrarToast("Erro ao exportar: " + e.message, "erro");
       } finally {
         this.exportacao.carregando = false;
@@ -1783,8 +1621,6 @@ function dashboard() {
       }
 
       this.exportacao.carregando = true;
-      this.exportacao.tipo = "adm";
-
       try {
         const res = await fetch(`/api/exportar/por-adm/${this.exportacao.adm}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1799,10 +1635,9 @@ function dashboard() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        this.mostrarToast(`✓ Arquivo de ${this.exportacao.adm} exportado`, "sucesso");
+        this.mostrarToast(`✓ ${this.exportacao.adm} exportado`, "sucesso");
       } catch (e) {
-        console.error("Erro ao exportar por ADM", e);
-        this.mostrarToast("Erro ao exportar: " + e.message, "erro");
+        this.mostrarToast("Erro: " + e.message, "erro");
       } finally {
         this.exportacao.carregando = false;
       }
@@ -1810,8 +1645,6 @@ function dashboard() {
 
     async exportarRelatorioAdms() {
       this.exportacao.carregando = true;
-      this.exportacao.tipo = "relatorio";
-
       try {
         const res = await fetch("/api/exportar/relatorio-adms");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1826,10 +1659,9 @@ function dashboard() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        this.mostrarToast("✓ Relatório ADMs exportado", "sucesso");
+        this.mostrarToast("✓ Relatório exportado", "sucesso");
       } catch (e) {
-        console.error("Erro ao exportar relatório", e);
-        this.mostrarToast("Erro ao exportar: " + e.message, "erro");
+        this.mostrarToast("Erro: " + e.message, "erro");
       } finally {
         this.exportacao.carregando = false;
       }
@@ -1842,8 +1674,6 @@ function dashboard() {
       }
 
       this.exportacao.carregando = true;
-      this.exportacao.tipo = "grupo";
-
       try {
         const res = await fetch(`/api/exportar/grupo/${this.exportacao.grupoId}`);
         if (!res.ok) {
@@ -1861,10 +1691,9 @@ function dashboard() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        this.mostrarToast("✓ Grupo exportado com sucesso", "sucesso");
+        this.mostrarToast("✓ Grupo exportado", "sucesso");
       } catch (e) {
-        console.error("Erro ao exportar grupo", e);
-        this.mostrarToast("Erro ao exportar: " + e.message, "erro");
+        this.mostrarToast("Erro: " + e.message, "erro");
       } finally {
         this.exportacao.carregando = false;
         this.exportacao.grupoId = "";
@@ -1885,7 +1714,7 @@ function dashboard() {
           const tempoTotal = ((Date.now() - inicioSync) / 1000).toFixed(1);
           const now = new Date();
           this.sincronizacao.ultimaSinc = now.toLocaleString("pt-BR");
-          this.sincronizacao.mensagem = `✓ ${data.total_grupos} grupos carregados em ${tempoTotal}s`;
+          this.sincronizacao.mensagem = `✓ ${data.total_grupos} grupos em ${tempoTotal}s`;
           this.mostrarToast(this.sincronizacao.mensagem, "sucesso");
           await this.fetchGruposGerenciador();
         } else {
@@ -1895,13 +1724,16 @@ function dashboard() {
         console.error("Erro ao sincronizar", e);
         this.sincronizacao.mensagem = `✗ Erro: ${e.message}`;
         this.sincronizacao.erro = true;
-        this.mostrarToast("Erro ao sincronizar: " + e.message, "erro");
+        this.mostrarToast("Erro: " + e.message, "erro");
       } finally {
         this.sincronizacao.carregando = false;
       }
     },
 
-    // ── ANALYTICS ───────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 18: ANALYTICS
+    // ══════════════════════════════════════════════════════════════════════════
+
     async carregarAnalytics() {
       this.analytics.carregando = true;
       this.analytics.erro = null;
@@ -1933,27 +1765,23 @@ function dashboard() {
         this.analytics.dados.distribuicao = dist.dados;
         this.analytics.dados.estatisticas = stat.dados;
 
-        // Aguardar DOM atualizar antes de inicializar gráficos
         await this.$nextTick?.() || new Promise(r => setTimeout(r, 100));
         this.inicializarGraficos();
-
       } catch (e) {
         console.error("Erro ao carregar analytics", e);
         this.analytics.erro = e.message;
-        this.mostrarToast("Erro ao carregar dashboard analítico: " + e.message, "erro");
+        this.mostrarToast("Erro ao carregar analytics: " + e.message, "erro");
       } finally {
         this.analytics.carregando = false;
       }
     },
 
     inicializarGraficos() {
-      // Destruir gráficos antigos
       Object.values(this.analytics.charts).forEach(chart => {
         if (chart && chart.destroy) chart.destroy();
       });
       this.analytics.charts = {};
 
-      // 1. Distribuição de Crédito por ADM (Donut)
       const ctxAdm = document.getElementById("chartDistribuicaoAdm");
       if (ctxAdm && this.analytics.dados.summary?.principais_adms) {
         const principais = this.analytics.dados.summary.principais_adms.slice(0, 6);
@@ -1973,13 +1801,11 @@ function dashboard() {
             maintainAspectRatio: false,
             plugins: {
               legend: { position: "bottom", labels: { color: "#cbd5e1" } },
-              tooltip: { backgroundColor: "#1e293b", titleColor: "#fff", bodyColor: "#cbd5e1" }
             }
           }
         });
       }
 
-      // 2. Comparativo de Grupos por ADM (Bar)
       const ctxComp = document.getElementById("chartComparativoAdm");
       if (ctxComp && this.analytics.dados.comparativo) {
         this.analytics.charts.comparativoAdm = new Chart(ctxComp, {
@@ -1998,10 +1824,7 @@ function dashboard() {
             indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { labels: { color: "#cbd5e1" } },
-              tooltip: { backgroundColor: "#1e293b", titleColor: "#fff", bodyColor: "#cbd5e1" }
-            },
+            plugins: { legend: { labels: { color: "#cbd5e1" } } },
             scales: {
               x: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
               y: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } }
@@ -2010,7 +1833,6 @@ function dashboard() {
         });
       }
 
-      // 3. Tendências de Lances (Line)
       const ctxTend = document.getElementById("chartTendencias");
       if (ctxTend && this.analytics.dados.tendencias?.meses) {
         this.analytics.charts.tendencias = new Chart(ctxTend, {
@@ -2025,7 +1847,6 @@ function dashboard() {
                 backgroundColor: "rgba(16, 185, 129, 0.1)",
                 tension: 0.3,
                 borderWidth: 2,
-                fill: true
               },
               {
                 label: "Menor Lance Médio (%)",
@@ -2034,17 +1855,13 @@ function dashboard() {
                 backgroundColor: "rgba(245, 158, 11, 0.1)",
                 tension: 0.3,
                 borderWidth: 2,
-                fill: true
               }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { labels: { color: "#cbd5e1" } },
-              tooltip: { backgroundColor: "#1e293b", titleColor: "#fff", bodyColor: "#cbd5e1" }
-            },
+            plugins: { legend: { labels: { color: "#cbd5e1" } } },
             scales: {
               x: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
               y: {
@@ -2058,7 +1875,6 @@ function dashboard() {
         });
       }
 
-      // 4. Distribuição por Faixa de Crédito (Bar)
       const ctxFaixa = document.getElementById("chartDistribuicaoFaixa");
       if (ctxFaixa && this.analytics.dados.distribuicao?.faixas) {
         this.analytics.charts.distribuicaoFaixa = new Chart(ctxFaixa, {
@@ -2067,18 +1883,14 @@ function dashboard() {
             labels: this.analytics.dados.distribuicao.faixas,
             datasets: [
               {
-                label: "Quantidade de Grupos",
+                label: "Quantidade",
                 data: this.analytics.dados.distribuicao.contagem,
                 backgroundColor: "#8b5cf6",
-                borderColor: "#6d28d9",
-                borderWidth: 1
               },
               {
                 label: "Percentual (%)",
                 data: this.analytics.dados.distribuicao.percentual,
                 backgroundColor: "#ec4899",
-                borderColor: "#be185d",
-                borderWidth: 1,
                 yAxisID: "y1"
               }
             ]
@@ -2086,10 +1898,7 @@ function dashboard() {
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { labels: { color: "#cbd5e1" } },
-              tooltip: { backgroundColor: "#1e293b", titleColor: "#fff", bodyColor: "#cbd5e1" }
-            },
+            plugins: { legend: { labels: { color: "#cbd5e1" } } },
             scales: {
               x: { ticks: { color: "#cbd5e1" }, grid: { color: "#334155" } },
               y: {
@@ -2113,25 +1922,29 @@ function dashboard() {
       }
     },
 
+    // ══════════════════════════════════════════════════════════════════════════
+    // SECTION 19: TOAST & UTILS
+    // ══════════════════════════════════════════════════════════════════════════
+
     mostrarToast(mensagem, tipo = "info") {
-      // Toast simples usando alert por enquanto
-      // TODO: Implementar toast UI melhorado
       console.log(`[${tipo.toUpperCase()}] ${mensagem}`);
+      // TODO: Implementar toast UI melhorado com Tailwind
     },
   };
 }
 
-// ✅ CRÍTICO: Expor dashboard globalmente ANTES de Alpine.start()
+// ══════════════════════════════════════════════════════════════════════════════
+// ALPINE INITIALIZATION
+// ══════════════════════════════════════════════════════════════════════════════
+
 if (typeof dashboard === 'function') {
   window.dashboard = dashboard;
-  console.log('[Alpine Init] ✓ window.dashboard disponível globalmente');
+  console.log('[Alpine Init] ✓ window.dashboard disponível');
 }
 
-// ✅ Registrar com Alpine também (dupla segurança)
 if (typeof Alpine !== 'undefined' && typeof dashboard === 'function') {
   Alpine.data('dashboard', dashboard);
-  console.log('[Alpine Init] ✓ dashboard() registrada com Alpine.data()');
+  console.log('[Alpine Init] ✓ dashboard() registrada com Alpine');
 }
 
-// Reinicializar Alpine após carregamento completo do script
-console.log('[Alpine Init] dashboard() carregado e pronto para Alpine.js');
+console.log('[Alpine Init] dashboard() pronto');
