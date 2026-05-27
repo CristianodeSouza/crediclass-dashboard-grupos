@@ -408,8 +408,8 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
                     if valor is None:
                         valor_str = ""
                     elif isinstance(valor, float):
-                        # Numeros: formatar com 2 casas decimais, usando virgula como separador
-                        valor_str = f"{valor:.2f}".replace(".", ",")
+                        # Numeros: enviar com ponto decimal (Google Sheets converte para locale automaticamente)
+                        valor_str = f"{valor:.2f}"  # NÃO substituir ponto por vírgula - deixar Sheets fazer isso
                     elif isinstance(valor, (int, bool)):
                         valor_str = str(valor)
                     else:
@@ -449,14 +449,14 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
                             col_idx = headers.index(maior_key)
                             col_letra = indice_para_coluna(col_idx)
                             cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
-                            valor_str = f"{maior_lance:.2f}".replace(".", ",") if maior_lance is not None else ""
+                            valor_str = f"{maior_lance:.2f}" if maior_lance is not None else ""
                             updates.append({"range": cell_ref, "values": [[valor_str]]})
 
                         if menor_key in headers:
                             col_idx = headers.index(menor_key)
                             col_letra = indice_para_coluna(col_idx)
                             cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # já é 1-based
-                            valor_str = f"{menor_lance:.2f}".replace(".", ",") if menor_lance is not None else ""
+                            valor_str = f"{menor_lance:.2f}" if menor_lance is not None else ""
                             updates.append({"range": cell_ref, "values": [[valor_str]]})
 
                         if qtd_key in headers:
