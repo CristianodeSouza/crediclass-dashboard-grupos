@@ -375,7 +375,8 @@ def criar_novo_grupo(grupo: GrupoCreate, usuario: str = Query("operador")):
 def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operador")):
     """Edita grupo e dispara sincronização assíncrona com Google Sheets"""
     try:
-        grupos = fetch_grupos()
+        # CRÍTICO: Forçar refresh do cache para evitar dados desatualizados em Render
+        grupos = fetch_grupos(force_refresh=True)
 
         # Verifica se grupo existe
         existe = any(str(g.get("grupo")) == str(grupo_id) for g in grupos)

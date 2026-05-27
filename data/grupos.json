@@ -33167,7 +33167,7 @@
     "historico": [
       {
         "mes": "MAY-24",
-        "maior_lance": 58.75,
+        "maior_lance": 88.88,
         "menor_lance": 58.75,
         "qtd": 14
       },
@@ -33273,7 +33273,8 @@
         "menor_lance": 37.5,
         "qtd": 31
       }
-    ]
+    ],
+    "editado_em": "2026-05-27T00:00:00"
   },
   {
     "adm": "AUTO-CAIXA",
