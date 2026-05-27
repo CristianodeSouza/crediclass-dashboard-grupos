@@ -48,6 +48,9 @@ async def background_sync_worker():
 async def startup_event():
     """Inicia background job ao ligar a aplicação"""
     print("[STARTUP] Iniciando background sync worker...")
+    print("[STARTUP] Criando aba Auditoria se nao existe...")
+    from sheets import criar_aba_auditoria_se_nao_existe
+    criar_aba_auditoria_se_nao_existe()
     asyncio.create_task(background_sync_worker())
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")

@@ -176,28 +176,133 @@ def fetch_grupos(force_refresh: bool = False) -> list[dict]:
         return []
 
 
-def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict = None):
+def criar_aba_auditoria_se_nao_existe():
+    """Cria aba 'Auditoria' com headers se não existir"""
+    try:
+        service = get_service(use_write_permissions=True)
+
+        # Obter lista de abas
+        sheet_metadata = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
+        sheets = sheet_metadata.get('sheets', [])
+
+        # Verificar se aba Auditoria já existe
+        for sheet in sheets:
+            if sheet['properties']['title'] == 'Auditoria':
+                return  # Já existe
+
+        # Criar aba Auditoria
+        batch_update_request = {
+            'requests': [
+                {
+                    'addSheet': {
+                        'properties': {
+                            'title': 'Auditoria',
+                            'gridProperties': {
+                                'rowCount': 10000,
+                                'columnCount': 8
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+        service.spreadsheets().batchUpdate(spreadsheetId=SPREADSHEET_ID, body=batch_update_request).execute()
+
+        # Adicionar headers
+        headers = [['Timestamp', 'Usuario', 'Grupo ID', 'Campo', 'Valor Antigo (Backup)', 'Valor Novo', 'Acao', 'Origem']]
+        service.spreadsheets().values().update(
+            spreadsheetId=SPREADSHEET_ID,
+            range='Auditoria!A1:H1',
+            valueInputOption='USER_ENTERED',
+            body={'values': headers}
+        ).execute()
+
+        print("Auditoria: Aba criada com sucesso")
+
+    except Exception as e:
+        print(f"Aviso: Nao conseguiu criar aba Auditoria: {e}")
+
+
+def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict = None, origem: str = "Dashboard"):
+    """
+    Registra auditoria em Google Sheets aba 'Auditoria'
+
+    Args:
+        usuario: nome do usuário (adm/operador)
+        acao: tipo de ação (INSERT, UPDATE, DELETE)
+        grupo_id: ID do grupo modificado
+        mudancas: dict com {'campo': {'antes': x, 'depois': y}}
+        origem: onde veio a ação (Dashboard, GoogleSheets, Sync)
+    """
     from datetime import datetime
 
-    AUDIT_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "auditoria.json")
-    os.makedirs(os.path.dirname(AUDIT_FILE), exist_ok=True)
+    try:
+        service = get_service(use_write_permissions=True)
 
-    auditoria = []
-    if os.path.exists(AUDIT_FILE):
-        with open(AUDIT_FILE, "r", encoding="utf-8") as f:
-            auditoria = json.load(f)
+        # Para cada mudança, cria uma linha no log
+        if mudancas:
+            for campo, valores in mudancas.items():
+                valor_antes = valores.get("antes", "")
+                valor_depois = valores.get("depois", "")
 
-    registro = {
-        "timestamp": datetime.now().isoformat(),
-        "usuario": usuario,
-        "acao": acao,
-        "grupo_id": str(grupo_id),
-        "mudancas": mudancas or {}
-    }
-    auditoria.append(registro)
+                linha = [
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # Timestamp
+                    usuario,                                         # Usuário
+                    str(grupo_id),                                  # Grupo ID
+                    campo,                                          # Campo alterado
+                    str(valor_antes),                              # Valor antigo (BACKUP)
+                    str(valor_depois),                             # Valor novo
+                    acao,                                          # Ação (INSERT/UPDATE/DELETE)
+                    origem                                         # Origem
+                ]
 
-    with open(AUDIT_FILE, "w", encoding="utf-8") as f:
-        json.dump(auditoria, f, ensure_ascii=False, indent=2)
+                # Adiciona linha à aba Auditoria
+                service.spreadsheets().values().append(
+                    spreadsheetId=SPREADSHEET_ID,
+                    range="Auditoria!A:H",
+                    valueInputOption="USER_ENTERED",
+                    body={"values": [linha]}
+                ).execute()
+        else:
+            # Se não há mudanças específicas, registra ação genérica
+            linha = [
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                usuario,
+                str(grupo_id),
+                "-",
+                "-",
+                "-",
+                acao,
+                origem
+            ]
+            service.spreadsheets().values().append(
+                spreadsheetId=SPREADSHEET_ID,
+                range="Auditoria!A:H",
+                valueInputOption="USER_ENTERED",
+                body={"values": [linha]}
+            ).execute()
+
+    except Exception as e:
+        print(f"Aviso: Nao conseguiu registrar auditoria: {e}")
+        # Fallback: salva em JSON local também
+        AUDIT_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "auditoria.json")
+        os.makedirs(os.path.dirname(AUDIT_FILE), exist_ok=True)
+        auditoria = []
+        if os.path.exists(AUDIT_FILE):
+            with open(AUDIT_FILE, "r", encoding="utf-8") as f:
+                auditoria = json.load(f)
+
+        registro = {
+            "timestamp": datetime.now().isoformat(),
+            "usuario": usuario,
+            "acao": acao,
+            "grupo_id": str(grupo_id),
+            "origem": origem,
+            "mudancas": mudancas or {}
+        }
+        auditoria.append(registro)
+        with open(AUDIT_FILE, "w", encoding="utf-8") as f:
+            json.dump(auditoria, f, ensure_ascii=False, indent=2)
 
 
 def mapa_campo_para_coluna() -> dict:
@@ -363,9 +468,9 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
         return False
 
 
-def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema") -> bool:
+def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema", origem: str = "Dashboard") -> bool:
     try:
-        grupos = fetch_grupos()
+        grupos = fetch_grupos(force_refresh=True)
 
         # Encontra índice do grupo
         grupo_idx = None
@@ -377,11 +482,13 @@ def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema")
         if grupo_idx is None:
             return False
 
-        # Registra alterações para auditoria
+        # Registra alteracoes para auditoria (com BACKUP dos valores antigos)
         mudancas = {}
         for chave, valor in dados.items():
-            if grupos[grupo_idx].get(chave) != valor:
-                mudancas[chave] = {"antes": grupos[grupo_idx].get(chave), "depois": valor}
+            valor_antigo = grupos[grupo_idx].get(chave)
+            if valor_antigo != valor:
+                # BACKUP: registra valor antigo como backup
+                mudancas[chave] = {"antes": valor_antigo, "depois": valor}
 
         # Atualiza grupo em cache
         grupos[grupo_idx].update(dados)
@@ -391,15 +498,13 @@ def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema")
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(grupos, f, ensure_ascii=False, indent=2)
 
-        # 🔴 NOVA: Sincroniza com Google Sheets
+        # Sincroniza com Google Sheets
         if not sincronizar_grupo_ao_sheets(grupo_id, dados):
-            print(f"Aviso: Cache atualizado mas Google Sheets não foi sincronizado para grupo {grupo_id}")
-            # Não retorna False para não bloquear o update do cache
-            # Mas avisa no console para investigação
+            print(f"Aviso: Cache atualizado mas Google Sheets nao foi sincronizado para grupo {grupo_id}")
 
-        # Registra auditoria
+        # Registra auditoria com origem
         if mudancas:
-            registrar_auditoria(usuario, "EDITAR", grupo_id, mudancas)
+            registrar_auditoria(usuario, "UPDATE", grupo_id, mudancas, origem)
 
         return True
     except Exception as e:
