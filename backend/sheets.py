@@ -278,7 +278,7 @@ def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict =
                 # Adiciona linha à aba Auditoria
                 service.spreadsheets().values().append(
                     spreadsheetId=SPREADSHEET_ID,
-                    range="Auditoria!A:H",
+                    range="'Auditoria'!A:H",
                     valueInputOption="USER_ENTERED",
                     body={"values": [linha]}
                 ).execute()
@@ -296,7 +296,7 @@ def registrar_auditoria(usuario: str, acao: str, grupo_id: str, mudancas: dict =
             ]
             service.spreadsheets().values().append(
                 spreadsheetId=SPREADSHEET_ID,
-                range="Auditoria!A:H",
+                range="'Auditoria'!A:H",
                 valueInputOption="USER_ENTERED",
                 body={"values": [linha]}
             ).execute()
