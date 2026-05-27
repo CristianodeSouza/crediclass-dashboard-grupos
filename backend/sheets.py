@@ -483,7 +483,14 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
             body={"data": updates, "valueInputOption": "USER_ENTERED"}
         ).execute()
 
-        print(f"[SUCESSO] Grupo {grupo_id} sincronizado com Google Sheets. Response: {response.get('responses', [])[:3]}")
+        # Log completo de TODAS as respostas para debug
+        responses = response.get('responses', [])
+        print(f"[SUCESSO] Grupo {grupo_id} sincronizado. {len(responses)} respostas recebidas")
+        for idx, resp in enumerate(responses):
+            if resp and 'updatedCells' in resp:
+                print(f"[RESP_{idx}] Range: {resp.get('updatedRange')} → Cells: {resp.get('updatedCells')}")
+            elif resp:
+                print(f"[RESP_{idx}] ERROR: {resp}")
         return True
     except Exception as e:
         print(f"[ERRO CRÍTICO] Erro ao sincronizar com Google Sheets: {e}")
