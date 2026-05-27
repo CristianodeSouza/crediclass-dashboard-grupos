@@ -394,7 +394,7 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
             if campo in campo_para_coluna:
                 col_idx = campo_para_coluna[campo]
                 col_letra = indice_para_coluna(col_idx)
-                cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
+                cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"
 
                 # Formata o valor corretamente
                 if valor is None:
@@ -439,21 +439,21 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
                     if maior_key in headers:
                         col_idx = headers.index(maior_key)
                         col_letra = indice_para_coluna(col_idx)
-                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
+                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"
                         valor_str = f"{maior_lance:.2f}".replace(".", ",") if maior_lance is not None else ""
                         updates.append({"range": cell_ref, "values": [[valor_str]]})
 
                     if menor_key in headers:
                         col_idx = headers.index(menor_key)
                         col_letra = indice_para_coluna(col_idx)
-                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
+                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"
                         valor_str = f"{menor_lance:.2f}".replace(".", ",") if menor_lance is not None else ""
                         updates.append({"range": cell_ref, "values": [[valor_str]]})
 
                     if qtd_key in headers:
                         col_idx = headers.index(qtd_key)
                         col_letra = indice_para_coluna(col_idx)
-                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx + 1}"
+                        cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"
                         valor_str = str(qtd) if qtd is not None else ""
                         updates.append({"range": cell_ref, "values": [[valor_str]]})
                 except (ValueError, IndexError):
