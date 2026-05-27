@@ -201,7 +201,8 @@ def processar_importacao(dados: List[Dict], modo: str = "insert_update") -> Dict
     - atualizados: qtd de grupos atualizados
     - erros: lista de erros durante processamento
     """
-    grupos_existentes = fetch_grupos()
+    result = fetch_grupos()
+    grupos_existentes = result['grupos']
     map_existentes = {(g["adm"].upper(), g["grupo"]): g for g in grupos_existentes}
 
     inseridos = 0
@@ -260,7 +261,8 @@ def processar_importacao(dados: List[Dict], modo: str = "insert_update") -> Dict
 
 def exportar_excel_completo() -> bytes:
     """Exportar todos os grupos em Excel completo usando openpyxl."""
-    grupos = fetch_grupos()
+    result = fetch_grupos()
+    grupos = result['grupos']
 
     # Definir ordem de colunas
     colunas_ordem = list(COLUNAS_OBRIGATORIAS.keys()) + list(COLUNAS_OPCIONAIS.keys())
@@ -313,7 +315,8 @@ def exportar_excel_completo() -> bytes:
 
 def exportar_por_adm(adm: str) -> bytes:
     """Exportar grupos filtrados por administradora usando openpyxl."""
-    grupos = fetch_grupos()
+    result = fetch_grupos()
+    grupos = result['grupos']
     grupos_filtrados = [g for g in grupos if g["adm"].upper() == adm.upper()]
 
     colunas_ordem = list(COLUNAS_OBRIGATORIAS.keys()) + list(COLUNAS_OPCIONAIS.keys())
@@ -365,7 +368,8 @@ def exportar_por_adm(adm: str) -> bytes:
 
 def exportar_grupo(grupo_id: str, adm: str) -> Dict:
     """Exportar detalhes completos de um grupo."""
-    grupos = fetch_grupos()
+    result = fetch_grupos()
+    grupos = result['grupos']
     grupo = next((g for g in grupos if g["grupo"] == grupo_id and g["adm"].upper() == adm.upper()), None)
 
     if not grupo:
@@ -380,7 +384,8 @@ def exportar_grupo(grupo_id: str, adm: str) -> Dict:
 
 def exportar_relatorio_adms() -> bytes:
     """Exportar relatório comparativo de administradoras usando openpyxl."""
-    grupos = fetch_grupos()
+    result = fetch_grupos()
+    grupos = result['grupos']
 
     # Agrupar por ADM
     relatorio = {}

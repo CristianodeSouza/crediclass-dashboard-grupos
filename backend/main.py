@@ -119,7 +119,11 @@ def listar_grupos(
     busca: Optional[str] = Query(None),
 ) -> Dict[str, Any]:
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
+        metadata = result['metadata']
+        if metadata['source'] == 'cache_fallback' and metadata['error']:
+            print(f"[AVISO] Dados do cache (API indisponível): {metadata['error']}")
     except Exception:
         return {"total": 0, "grupos": [], "aviso": "Dados não carregados. Configure as credenciais Google."}
 
@@ -152,7 +156,8 @@ def listar_grupos(
 @app.get("/api/grupos/{grupo_id}")
 def detalhe_grupo(grupo_id: str) -> Dict[str, Any]:
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
     except Exception:
         raise HTTPException(status_code=503, detail="Dados não disponíveis")
     for g in grupos:
@@ -164,7 +169,8 @@ def detalhe_grupo(grupo_id: str) -> Dict[str, Any]:
 @app.get("/api/stats")
 def estatisticas() -> Dict[str, Any]:
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
     except Exception:
         return {"total_grupos": 0, "por_administradora": {}, "por_tipo_bem": {},
                 "media_lance_geral": 0, "administradoras": [], "tipos_bem": []}
@@ -273,7 +279,8 @@ def listar_grupos_gerenciador(
     por_pagina: int = Query(20, ge=1)
 ):
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
     except Exception:
         return {"total": 0, "grupos": [], "pagina": 1, "total_paginas": 0, "aviso": "Dados não carregados"}
 
@@ -341,7 +348,8 @@ def status_fila_sincronizacao():
 @app.get("/api/administradoras")
 def listar_todas_administradoras():
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
     except Exception:
         return {"administradoras": [], "total": 0}
 
@@ -379,7 +387,11 @@ def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operad
     """Edita grupo e dispara sincronização assíncrona com Google Sheets"""
     try:
         # CRÍTICO: Forçar refresh do cache para evitar dados desatualizados em Render
-        grupos = fetch_grupos(force_refresh=True)
+        result = fetch_grupos(force_refresh=True)
+        grupos = result['grupos']
+        metadata = result['metadata']
+        if metadata['source'] == 'cache_fallback' and metadata['error']:
+            print(f"[AVISO] Dados do cache em editar_grupo: {metadata['error']}")
 
         # Verifica se grupo existe
         existe = any(str(g.get("grupo")) == str(grupo_id) for g in grupos)
@@ -424,7 +436,8 @@ def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operad
 @app.delete("/api/grupos/{grupo_id}")
 def apagar_grupo(grupo_id: str, usuario: str = Query("operador"), soft: bool = Query(True)):
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
 
         existe = any(str(g.get("grupo")) == str(grupo_id) for g in grupos)
         if not existe:
@@ -449,7 +462,8 @@ def mudar_status_grupo(grupo_id: str, novo_status: str = Body(...), usuario: str
         if novo_status not in status_validos:
             raise HTTPException(status_code=400, detail=f"Status inválido. Valores aceitos: {', '.join(status_validos)}")
 
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
         grupo_atual = None
         for g in grupos:
             if str(g.get("grupo")) == str(grupo_id):
@@ -497,7 +511,8 @@ def mudar_status_grupo(grupo_id: str, novo_status: str = Body(...), usuario: str
 @app.post("/api/grupos/{grupo_id}/duplicar")
 def duplicar_novo_grupo(grupo_id: str, usuario: str = Query("operador")):
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
         existe = any(str(g.get("grupo")) == str(grupo_id) for g in grupos)
         if not existe:
             raise HTTPException(status_code=404, detail="Grupo não encontrado")
@@ -517,7 +532,9 @@ def duplicar_novo_grupo(grupo_id: str, usuario: str = Query("operador")):
 def sincronizar_com_sheets(usuario: str = Query("operador")):
     try:
         # Força recarregamento do cache que sincroniza com sheets
-        grupos = fetch_grupos(force_refresh=True)
+        result = fetch_grupos(force_refresh=True)
+        grupos = result['grupos']
+        metadata = result['metadata']
         timestamp_sincronizacao = datetime.now().isoformat()
         data_formatada = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 

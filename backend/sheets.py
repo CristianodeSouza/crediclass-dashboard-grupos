@@ -150,18 +150,61 @@ def build_history(row: list, headers: list) -> list:
     return history
 
 
-def fetch_grupos(force_refresh: bool = False) -> List[Dict[str, Any]]:
+def fetch_grupos(force_refresh: bool = False) -> Dict[str, Any]:
+    """Fetch groups from Google Sheets API or cache
+
+    Returns dict with structure:
+    {
+        'grupos': [...],
+        'metadata': {
+            'source': 'api' | 'cache' | 'cache_fallback',
+            'timestamp': ISO timestamp,
+            'error': None or error message
+        }
+    }
+    """
+    # PROB-004: Try cache first (if not forcing refresh)
     if not force_refresh and os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            # Se o cache é um dict (formato antigo com chave ID), converte para lista
-            if isinstance(data, dict):
-                return list(data.values())
-            # Se é uma lista (formato novo), retorna como está
-            return data if isinstance(data, list) else []
+        try:
+            with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                grupos = data if isinstance(data, list) else list(data.values()) if isinstance(data, dict) else []
+                return {
+                    'grupos': grupos,
+                    'metadata': {
+                        'source': 'cache',
+                        'timestamp': datetime.now().isoformat(),
+                        'error': None
+                    }
+                }
+        except Exception as e:
+            print(f"[AVISO] Erro ao ler cache: {e}")
 
     try:
         service = get_service()
+        if not service:
+            # API Key also failed - try cache fallback
+            if os.path.exists(CACHE_FILE):
+                with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    grupos = data if isinstance(data, list) else list(data.values()) if isinstance(data, dict) else []
+                    return {
+                        'grupos': grupos,
+                        'metadata': {
+                            'source': 'cache_fallback',
+                            'timestamp': datetime.now().isoformat(),
+                            'error': 'Google Sheets API indisponível, usando cache antigo'
+                        }
+                    }
+            return {
+                'grupos': [],
+                'metadata': {
+                    'source': 'none',
+                    'timestamp': datetime.now().isoformat(),
+                    'error': 'Google Sheets API indisponível e cache não encontrado'
+                }
+            }
+
         result = (
             service.spreadsheets()
             .values()
@@ -170,7 +213,14 @@ def fetch_grupos(force_refresh: bool = False) -> List[Dict[str, Any]]:
         )
         rows = result.get("values", [])
         if not rows:
-            return []
+            return {
+                'grupos': [],
+                'metadata': {
+                    'source': 'api',
+                    'timestamp': datetime.now().isoformat(),
+                    'error': 'Planilha vazia'
+                }
+            }
 
         headers = rows[0]
         grupos = []
@@ -214,13 +264,44 @@ def fetch_grupos(force_refresh: bool = False) -> List[Dict[str, Any]]:
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(grupos, f, ensure_ascii=False, indent=2)
 
-        return grupos
+        return {
+            'grupos': grupos,
+            'metadata': {
+                'source': 'api',
+                'timestamp': datetime.now().isoformat(),
+                'error': None
+            }
+        }
     except Exception as e:
-        print(f"Erro ao carregar dados do Google Sheets: {e}")
+        print(f"[ERRO] Erro ao carregar dados do Google Sheets: {e}")
+        import traceback
+        traceback.print_exc()
+
+        # PROB-004: Cache fallback with error info
         if os.path.exists(CACHE_FILE):
-            with open(CACHE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        return []
+            try:
+                with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    grupos = data if isinstance(data, list) else list(data.values()) if isinstance(data, dict) else []
+                    return {
+                        'grupos': grupos,
+                        'metadata': {
+                            'source': 'cache_fallback',
+                            'timestamp': datetime.now().isoformat(),
+                            'error': f'API error: {str(e)}'
+                        }
+                    }
+            except Exception as cache_err:
+                print(f"[ERRO] Erro ao ler cache fallback: {cache_err}")
+
+        return {
+            'grupos': [],
+            'metadata': {
+                'source': 'none',
+                'timestamp': datetime.now().isoformat(),
+                'error': f'API indisponível e cache não pode ser carregado: {str(e)}'
+            }
+        }
 
 
 def criar_aba_auditoria_se_nao_existe():
@@ -424,6 +505,10 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: Dict[str, Any]) -> bool:
         # Prepara updates para a API (para TODAS as linhas encontradas)
         updates = []
 
+        # PROB-002: Rastreia campos não mapeados
+        unmapped_fields = []
+        synced_fields = []
+
         # Extrai historico se presente (para tratamento especial) - NÃO modifica dados original
         historico = dados.get("historico", None)
 
@@ -434,6 +519,7 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: Dict[str, Any]) -> bool:
                 if campo == "historico":
                     continue
                 if campo in campo_para_coluna:
+                    synced_fields.append(campo)
                     col_idx = campo_para_coluna[campo]
                     col_letra = indice_para_coluna(col_idx)
                     cell_ref = f"Tabela de Grupos 3.0!{col_letra}{grupo_row_idx}"  # grupo_row_idx já é linha 1-based
@@ -453,6 +539,10 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: Dict[str, Any]) -> bool:
                         "range": cell_ref,
                         "values": [[valor_str]]
                     })
+                else:
+                    # PROB-002: Campo não encontrado no mapa
+                    if campo not in unmapped_fields and campo != "historico":
+                        unmapped_fields.append(campo)
 
         # Processa historico (dados mensais) para TODAS as linhas
         if historico and isinstance(historico, list):
@@ -502,6 +592,16 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: Dict[str, Any]) -> bool:
                     except (ValueError, IndexError):
                         continue
 
+        # PROB-002: Aviso sobre campos não mapeados
+        if unmapped_fields:
+            print(f"[AVISO PROB-002] Campos NÃO SINCRONIZADOS (não encontrados no mapa):")
+            for field in unmapped_fields:
+                print(f"  - {field}")
+            print(f"[RESUMO PROB-002] Total de campos não mapeados: {len(unmapped_fields)}/{len(dados)} campos recebidos")
+            print(f"[RESUMO PROB-002] Campos que SERÃO sincronizados: {len(set(synced_fields))} únicos")
+        else:
+            print(f"[OK PROB-002] Todos os {len(set(synced_fields))} campos estão mapeados e serão sincronizados")
+
         if not updates:
             print(f"[DEBUG] Nenhum update a fazer para grupo {grupo_id}")
             return False
@@ -538,7 +638,11 @@ def atualizar_grupo_sheets(grupo_id: str, dados: Dict[str, Any], usuario: str = 
     try:
         print(f"[UPDATE_GRUPO] Atualizando grupo {grupo_id}. Usuario: {usuario}, Origem: {origem}")
         print(f"[UPDATE_GRUPO] Dados RECEBIDOS: maior_credito={dados.get('maior_credito')}, menor_credito={dados.get('menor_credito')}, taxa_adm={dados.get('taxa_adm')}")
-        grupos = fetch_grupos(force_refresh=True)
+        result = fetch_grupos(force_refresh=True)
+        grupos = result['grupos']
+        metadata = result['metadata']
+        if metadata['source'] == 'cache_fallback':
+            print(f"[AVISO] Dados carregados do cache (API indisponível): {metadata['error']}")
 
         # Encontra índice do grupo
         grupo_idx = None
@@ -598,7 +702,8 @@ def atualizar_grupo_sheets(grupo_id: str, dados: Dict[str, Any], usuario: str = 
 
 def criar_grupo(dados: dict, usuario: str = "sistema") -> str | None:
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
 
         # Gera novo ID baseado no próximo número disponível
         ids = [str(g.get("grupo", "")) for g in grupos]
@@ -629,7 +734,8 @@ def criar_grupo(dados: dict, usuario: str = "sistema") -> str | None:
 
 def deletar_grupo(grupo_id: str, usuario: str = "sistema", soft: bool = True) -> bool:
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
 
         grupo_idx = None
         for i, g in enumerate(grupos):
@@ -663,7 +769,8 @@ def deletar_grupo(grupo_id: str, usuario: str = "sistema", soft: bool = True) ->
 
 def duplicar_grupo(grupo_id: str, usuario: str = "sistema") -> str | None:
     try:
-        grupos = fetch_grupos()
+        result = fetch_grupos()
+        grupos = result['grupos']
 
         # Encontra grupo original
         grupo_original = None

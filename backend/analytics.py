@@ -19,7 +19,8 @@ def calcular_summary_analytics() -> Dict[str, Any]:
     - grupos_por_adm: dict com qtd de grupos por administradora
     - principais_adms: top 3 administradoras por qtd de grupos
     """
-    grupos = fetch_grupos()
+    result = fetch_grupos()
+    grupos = result['grupos']
     grupos_ativos = [g for g in grupos if g.get("status", "ativo") != "deletado"]
 
     if not grupos_ativos:
@@ -77,7 +78,8 @@ def calcular_comparativo_adms() -> Dict[str, Any]:
     - taxa ADM média
     - vida média dos grupos (em %)
     """
-    grupos = fetch_grupos()
+    result = fetch_grupos()
+    grupos = result['grupos']
     grupos_ativos = [g for g in grupos if g.get("status", "ativo") != "deletado"]
 
     # Agrupar por ADM
@@ -136,7 +138,8 @@ def calcular_tendencias_mensais() -> Dict[str, Any]:
     - contemplacoes_total: total de contemplações por mês
     - historico: lista com dados de cada mês
     """
-    grupos = fetch_grupos()
+    result = fetch_grupos()
+    grupos = result['grupos']
     grupos_ativos = [g for g in grupos if g.get("status", "ativo") != "deletado"]
 
     if not grupos_ativos:
@@ -234,7 +237,8 @@ def calcular_distribuicao_creditos() -> Dict[str, Any]:
     - percentual: percentual de grupos em cada faixa
     - faixas_detalhadas: lista completa com todas informações
     """
-    grupos = fetch_grupos()
+    result = fetch_grupos()
+    grupos = result['grupos']
     grupos_ativos = [g for g in grupos if g.get("status", "ativo") != "deletado"]
 
     if not grupos_ativos:
@@ -294,7 +298,8 @@ def calcular_estatisticas_detalhadas() -> Dict[str, Any]:
     - vida_minima: menor % de vida
     - vida_maxima: maior % de vida
     """
-    grupos = fetch_grupos()
+    result = fetch_grupos()
+    grupos = result['grupos']
     grupos_ativos = [g for g in grupos if g.get("status", "ativo") != "deletado"]
 
     if not grupos_ativos:
