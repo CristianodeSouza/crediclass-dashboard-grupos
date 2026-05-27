@@ -90,42 +90,6 @@ const Validators = {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// HIGH 4: Service Worker Registration (Offline Cache)
-// ══════════════════════════════════════════════════════════════════════════════
-
-const OfflineCache = {
-  async register() {
-    if ('serviceWorker' in navigator) {
-      try {
-        const reg = await navigator.serviceWorker.register('/service-worker.js');
-        console.log('[OfflineCache] Service Worker registrado:', reg);
-      } catch (err) {
-        console.warn('[OfflineCache] Falha ao registrar SW:', err);
-      }
-    }
-  },
-
-  async getFromCache(key) {
-    try {
-      const cache = await caches.open('crediclass-v1');
-      return await cache.match(key);
-    } catch (err) {
-      console.warn('[OfflineCache] Erro ao ler cache:', err);
-      return null;
-    }
-  },
-
-  async saveToCache(key, response) {
-    try {
-      const cache = await caches.open('crediclass-v1');
-      cache.put(key, response);
-    } catch (err) {
-      console.warn('[OfflineCache] Erro ao salvar cache:', err);
-    }
-  }
-};
-
-// ══════════════════════════════════════════════════════════════════════════════
 // MAIN DASHBOARD STATE
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -358,7 +322,6 @@ function dashboard() {
     // ══════════════════════════════════════════════════════════════════════════
 
     async init() {
-      OfflineCache.register();
       await Promise.all([this.loadStats(), this.loadGrupos()]);
     },
 
@@ -2003,13 +1966,6 @@ if (typeof Alpine !== 'undefined' && typeof dashboard === 'function') {
 
 function init() {
   console.log('[init] Alpine.js inicializando...');
-
-  // Registra Service Worker para offline cache
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(reg => console.log('[OfflineCache] Service Worker registrado:', reg))
-      .catch(err => console.warn('[OfflineCache] Falha ao registrar SW:', err));
-  }
 
   // Carrega grupos na inicialização
   this.loadGrupos();
