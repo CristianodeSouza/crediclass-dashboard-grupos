@@ -343,6 +343,7 @@ def sincronizar_grupo_ao_sheets(grupo_id: str, dados: dict) -> bool:
     """
     try:
         print(f"[DEBUG] Iniciando sincronizacao de grupo {grupo_id} com Google Sheets...")
+        print(f"[DEBUG] Dados recebidos para sincronizar: maior_credito={dados.get('maior_credito')}, menor_credito={dados.get('menor_credito')}, taxa_adm={dados.get('taxa_adm')}")
         service = get_service(use_write_permissions=True)
 
         # Verifica se conseguiu credenciais de escrita
