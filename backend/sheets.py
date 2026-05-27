@@ -19,16 +19,35 @@ _service_cache = None
 
 
 def get_service_account_credentials():
-    """Tenta carregar credenciais de Service Account para escrita"""
+    """Carrega credenciais de Service Account de arquivo ou variável de ambiente"""
     try:
+        # Tenta primeiro a variável de ambiente (prioridade para Render/produção)
+        sa_b64 = os.getenv("GOOGLE_SERVICE_ACCOUNT_B64")
+        if sa_b64:
+            import base64
+            import json
+            try:
+                sa_json = base64.b64decode(sa_b64).decode('utf-8')
+                sa_dict = json.loads(sa_json)
+                credentials = Credentials.from_service_account_info(
+                    sa_dict,
+                    scopes=["https://www.googleapis.com/auth/spreadsheets"]
+                )
+                print("[STARTUP] ✅ Service Account carregado de GOOGLE_SERVICE_ACCOUNT_B64")
+                return credentials
+            except Exception as e:
+                print(f"[AVISO] Erro ao decodificar GOOGLE_SERVICE_ACCOUNT_B64: {e}")
+
+        # Fallback: carrega do arquivo local (desenvolvimento)
         if os.path.exists(SERVICE_ACCOUNT_FILE):
             credentials = Credentials.from_service_account_file(
                 SERVICE_ACCOUNT_FILE,
                 scopes=["https://www.googleapis.com/auth/spreadsheets"]
             )
+            print("[STARTUP] ✅ Service Account carregado de arquivo local")
             return credentials
     except Exception as e:
-        print(f"Aviso: Nao conseguiu carregar Service Account: {e}")
+        print(f"[AVISO] Nao conseguiu carregar Service Account: {e}")
     return None
 
 
