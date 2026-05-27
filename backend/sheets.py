@@ -33,7 +33,7 @@ def get_service_account_credentials():
                     sa_dict,
                     scopes=["https://www.googleapis.com/auth/spreadsheets"]
                 )
-                print("[STARTUP] ✅ Service Account carregado de GOOGLE_SERVICE_ACCOUNT_B64")
+                print("[STARTUP] [OK] Service Account carregado de GOOGLE_SERVICE_ACCOUNT_B64")
                 return credentials
             except Exception as e:
                 print(f"[AVISO] Erro ao decodificar GOOGLE_SERVICE_ACCOUNT_B64: {e}")
@@ -44,7 +44,7 @@ def get_service_account_credentials():
                 SERVICE_ACCOUNT_FILE,
                 scopes=["https://www.googleapis.com/auth/spreadsheets"]
             )
-            print("[STARTUP] ✅ Service Account carregado de arquivo local")
+            print("[STARTUP] [OK] Service Account carregado de arquivo local")
             return credentials
     except Exception as e:
         print(f"[AVISO] Nao conseguiu carregar Service Account: {e}")
@@ -526,7 +526,7 @@ def atualizar_grupo_sheets(grupo_id: str, dados: dict, usuario: str = "sistema",
         else:
             print(f"[UPDATE_GRUPO] Nenhuma mudança detectada (dados identicos)")
 
-        print(f"[UPDATE_GRUPO] ✅ Grupo {grupo_id} atualizado com sucesso!")
+        print(f"[UPDATE_GRUPO] [OK] Grupo {grupo_id} atualizado com sucesso!")
         return True
     except Exception as e:
         print(f"[ERRO] Erro ao atualizar grupo: {e}")

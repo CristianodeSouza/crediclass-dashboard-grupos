@@ -175,17 +175,17 @@ async def processar_fila_sincronizacao():
                 if resultado:
                     SyncQueue.marcar_como_sincronizado(grupo_id)
                     processados += 1
-                    print(f"[SYNC WORKER] ✅ Sincronizado com sucesso: {grupo_id}")
+                    print(f"[SYNC WORKER] [OK] Sincronizado com sucesso: {grupo_id}")
                 else:
                     erro_msg = "Falha ao sincronizar com Google Sheets"
                     SyncQueue.registrar_erro(grupo_id, erro_msg)
                     erros += 1
-                    print(f"[SYNC WORKER] ❌ Erro: {erro_msg}")
+                    print(f"[SYNC WORKER] [ERROR] Erro: {erro_msg}")
 
             except Exception as e:
                 SyncQueue.registrar_erro(item["grupo_id"], str(e))
                 erros += 1
-                print(f"[SYNC WORKER] ❌ Exceção: {str(e)[:100]}")
+                print(f"[SYNC WORKER] [ERROR] Exceção: {str(e)[:100]}")
 
         return {
             "processados": processados,
@@ -194,5 +194,5 @@ async def processar_fila_sincronizacao():
         }
 
     except Exception as e:
-        print(f"[SYNC WORKER] ❌ Erro crítico ao processar fila: {e}")
+        print(f"[SYNC WORKER] [ERROR] Erro crítico ao processar fila: {e}")
         return {"processados": 0, "erros": 1, "erro_critico": str(e)}
