@@ -150,6 +150,18 @@ def build_history(row: list, headers: list) -> list:
     return history
 
 
+def _validar_grupos(data: Any) -> list:
+    """Valida que data é uma lista de dicionários válidos"""
+    if not isinstance(data, list):
+        if isinstance(data, dict):
+            data = list(data.values())
+        else:
+            return []
+
+    # Filtra apenas itens que são dicionários com chave "adm"
+    return [g for g in data if isinstance(g, dict) and "adm" in g]
+
+
 def fetch_grupos(force_refresh: bool = False) -> Dict[str, Any]:
     """Fetch groups from Google Sheets API or cache
 
@@ -168,15 +180,18 @@ def fetch_grupos(force_refresh: bool = False) -> Dict[str, Any]:
         try:
             with open(CACHE_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                grupos = data if isinstance(data, list) else list(data.values()) if isinstance(data, dict) else []
-                return {
-                    'grupos': grupos,
-                    'metadata': {
-                        'source': 'cache',
-                        'timestamp': datetime.now().isoformat(),
-                        'error': None
+                grupos = _validar_grupos(data)
+                if grupos:
+                    return {
+                        'grupos': grupos,
+                        'metadata': {
+                            'source': 'cache',
+                            'timestamp': datetime.now().isoformat(),
+                            'error': None
+                        }
                     }
-                }
+                else:
+                    print("[AVISO] Cache inválido ou vazio, forçando refresh...")
         except Exception as e:
             print(f"[AVISO] Erro ao ler cache: {e}")
 
@@ -187,7 +202,7 @@ def fetch_grupos(force_refresh: bool = False) -> Dict[str, Any]:
             if os.path.exists(CACHE_FILE):
                 with open(CACHE_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    grupos = data if isinstance(data, list) else list(data.values()) if isinstance(data, dict) else []
+                    grupos = _validar_grupos(data)
                     return {
                         'grupos': grupos,
                         'metadata': {
@@ -282,7 +297,7 @@ def fetch_grupos(force_refresh: bool = False) -> Dict[str, Any]:
             try:
                 with open(CACHE_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    grupos = data if isinstance(data, list) else list(data.values()) if isinstance(data, dict) else []
+                    grupos = _validar_grupos(data)
                     return {
                         'grupos': grupos,
                         'metadata': {
