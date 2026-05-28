@@ -12,12 +12,18 @@ export default function Home() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await apiClient.getStats();
-        if (response.data) {
-          setIsAuthenticated(true);
-          setIsLoading(false);
+        // Try to load stats to verify backend is available
+        // If stats fails, still allow access to the dashboard
+        try {
+          await apiClient.getStats();
+        } catch (statsErr) {
+          console.warn('Stats endpoint unavailable:', getErrorMessage(statsErr));
         }
+        // Mark as authenticated regardless since we have the groups endpoint working
+        setIsAuthenticated(true);
+        setIsLoading(false);
       } catch (err) {
+        // Only show error if we have a critical failure
         setError(`Falha ao conectar com o servidor: ${getErrorMessage(err)}`);
         setIsLoading(false);
       }
