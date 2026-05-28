@@ -17,11 +17,9 @@ export interface Grupo {
 
 export interface HistoricoMensal {
   mes: string; // format: "JAN-24", "FEV-24", etc
-  saldo: number;
-  juros: number;
-  multa: number;
-  taxa_adm: number;
-  observacoes?: string;
+  maior_lance?: number;
+  menor_lance?: number;
+  qtd?: number;
 }
 
 export interface GrupoListResponse {

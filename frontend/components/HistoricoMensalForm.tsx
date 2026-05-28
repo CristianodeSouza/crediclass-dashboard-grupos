@@ -26,11 +26,9 @@ export default function HistoricoMensalForm({
       mesesArray.push(
         existing || {
           mes: mesKey,
-          saldo: 0,
-          juros: 0,
-          multa: 0,
-          taxa_adm: 0,
-          observacoes: '',
+          maior_lance: undefined,
+          menor_lance: undefined,
+          qtd: undefined,
         }
       );
     }
@@ -39,20 +37,15 @@ export default function HistoricoMensalForm({
   const handleChange = (
     index: number,
     field: keyof HistoricoMensal,
-    value: string | number
+    value: string | number | undefined
   ) => {
     const updated = [...mesesArray];
     if (field === 'mes') {
       updated[index].mes = value as string;
-    } else if (
-      field === 'saldo' ||
-      field === 'juros' ||
-      field === 'multa' ||
-      field === 'taxa_adm'
-    ) {
-      updated[index][field] = typeof value === 'string' ? parseFloat(value) || 0 : value;
-    } else {
-      updated[index][field] = value as any;
+    } else if (field === 'maior_lance' || field === 'menor_lance') {
+      updated[index][field] = value ? (typeof value === 'string' ? parseFloat(value) : value) : undefined;
+    } else if (field === 'qtd') {
+      updated[index][field] = value ? (typeof value === 'string' ? parseInt(value, 10) : value) : undefined;
     }
     onChange(updated);
   };
@@ -71,37 +64,28 @@ export default function HistoricoMensalForm({
             <div className="space-y-2">
               <input
                 type="number"
-                placeholder="Saldo"
-                value={item.saldo}
+                placeholder="Maior Lance"
+                value={item.maior_lance ?? ''}
                 onChange={(e) =>
-                  handleChange(index, 'saldo', e.target.value)
+                  handleChange(index, 'maior_lance', e.target.value)
                 }
                 className="w-full bg-slate-600 text-slate-100 rounded px-2 py-1 text-xs border border-slate-500"
               />
               <input
                 type="number"
-                placeholder="Juros"
-                value={item.juros}
+                placeholder="Menor Lance"
+                value={item.menor_lance ?? ''}
                 onChange={(e) =>
-                  handleChange(index, 'juros', e.target.value)
+                  handleChange(index, 'menor_lance', e.target.value)
                 }
                 className="w-full bg-slate-600 text-slate-100 rounded px-2 py-1 text-xs border border-slate-500"
               />
               <input
                 type="number"
-                placeholder="Multa"
-                value={item.multa}
+                placeholder="Qtd"
+                value={item.qtd ?? ''}
                 onChange={(e) =>
-                  handleChange(index, 'multa', e.target.value)
-                }
-                className="w-full bg-slate-600 text-slate-100 rounded px-2 py-1 text-xs border border-slate-500"
-              />
-              <input
-                type="number"
-                placeholder="Taxa Adm"
-                value={item.taxa_adm}
-                onChange={(e) =>
-                  handleChange(index, 'taxa_adm', e.target.value)
+                  handleChange(index, 'qtd', e.target.value)
                 }
                 className="w-full bg-slate-600 text-slate-100 rounded px-2 py-1 text-xs border border-slate-500"
               />
