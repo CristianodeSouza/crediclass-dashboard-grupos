@@ -12,7 +12,6 @@ interface GrupoCardProps {
 export default function GrupoCard({ grupo, onRefresh }: GrupoCardProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const ultimoHistorico = grupo.historico?.[grupo.historico.length - 1];
   const statusColor =
     grupo.status === 'ativo'
       ? 'bg-green-900 text-green-100'
@@ -43,22 +42,6 @@ export default function GrupoCard({ grupo, onRefresh }: GrupoCardProps) {
               {grupo.prazo_min} a {grupo.prazo_max} meses
             </span>
           </div>
-          {ultimoHistorico && (
-            <>
-              <div className="flex justify-between pt-2 border-t border-slate-700">
-                <span>Saldo:</span>
-                <span className="text-green-400 font-medium">
-                  R$ {(ultimoHistorico.saldo ?? 0).toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Juros:</span>
-                <span className="text-slate-200">
-                  R$ {(ultimoHistorico.juros ?? 0).toFixed(2)}
-                </span>
-              </div>
-            </>
-          )}
         </div>
 
         <div className="flex gap-2 pt-4 border-t border-slate-700">
