@@ -1,4 +1,10 @@
 // ══════════════════════════════════════════════════════════════════════════════
+// API BASE URL - CRITICAL: Usar variável de ambiente
+// ══════════════════════════════════════════════════════════════════════════════
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+// ══════════════════════════════════════════════════════════════════════════════
 // CRITICAL 1: UTILITY FUNCTIONS (Debounce, Error Handling, Validation)
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -337,7 +343,7 @@ function dashboard() {
 
     async loadStats() {
       try {
-        const res = await fetch("/api/stats");
+        const res = await fetch(`${API_BASE_URL}/api/stats`);
         this.stats = await res.json();
       } catch {}
     },
@@ -345,7 +351,7 @@ function dashboard() {
     async loadGrupos() {
       this.loading = true;
       try {
-        const res = await fetch("/api/grupos");
+        const res = await fetch(`${API_BASE_URL}/api/grupos`);
         const data = await res.json();
         this.grupos = data.grupos || [];
       } catch (e) {
@@ -359,7 +365,7 @@ function dashboard() {
     async refresh() {
       this.loading = true;
       try {
-        await fetch("/api/refresh", { method: "POST" });
+        await fetch(`${API_BASE_URL}/api/refresh`, { method: "POST" });
         await Promise.all([this.loadStats(), this.loadGrupos()]);
       } finally {
         this.loading = false;
@@ -387,7 +393,7 @@ function dashboard() {
       this.piperunError = null;
       this.oportunidade = null;
       try {
-        const res = await fetch(`/api/piperun/${id}`);
+        const res = await fetch(`${API_BASE_URL}/api/piperun/${id}`);
         if (!res.ok) {
           const err = await res.json();
           throw new Error(err.detail || "Erro ao buscar oportunidade");
@@ -595,7 +601,7 @@ function dashboard() {
       this.piperunLoading = true;
       this.piperunError = null;
       try {
-        const resp = await fetch(`/api/piperun/${this.piperunId}`);
+        const resp = await fetch(`${API_BASE_URL}/api/piperun/${this.piperunId}`);
         if (!resp.ok) throw new Error(`Erro ${resp.status}`);
         const data = await resp.json();
         const f = data.formulario;
@@ -953,7 +959,7 @@ function dashboard() {
       p.append("por_pagina", this.gerenciador.porPagina);
 
       try {
-        const res = await fetch(`/api/grupos-gerenciador?${p}`);
+        const res = await fetch(`${API_BASE_URL}/api/grupos-gerenciador?${p}`);
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}: ${await res.text()}`);
         }
@@ -969,7 +975,7 @@ function dashboard() {
         this.gerenciador.paginaAtual = data.pagina || 1;
         this.gerenciador.totalPaginas = data.total_paginas || 0;
 
-        const admsRes = await fetch("/api/administradoras");
+        const admsRes = await fetch(`${API_BASE_URL}/api/administradoras`);
         if (admsRes.ok) {
           const admsData = await admsRes.json();
           this.gerenciador.adms = admsData.administradoras || [];
@@ -1286,7 +1292,7 @@ function dashboard() {
 
     async obterAuditoria(grupoId) {
       try {
-        const res = await fetch(`/api/grupos/${grupoId}/auditoria`);
+        const res = await fetch(`${API_BASE_URL}/api/grupos/${grupoId}/auditoria`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
@@ -1537,7 +1543,7 @@ function dashboard() {
       formData.append("arquivo", this.importacao.arquivo);
 
       try {
-        const res = await fetch("/api/importar/preview", {
+        const res = await fetch(`${API_BASE_URL}/api/importar/preview`, {
           method: "POST",
           body: formData
         });
@@ -1576,7 +1582,7 @@ function dashboard() {
       formData.append("modo", this.importacao.modo);
 
       try {
-        const res = await fetch("/api/importar/processar", {
+        const res = await fetch(`${API_BASE_URL}/api/importar/processar`, {
           method: "POST",
           body: formData
         });
@@ -1612,7 +1618,7 @@ function dashboard() {
     async exportarTudo() {
       this.exportacao.carregando = true;
       try {
-        const res = await fetch("/api/exportar/completo");
+        const res = await fetch(`${API_BASE_URL}/api/exportar/completo`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const blob = await res.blob();
@@ -1641,7 +1647,7 @@ function dashboard() {
 
       this.exportacao.carregando = true;
       try {
-        const res = await fetch(`/api/exportar/por-adm/${this.exportacao.adm}`);
+        const res = await fetch(`${API_BASE_URL}/api/exportar/por-adm/${this.exportacao.adm}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const blob = await res.blob();
@@ -1665,7 +1671,7 @@ function dashboard() {
     async exportarRelatorioAdms() {
       this.exportacao.carregando = true;
       try {
-        const res = await fetch("/api/exportar/relatorio-adms");
+        const res = await fetch(`${API_BASE_URL}/api/exportar/relatorio-adms`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const blob = await res.blob();
@@ -1694,7 +1700,7 @@ function dashboard() {
 
       this.exportacao.carregando = true;
       try {
-        const res = await fetch(`/api/exportar/grupo/${this.exportacao.grupoId}`);
+        const res = await fetch(`${API_BASE_URL}/api/exportar/grupo/${this.exportacao.grupoId}`);
         if (!res.ok) {
           const data = await res.json();
           throw new Error(data.detail || `HTTP ${res.status}`);
@@ -1726,7 +1732,7 @@ function dashboard() {
 
       try {
         const inicioSync = Date.now();
-        const res = await fetch("/api/sync-sheets", { method: "POST" });
+        const res = await fetch(`${API_BASE_URL}/api/sync-sheets`, { method: "POST" });
         const data = await res.json();
 
         if (res.ok && data.status === "sucesso") {
@@ -1759,11 +1765,11 @@ function dashboard() {
 
       try {
         const [sumRes, admRes, tendRes, distRes, statRes] = await Promise.all([
-          fetch("/api/analytics/summary"),
-          fetch("/api/analytics/adm-comparison"),
-          fetch("/api/analytics/trends"),
-          fetch("/api/analytics/distribution"),
-          fetch("/api/analytics/statistics")
+          fetch(`${API_BASE_URL}/api/analytics/summary`),
+          fetch(`${API_BASE_URL}/api/analytics/adm-comparison`),
+          fetch(`${API_BASE_URL}/api/analytics/trends`),
+          fetch(`${API_BASE_URL}/api/analytics/distribution`),
+          fetch(`${API_BASE_URL}/api/analytics/statistics`)
         ]);
 
         if (!sumRes.ok || !admRes.ok || !tendRes.ok || !distRes.ok || !statRes.ok) {
