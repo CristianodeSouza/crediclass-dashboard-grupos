@@ -7,7 +7,6 @@ import { apiClient, getErrorMessage } from '@/lib/api';
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -19,8 +18,7 @@ export default function Home() {
         } catch (statsErr) {
           console.warn('Stats endpoint unavailable:', getErrorMessage(statsErr));
         }
-        // Mark as authenticated regardless since we have the groups endpoint working
-        setIsAuthenticated(true);
+        // Dashboard can load regardless
         setIsLoading(false);
       } catch (err) {
         // Only show error if we have a critical failure

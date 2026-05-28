@@ -16,7 +16,7 @@ export default function MapaGrupos() {
     const fetchGrupos = async () => {
       try {
         const response = await apiClient.getGrupos();
-        setGrupos(response.data.grupos || []);
+        setGrupos(response.data || []);
         setIsLoading(false);
       } catch (err) {
         setError(`Falha ao carregar grupos: ${getErrorMessage(err)}`);

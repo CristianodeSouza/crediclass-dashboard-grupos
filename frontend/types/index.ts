@@ -20,6 +20,8 @@ export interface HistoricoMensal {
   maior_lance?: number;
   menor_lance?: number;
   qtd?: number;
+  saldo?: number;
+  juros?: number;
 }
 
 export interface GrupoListResponse {

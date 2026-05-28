@@ -11,7 +11,6 @@ interface GrupoCardProps {
 
 export default function GrupoCard({ grupo, onRefresh }: GrupoCardProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const ultimoHistorico = grupo.historico?.[grupo.historico.length - 1];
   const statusColor =
@@ -49,13 +48,13 @@ export default function GrupoCard({ grupo, onRefresh }: GrupoCardProps) {
               <div className="flex justify-between pt-2 border-t border-slate-700">
                 <span>Saldo:</span>
                 <span className="text-green-400 font-medium">
-                  R$ {ultimoHistorico.saldo.toFixed(2)}
+                  R$ {(ultimoHistorico.saldo ?? 0).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Juros:</span>
                 <span className="text-slate-200">
-                  R$ {ultimoHistorico.juros.toFixed(2)}
+                  R$ {(ultimoHistorico.juros ?? 0).toFixed(2)}
                 </span>
               </div>
             </>
@@ -71,9 +70,8 @@ export default function GrupoCard({ grupo, onRefresh }: GrupoCardProps) {
           </button>
           <button
             className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2 rounded transition-colors text-sm font-medium"
-            disabled={isLoading}
           >
-            {isLoading ? 'Copiando...' : 'Duplicar'}
+            Duplicar
           </button>
         </div>
       </div>
