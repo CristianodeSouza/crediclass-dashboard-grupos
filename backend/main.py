@@ -170,27 +170,35 @@ def detalhe_grupo(grupo_id: str) -> Dict[str, Any]:
 def estatisticas() -> Dict[str, Any]:
     try:
         result = fetch_grupos()
-        grupos = result['grupos']
-    except Exception:
+        grupos = result.get('grupos', [])
+        if not grupos:
+            return {"total_grupos": 0, "por_administradora": {}, "por_tipo_bem": {},
+                    "media_lance_geral": 0, "administradoras": [], "tipos_bem": []}
+
+        adms, tipos = {}, {}
+        for g in grupos:
+            adm = g.get("adm", "Desconhecida")
+            bem = g.get("tipo_bem", "Desconhecido")
+            adms[adm] = adms.get(adm, 0) + 1
+            tipos[bem] = tipos.get(bem, 0) + 1
+
+        medias = [g.get("media_lance") for g in grupos if g.get("media_lance") is not None]
+        media_geral = sum(medias) / len(medias) if medias else 0
+
+        return {
+            "total_grupos": len(grupos),
+            "por_administradora": adms,
+            "por_tipo_bem": tipos,
+            "media_lance_geral": round(media_geral, 2),
+            "administradoras": sorted(adms.keys()),
+            "tipos_bem": sorted(tipos.keys()),
+        }
+    except Exception as e:
+        import traceback
+        print(f"[ERRO] /api/stats: {str(e)}")
+        traceback.print_exc()
         return {"total_grupos": 0, "por_administradora": {}, "por_tipo_bem": {},
                 "media_lance_geral": 0, "administradoras": [], "tipos_bem": []}
-
-    adms, tipos = {}, {}
-    for g in grupos:
-        adms[g["adm"]] = adms.get(g["adm"], 0) + 1
-        tipos[g["tipo_bem"]] = tipos.get(g["tipo_bem"], 0) + 1
-
-    medias = [g["media_lance"] for g in grupos if g["media_lance"] is not None]
-    media_geral = sum(medias) / len(medias) if medias else 0
-
-    return {
-        "total_grupos": len(grupos),
-        "por_administradora": adms,
-        "por_tipo_bem": tipos,
-        "media_lance_geral": round(media_geral, 2),
-        "administradoras": sorted(adms.keys()),
-        "tipos_bem": sorted(tipos.keys()),
-    }
 
 
 @app.get("/api/piperun/{deal_id}")
