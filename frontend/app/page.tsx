@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Dashboard from '@/components/Dashboard';
-import { apiClient } from '@/lib/api';
+import { apiClient, getErrorMessage } from '@/lib/api';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -12,13 +12,13 @@ export default function Home() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await apiClient.get('/api/stats');
+        const response = await apiClient.getStats();
         if (response.data) {
           setIsAuthenticated(true);
           setIsLoading(false);
         }
       } catch (err) {
-        setError('Falha ao conectar com o servidor');
+        setError(`Falha ao conectar com o servidor: ${getErrorMessage(err)}`);
         setIsLoading(false);
       }
     };

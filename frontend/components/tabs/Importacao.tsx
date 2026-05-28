@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apiClient } from '@/lib/api';
+import { apiClient, getErrorMessage } from '@/lib/api';
 
 export default function Importacao() {
   const [file, setFile] = useState<File | null>(null);
@@ -19,7 +19,7 @@ export default function Importacao() {
       const response = await apiClient.previewImport(selectedFile);
       setPreview(response.data);
     } catch (err) {
-      console.error('Erro ao fazer preview:', err);
+      console.error('Erro ao fazer preview:', getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -35,7 +35,7 @@ export default function Importacao() {
       setPreview(null);
       alert('Importação realizada com sucesso!');
     } catch (err) {
-      alert('Erro ao processar importação');
+      alert(`Erro ao processar importação: ${getErrorMessage(err)}`);
     } finally {
       setIsLoading(false);
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apiClient } from '@/lib/api';
+import { apiClient, getErrorMessage } from '@/lib/api';
 import { Grupo, GrupoEditFormData } from '@/types';
 import HistoricoMensalForm from './HistoricoMensalForm';
 
@@ -39,7 +39,7 @@ export default function GrupoEditModal({
       setIsLoading(false);
       onSave();
     } catch (err) {
-      setError('Falha ao salvar grupo');
+      setError(`Falha ao salvar grupo: ${getErrorMessage(err)}`);
       setIsLoading(false);
     }
   };

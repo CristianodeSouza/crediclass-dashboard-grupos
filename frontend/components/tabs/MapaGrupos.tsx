@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { apiClient } from '@/lib/api';
+import { apiClient, getErrorMessage } from '@/lib/api';
 import { Grupo } from '@/types';
 import GrupoCard from '../GrupoCard';
 
@@ -19,7 +19,7 @@ export default function MapaGrupos() {
         setGrupos(response.data.grupos || []);
         setIsLoading(false);
       } catch (err) {
-        setError('Falha ao carregar grupos');
+        setError(`Falha ao carregar grupos: ${getErrorMessage(err)}`);
         setIsLoading(false);
       }
     };

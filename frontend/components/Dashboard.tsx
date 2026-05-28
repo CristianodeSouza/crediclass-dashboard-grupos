@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { apiClient } from '@/lib/api';
+import { apiClient, getErrorMessage } from '@/lib/api';
 import { Stats, DashboardTab } from '@/types';
 import Layout from './Layout';
 import MapaGrupos from './tabs/MapaGrupos';
@@ -33,7 +33,7 @@ export default function Dashboard() {
         setStats(response.data);
         setIsLoading(false);
       } catch (err) {
-        setError('Falha ao carregar estatísticas');
+        setError(`Falha ao carregar estatísticas: ${getErrorMessage(err)}`);
         setIsLoading(false);
       }
     };

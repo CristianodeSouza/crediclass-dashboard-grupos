@@ -74,13 +74,20 @@ export interface ImportProcessResponse {
   }[];
 }
 
+export interface GrupoAuditoriaDetalhes {
+  campo_alterado?: string;
+  valor_anterior?: string | number | boolean;
+  valor_novo?: string | number | boolean;
+  observacao?: string;
+}
+
 export interface GrupoAuditoria {
   id: string;
   grupo_id: string;
   acao: 'criado' | 'atualizado' | 'deletado' | 'status_alterado' | 'duplicado';
   usuario: string;
   data: string;
-  detalhes: Record<string, any>;
+  detalhes: GrupoAuditoriaDetalhes;
 }
 
 export interface PiperunOportunidade {
