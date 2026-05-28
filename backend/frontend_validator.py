@@ -44,6 +44,10 @@ class FrontendValidator:
         self.frontend_dir = frontend_dir
         self.html_file = os.path.join(frontend_dir, "index.html")
         self.app_js_file = os.path.join(frontend_dir, "js", "app.js")
+        # Check if this is a Next.js project
+        self.is_nextjs = os.path.exists(os.path.join(frontend_dir, "next.config.ts")) or \
+                         os.path.exists(os.path.join(frontend_dir, "next.config.js")) or \
+                         os.path.exists(os.path.join(frontend_dir, "app"))
         self.errors: List[str] = []
         self.warnings: List[str] = []
 
@@ -56,6 +60,13 @@ class FrontendValidator:
         """
         self.errors = []
         self.warnings = []
+
+        # Skip Alpine.js validation if this is a Next.js project
+        if self.is_nextjs:
+            # Just verify Next.js structure exists
+            if not os.path.exists(os.path.join(self.frontend_dir, "package.json")):
+                self.errors.append(f"[ERRO] package.json nao encontrado (projeto Next.js)")
+            return len(self.errors) == 0, self.errors, self.warnings
 
         self._check_files_exist()
         self._check_html_structure()
