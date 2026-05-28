@@ -1,0 +1,8 @@
+# Old Alpine.js frontend files - exclude from Vercel deployment
+index.html
+login.html
+estudo-financeiro.html
+js/
+service-worker.js
+test-frontend-api.js
+test-integration.js
