@@ -3,8 +3,7 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, HTTPException, Body, UploadFile, File
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from .sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_grupo, duplicar_grupo, obter_auditoria_grupo, obter_auditoria_grupo_detalhada
 from .piperun import fetch_oportunidade
@@ -53,9 +52,6 @@ async def startup_event():
     criar_aba_auditoria_se_nao_existe()
     asyncio.create_task(background_sync_worker())
 
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
-
-
 class HistoricoData(BaseModel):
     mes: str
     maior_lance: Optional[float] = None
@@ -91,12 +87,22 @@ class GrupoCreate(BaseModel):
     conservador_24m: float
     moderado_12m: float
     dados_adicionais: Optional[dict] = None
-app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 
-@app.get("/")
-def index():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+@app.get("/api")
+def api_root():
+    """Endpoint raiz da API com informações básicas"""
+    return {
+        "app": "Crediclass Dashboard Grupos",
+        "version": "2.0.0",
+        "status": "online",
+        "endpoints": {
+            "grupos": "/api/grupos",
+            "grupos_gerenciador": "/api/grupos-gerenciador",
+            "stats": "/api/stats",
+            "administradoras": "/api/administradoras"
+        }
+    }
 
 
 @app.get("/api/auth/check")
@@ -838,43 +844,6 @@ def analytics_statistics():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao calcular estatísticas: {str(e)}")
-
-
-@app.get("/api/health/frontend")
-def health_frontend():
-    """
-    Health check para validar integridade do frontend.
-    Verifica:
-    - Se app.js está acessível
-    - Se index.html existe
-    - Se scripts críticos estão presentes
-    """
-    from .frontend_validator import FrontendValidator
-    import json
-
-    validator = FrontendValidator(FRONTEND_DIR)
-    success, errors, warnings = validator.validate()
-
-    # Verifica se app.js está acessível
-    app_js_path = os.path.join(FRONTEND_DIR, "js", "app.js")
-    app_js_accessible = os.path.exists(app_js_path) and os.path.getsize(app_js_path) > 0
-
-    return {
-        "status": "healthy" if success and app_js_accessible else "degraded",
-        "timestamp": datetime.now().isoformat(),
-        "checks": {
-            "app_js_accessible": app_js_accessible,
-            "scripts_valid": len(errors) == 0,
-            "html_structure_valid": len([e for e in errors if "HTML" in e]) == 0,
-        },
-        "errors": errors,
-        "warnings": warnings,
-        "details": {
-            "app_js_size_bytes": os.path.getsize(app_js_path) if app_js_accessible else 0,
-            "frontend_dir": FRONTEND_DIR,
-            "validation_passed": success,
-        }
-    }
 
 
 if __name__ == "__main__":
