@@ -46,10 +46,11 @@ jobs:
       - name: Check backend syntax
         run: python -m py_compile backend/*.py
 
-      - name: Verify frontend files
+      - name: Verify frontend structure
         run: |
-          test -f frontend/index.html || exit 1
-          test -f frontend/js/app.js || exit 1
+          test -f frontend/package.json || exit 1
+          test -d frontend/app || exit 1
+          test -f frontend/next.config.ts || test -f frontend/next.config.js || exit 1
 
   deploy:
     runs-on: ubuntu-latest
