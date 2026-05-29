@@ -1,29 +1,31 @@
-# Crediclass Dashboard Grupos — Guia Claude Desktop
+# Crediclass Dashboard Grupos — Guia Claude Code
 
 Dashboard de análise financeira de grupos de consórcio imobiliário com simulador de modalidades e comparativo entre 6 administradoras.
 
-**Status:** Em desenvolvimento | Última atualização: 2026-05-19
+**Status:** ✅ Produção | Última atualização: 2026-05-29  
+**Stack:** Frontend (Next.js/Vercel) + Backend (FastAPI/Render)
 
 ---
 
 ## 🚀 Início Rápido
 
+### Terminal 1 — Backend (Render)
 ```bash
-# Terminal 1 (Backend)
 cd backend
 pip install -r requirements.txt
-python main.py
-# → http://localhost:8000
-
-# Terminal 2 (Frontend)
-# Acesse diretamente:
-# → http://localhost:8000
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+# → http://localhost:8000/api
 ```
 
-**Setup inicial (primeira vez):**
+### Terminal 2 — Frontend (Vercel)
 ```bash
-python setup_google.py  # Configura OAuth Google Sheets
+cd frontend
+npm install
+npm run dev
+# → http://localhost:3000
 ```
+
+**Variáveis de Ambiente:** Copie de `.env.example` (ou configure no deploy)
 
 ---
 
@@ -31,67 +33,75 @@ python setup_google.py  # Configura OAuth Google Sheets
 
 ```
 crediclass-dashboard-grupos/
-├── backend/
-│   ├── main.py           # FastAPI + rotas
-│   ├── sheets.py         # Leitura Google Sheets API
-│   ├── piperun.py        # Integração Piperun CRM
-│   └── requirements.txt
-├── frontend/
-│   ├── index.html        # Dashboard SPA
-│   ├── estudo-financeiro.html  # Página estudo (TODO)
-│   ├── js/app.js         # Alpine.js + lógica calculadora
-│   └── css/style.css
-├── data/
-│   └── grupos.json       # Cache local (~1809 grupos)
-├── docs/
-│   ├── ROADMAP.md        # Tarefas e progresso
-│   ├── QUICK_START.md    # Detalhes de setup
-│   ├── FEATURES.md       # Features com status
-│   └── HISTORICO.md      # Mudanças recentes
-└── CLAUDE.md             # Este arquivo
+│
+├── frontend/                    # Next.js + TypeScript
+│   ├── app/                     # Rotas e páginas
+│   ├── components/              # Componentes React
+│   ├── lib/                      # API client, tipos, validadores
+│   ├── css/                      # Estilos Tailwind
+│   ├── public/                   # Assets estáticos
+│   ├── next.config.ts           # Configuração Next.js
+│   ├── tailwind.config.ts       # Configuração Tailwind
+│   ├── tsconfig.json            # TypeScript
+│   └── package.json
+│
+├── backend/                      # FastAPI + Python 3.11
+│   ├── main.py                  # Aplicação FastAPI com todas as rotas
+│   ├── sheets.py                # Integração Google Sheets API
+│   ├── piperun.py               # Integração PipeRun CRM
+│   ├── sync_queue.py            # Fila de sincronização assíncrona
+│   ├── requirements.txt          # Python dependencies
+│   └── __init__.py
+│
+├── data/                         # Cache local
+│   └── grupos.json              # ~1.809 grupos (sincronizado com Google Sheets)
+│
+├── docs/                         # Documentação (limpeza recente)
+├── README.md                     # Documentação principal
+├── CLAUDE.md                     # Este arquivo (guia para development)
+├── Dockerfile                    # Build do backend (Render)
+├── render.yaml                   # Configuração Render
+├── vercel.json                   # Configuração Vercel
+├── .env.example                  # Template de variáveis de ambiente
+└── .gitignore
 ```
 
 ---
 
-## 🎯 Features Principais
+## 🎯 Capacidades Principais
 
-### ✅ Calculadora Financeira (Implementada)
-- **Inputs:** crédito desejado, prazo, parcela, FGTS, renda
-- **Outputs:** comparativo de 6 ADMs + groups compatíveis
-- **Simulações:** 4 modalidades (sorteio, lance fixo, conservador, moderado)
-- **Validações:** score de viabilidade (0-100)
-
-### ✅ Buscar Oportunidade (Implementada)
-- Integração com Piperun CRM
-- Auto-fill automático de campos
-
-### ⏳ TODO — Próximas Prioridades
-Veja `docs/ROADMAP.md` para lista completa e datas.
+- **Análise Financeira:** Dashboard com 1.809 grupos de consórcio imobiliário
+- **Comparativo de Administradoras:** CNP, ITAÚ, CAOA, PORTO, EMBRACON, RODOBENS
+- **Histórico Mensal:** 18 meses de dados (MAY-24 até DEC-25) com maior_lance, menor_lance, qtd_contemplações
+- **Integração PipeRun:** Sincronização de oportunidades via CRM
+- **API RESTful:** Endpoints para filtros, detalhes, atualização de grupos
+- **Google Sheets:** Base de dados principal com 156 colunas
+- **Cache Local:** JSON sincronizado para performance
 
 ---
 
-## 🔗 Referências Importantes
+## 🌐 URLs Principais
 
-| Recurso | Link |
-|---------|------|
-| **Aplicação Live** | https://crediclass.csrtecnologia.com.br |
-| **Planilha Grupos** | [Google Sheets](https://docs.google.com/spreadsheets/d/1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM/) |
-| **GitHub Repositório** | https://github.com/CristianodeSouza/crediclass-dashboard-grupos |
+| Ambiente | URL |
+|----------|-----|
+| **Produção** | https://crediclass.csrtecnologia.com.br |
+| **Backend API** | https://crediclass.csrtecnologia.com.br/api |
+| **GitHub** | https://github.com/CristianodeSouza/crediclass-dashboard-grupos |
 | **Render Dashboard** | https://dashboard.render.com |
-| **Setup Render** | `RENDER_SETUP.md` |
-| **Roadmap & TODO** | `docs/ROADMAP.md` |
-| **Features Status** | `docs/FEATURES.md` |
-| **Setup Detalhado** | `docs/QUICK_START.md` |
-| **Histórico Mudanças** | `docs/HISTORICO.md` |
+| **Vercel Dashboard** | https://vercel.com/dashboard |
+| **Google Sheets** | [Tabela de Grupos 3.0](https://docs.google.com/spreadsheets/d/1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM/) |
 
 ---
 
-## 📊 Dados Gerais
+## 📊 Dataset
 
-- **Planilha:** Tabela de Grupos 3.0
-- **Grupos:** ~1.809 ativos
-- **Colunas:** 156
-- **Administradoras:** CNP, ITAÚ, CAOA, PORTO, EMBRACON, RODOBENS
+- **Total de Grupos:** ~1.809 ativos gerenciados
+- **Colunas na Planilha:** 156 campos
+- **Administradoras:** CNP, ITAÚ, CAOA, PORTO, EMBRACON, RODOBENS (6 total)
+- **Histórico Mensal:** 18 meses (MAY-24 até DEC-25)
+- **Campos Históricos:** maior_lance, menor_lance, qtd_contemplações
+- **Fonte Principal:** Google Sheets API v4 (Tabela de Grupos 3.0)
+- **Cache Local:** `/data/grupos.json` (sincronizado automaticamente)
 
 ---
 
@@ -99,50 +109,71 @@ Veja `docs/ROADMAP.md` para lista completa e datas.
 
 | Componente | Tecnologia |
 |-----------|-----------|
-| Backend | FastAPI + Python 3.11 |
-| Frontend | Alpine.js 3.14.1 + Chart.js |
-| API Sheets | Google Sheets API v4 |
-| CRM | Piperun (integração JSON) |
-| **Deploy** | **Render.com (Native Python)** |
-| **DNS/CDN** | **Cloudflare** |
-| **Repositório** | **GitHub** (CristianodeSouza/crediclass-dashboard-grupos) |
-| **Domínio** | crediclass.csrtecnologia.com.br |
-| Cache | JSON local (`data/grupos.json`) |
+| **Frontend** | Next.js 15 + TypeScript + Tailwind CSS |
+| **Backend** | FastAPI + Python 3.11 |
+| **Hospedagem Frontend** | Vercel |
+| **Hospedagem Backend** | Render (Native Python) |
+| **Banco de Dados** | Google Sheets API v4 |
+| **CRM** | PipeRun (integração JSON) |
+| **DNS/CDN** | Cloudflare |
+| **Versionamento** | GitHub |
+| **Cache** | JSON local (`data/grupos.json`) |
 
 ---
 
-## 📝 Documentação
+## 🔌 API Endpoints Principais
 
-- **[ROADMAP.md](docs/ROADMAP.md)** — Tarefas, prazos e status de cada feature
-- **[QUICK_START.md](docs/QUICK_START.md)** — Setup detalhado, troubleshooting, credenciais
-- **[FEATURES.md](docs/FEATURES.md)** — Cada feature com uso, fórmulas, estado
-- **[HISTORICO.md](docs/HISTORICO.md)** — Log de mudanças, PRs, testes
-- **[RENDER_SETUP.md](RENDER_SETUP.md)** — Configuração Render + troubleshooting (⚠️ CRÍTICO)
-- **[DOCKERFILE_CRITICAL.md](DOCKERFILE_CRITICAL.md)** — Fix para black screen (2026-05-19) — **LEIA ISSO** se tela estiver preta em produção
+**Base URL:** `https://crediclass.csrtecnologia.com.br/api` (ou `http://localhost:8000/api` em desenvolvimento)
 
----
-
-## ⚠️ RENDER DEPLOYMENT — CRÍTICO
-
-**Problema Identificado (2026-05-19):**
-
-Render ignora `render.yaml` se a UI estiver configurada para "Docker". Isso causa deploy loops com erro: `"failed to read dockerfile: open Dockerfile: no such file or directory"`
-
-**Solução Permanente:** Veja `RENDER_SETUP.md` completo com:
-1. Sincronizar Render UI de Docker → Native Python
-2. Configuração correta de render.yaml
-3. Checklist pre-deployment
-4. Troubleshooting
-
-**Quick Fix para Deploy Imediato:**
-
-```bash
-# 1. Ir a https://dashboard.render.com
-# 2. Serviço: crediclass-dashboard → Settings → Build & Deploy
-# 3. Build Method: Docker → Native (Python 3.11)
-# 4. Salvar
-# 5. git push origin main → Render refaz build automaticamente
 ```
+GET    /grupos-gerenciador       # Lista grupos com filtros (query: limit, offset, filters)
+GET    /grupos/{id}              # Detalhes do grupo + histórico completo
+PUT    /grupos/{id}              # Atualizar grupo (requer histórico completo no body)
+GET    /stats                    # Estatísticas gerais (total grupos, administradoras, etc)
+POST   /refresh                  # Forçar atualização do cache (fetch_grupos com force_refresh=True)
+GET    /piperun/{deal_id}        # Dados do deal no PipeRun CRM
+```
+
+## ⚙️ Variáveis de Ambiente
+
+### Backend (`.env` ou Render environment)
+
+```env
+GOOGLE_SHEETS_ID=1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM
+GOOGLE_API_KEY=<sua-chave-google-api>
+PIPERUN_API_KEY=<sua-chave-piperun>
+ENVIRONMENT=production    # ou 'development' localmente
+DEBUG=false
+PORT=8000
+```
+
+### Frontend (Vercel environment ou `.env.local`)
+
+```env
+NEXT_PUBLIC_API_URL=https://crediclass.csrtecnologia.com.br
+NEXT_PUBLIC_APP_NAME=Crediclass Dashboard Grupos
+```
+
+⚠️ **NUNCA commitar `.env` com credenciais reais.** Usar `.env.example` como template.
+
+---
+
+## 🚀 Deploy
+
+### Render (Backend)
+
+1. Conectar repositório GitHub
+2. Build Method: **Python 3.11 (Native)**
+3. Start Command: `sh -c 'PYTHONPATH=/app python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT'`
+4. Adicionar variáveis de ambiente
+5. Deploy automático em cada push para `main`
+
+### Vercel (Frontend)
+
+1. Conectar repositório GitHub
+2. Framework: **Next.js**
+3. Adicionar `NEXT_PUBLIC_API_URL` nas variáveis
+4. Deploy automático em cada push para `main`
 
 **Verificação Pós-Deploy:**
 ```bash
@@ -152,185 +183,20 @@ curl https://crediclass.csrtecnologia.com.br/api/grupos-gerenciador?limit=1
 
 ---
 
----
+## 🤝 Contribuindo
 
-## 🐳 VALIDAÇÃO DOCKERFILE AUTOMÁTICA (Pre-Commit Hook)
-
-**PROCESSO PERMANENTE desde 2026-05-19 (FIX de Black Screen):**
-
-### ⚠️ PROBLEMA IDENTIFICADO
-Deploy em Render falhava silenciosamente porque o Dockerfile não copiava o diretório `/data/`, causando:
-- API retornava `{"total": 0, "grupos": []}` (dados vazios)
-- Frontend carregava com Alpine.js OK mas sem dados
-- Tela preta em produção (dashboard não-funcional)
-- Erro foi invisível (HTTP 200 OK, mas sem dados)
-
-**Arquivo crítico faltando:** `/data/grupos.json` (cache local com 1.809 grupos)
-
-### ✅ SOLUÇÃO PERMANENTE
-**Pre-commit hook automático** que valida Dockerfile ANTES de cada commit:
-
-```bash
-# Localização: .git/hooks/pre-commit
-# Executa automaticamente: python backend/dockerfile_validator.py
-# Bloqueia commit se validação falhar
-# Erro: COPY data/ ./data/ deve estar presente
-```
-
-**Validações executadas:**
-1. ✅ Arquivo `Dockerfile` existe
-2. ✅ `COPY backend/ ./backend/` presente
-3. ✅ `COPY frontend/ ./frontend/` presente
-4. ✅ **`COPY data/ ./data/` presente** ← CRÍTICO
-5. ✅ `ENV PYTHONPATH=/app` definido
-6. ✅ `EXPOSE 8000` configurado
-7. ✅ `CMD ["python", "-m", "uvicorn", ...]` correto
-8. ✅ Ordem das COPY directives correta
-
-### 🚀 FLUXO DE DESENVOLVIMENTO
-
-```
-1. Developer modifica código (frontend, backend, ou data/)
-   ↓
-2. git commit -m "mensagem"
-   ↓
-3. Pre-commit hook executa validações:
-   - frontend_validator.py (Alpine.js, scripts)
-   - dockerfile_validator.py (COPY directives)
-   ↓
-   ✅ Se PASS: Commit prossegue
-   ❌ Se FAIL: Commit bloqueado, listar erros
-   ↓
-4. Developer corrige Dockerfile (ex: adicionar COPY data/)
-   ↓
-5. git commit -m "fix: adicionar COPY data/ no Dockerfile" ← Agora passa
-```
-
-### 💡 IMPORTANTE
-- **Bypass NÃO é permitido sem motivo** (se tentar `--no-verify`, hook avisa)
-- **Rápido** — executa em < 1s, não atrasa development
-- **Automático** — sem ação manual necessária
-- **Previne deploy vazio** — catch critical directory issues antes de IR A PRODUÇÃO
-
-### 📚 Referência
-- `DOCKERFILE_CRITICAL.md` — Documentação completa do problema e solução
-- `backend/dockerfile_validator.py` — Script de validação (classe DockerfileValidator)
-- `backend/frontend_validator.py` — Validador de frontend (já existente)
-
----
-
-## ⚙️ ORDEM DE IMPLEMENTAÇÃO (Crítica)
-
-**REGRA PERMANENTE desde 2026-05-19:**
-
-✅ **SEMPRE fazer implementações via sistema** (tools: Read, Edit, Write, Bash)  
-❌ **NUNCA pedir ação manual** se tiver acesso via sistema/CLI/API/token/credencial
-
-Exceções para ação manual:
-- Teste manual em navegador (após implementação completa)
-- Setup inicial de credenciais externas (Google Sheets, GitHub, etc)
-- Ações que requerem autenticação do usuário
-
-Isso garante: velocidade, rastreabilidade, reprodutibilidade, zero fricção.
-
----
-
-## 🛡️ VALIDAÇÃO FRONTEND AUTOMÁTICA (Pre-Commit Hook)
-
-**PROCESSO PERMANENTE desde 2026-05-19:**
-
-### ⚠️ PROBLEMA IDENTIFICADO
-Alpine.js não inicializava quando scripts faltavam atributo `defer`, causando:
-- Templates `{{ }}` não renderizados
-- Botões não funcionavam
-- Dashboard completamente não-funcional em produção
-- Erro console: "Alpine Warning: Unable to initialize"
-
-### ✅ SOLUÇÃO PERMANENTE
-**Pre-commit hook automático** que valida frontend ANTES de qualquer commit:
-
-```bash
-# Localização: .git/hooks/pre-commit
-# Executa automaticamente: python backend/frontend_validator.py
-# Bloqueia commit se validação falhar
-# Erro: deve adicionar 'defer' a scripts críticos
-```
-
-**Scripts validados:**
-- ✅ Alpine.js (cdn.jsdelivr.net/npm/alpinejs@3)
-- ✅ app.js (/static/js/app.js)
-
-### 📋 VALIDAÇÕES EXECUTADAS
-1. **Arquivos críticos existem** (index.html, app.js)
-2. **Scripts obrigatórios carregados** (Alpine, Chart.js, Tailwind)
-3. **Atributo `defer` presente** em scripts críticos ← NOVO
-4. **Script order correto** (Alpine ANTES de app.js)
-5. **Conteúdo app.js válido** (funções críticas presentes)
-6. **Alpine data bindings** (x-data="dashboard()", x-init="init()")
-
-### 🚀 FLUXO DE DESENVOLVIMENTO
-
-```
-1. Developer modifica código frontend
-   ↓
-2. git commit -m "mensagem"
-   ↓
-3. Pre-commit hook executa validador automaticamente
-   ↓
-   ✅ Se PASS: Commit prossegue, push para GitHub
-   ❌ Se FAIL: Commit bloqueado, mensagem de erro clara exibida
-   ↓
-4. Developer corrige erros (ex: adicionar defer)
-   ↓
-5. git commit -m "fix: adicionar defer" ← Commit agora passa
-```
-
-### 💡 IMPORTANTE
-- **Bypass NÃO é permitido sem motivo** (se tentar `git commit --no-verify`, hook exibe advertência clara)
-- **Zero falsos positivos** - validador foi testado em produção
-- **Rápido** - executa em < 1s, não atrasa development
-- **Automático** - sem ação manual necessária
-
-### 📚 Referência
-Veja: `backend/frontend_validator.py` (classe FrontendValidator, método _check_defer_attributes)
-Veja: `VALIDACAO_ALPINE_FIX.md` (documentação técnica completa)
-
----
-
-## 🧪 CHECKLIST PRÉ-DEPLOY
-
-Antes de fazer deploy em produção (Render), sempre verificar:
-
-### 📋 Validações Automáticas (Pre-Commit)
-- [ ] **Frontend validado** ← Automático ao fazer git commit
-- [ ] **Dockerfile validado** ← Automático ao fazer git commit
-  - [ ] ✅ `COPY backend/ ./backend/` presente
-  - [ ] ✅ `COPY frontend/ ./frontend/` presente
-  - [ ] ✅ **`COPY data/ ./data/` presente** (CRÍTICO — evita black screen)
-
-### 📋 Verificações Manuais em Produção
-- [ ] **Testes backend passam** (se houver)
-- [ ] **Sem erros em console do navegador** (F12 DevTools)
-- [ ] **Templates {{ }} renderizados** (dados visíveis na UI)
-- [ ] **Botões funcionam** (testar "Executar Cálculo" manualmente)
-- [ ] **API responde com dados:**
-  ```bash
-  curl https://crediclass.csrtecnologia.com.br/api/grupos-gerenciador?limit=1
-  # Esperado: {"total":342,"grupos":[...]}
-  # NÃO esperado: {"total":0,"grupos":[]}
-  ```
-
-Se TODOS os itens passarem, é seguro fazer `git push origin main` → Render deploy automático.
-
-⚠️ **Se API retorna `"total":0`:** Verificar que `/data/grupos.json` foi copiado ao container Render (veja DOCKERFILE_CRITICAL.md)
+1. Crie uma branch: `git checkout -b feature/sua-feature`
+2. Commit: `git commit -m "feat: descrição"`
+3. Push: `git push origin feature/sua-feature`
+4. Abra um Pull Request
 
 ---
 
 ## 👤 Contato & Suporte
 
-Para dúvidas sobre o projeto, consulte `docs/ROADMAP.md` ou `docs/QUICK_START.md`.
-Para problemas de validação frontend, veja `backend/frontend_validator.py` ou execute:
-```bash
-python backend/frontend_validator.py
-```
+Para dúvidas sobre o projeto, consulte o README.md ou entre em contato:
+
+**Desenvolvedor:** Cristiano de Souza  
+**Email:** csrdesouza@gmail.com  
+**GitHub:** [@CristianodeSouza](https://github.com/CristianodeSouza)
 
