@@ -1,15 +1,26 @@
 # 🚀 Plano de Setup do Zero — Crediclass Dashboard Grupos
 
-**Status:** Projeto limpo (Render e Vercel deletados) | Repositório GitHub preservado
+**Status:** ✅ LIMPEZA COMPLETADA | Todos os projetos deletados | Repositório GitHub preservado
 
 ---
 
 ## ✅ O que foi feito
 
-- ✅ Deletado projeto no Render
-- ✅ Deletado projeto no Vercel
-- ✅ Removido acesso a produção (URLs inativas)
-- ✅ Repositório GitHub intacto com código limpo
+### Limpeza Realizada (29 de Maio de 2026)
+
+- ✅ **Render**: Serviço `crediclass-dashboard-grupos` deletado permanentemente
+  - Método: Settings → Delete Web Service (confirmação textual)
+  - Status: Removido ✅
+  - Recursos deletados: Deployments, domínios, variáveis de ambiente
+
+- ✅ **Vercel**: Projeto `crediclass-dashboard-grupos-v2` deletado permanentemente
+  - Método: Project Settings → Delete Project (confirmação: nome do projeto)
+  - Status: Removido ✅
+  - Recursos deletados: Deployments, domínios, variáveis de ambiente, preview URLs
+
+- ✅ **Removido acesso a produção** (URLs antigas inativas)
+
+- ✅ **Repositório GitHub intacto** com código limpo e sem imports inválidos
 
 ---
 
