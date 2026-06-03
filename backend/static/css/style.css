@@ -1,0 +1,48 @@
+:root {
+  --page-bg: #f6f7f9;
+  --border: #d9dee7;
+  --ink: #20242c;
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--ink);
+}
+
+.table-responsive {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table thead th {
+  background: #eef1f5;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  white-space: nowrap;
+}
+
+.filters {
+  max-width: 860px;
+}
+
+.history-table input,
+#generalFields input {
+  min-width: 0;
+}
+
+.modal-xl {
+  --bs-modal-width: min(1180px, calc(100vw - 32px));
+}
+
+.action-cell {
+  min-width: 150px;
+}

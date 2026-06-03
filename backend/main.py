@@ -1,22 +1,19 @@
-import os
-import json
-from datetime import datetime
-from dotenv import load_dotenv
-from fastapi import FastAPI, Query, HTTPException, Body, UploadFile, File
-from fastapi.responses import StreamingResponse
+from pathlib import Path
+from typing import Any
+
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from .sheets import fetch_grupos, atualizar_grupo_sheets, criar_grupo, deletar_grupo, duplicar_grupo, obter_auditoria_grupo, obter_auditoria_grupo_detalhada
-from .piperun import fetch_oportunidade
-from .sync_queue import SyncQueue, processar_fila_sincronizacao
-from pydantic import BaseModel
-from typing import Optional, Any, Dict
-import io
-import asyncio
-from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from googleapiclient.errors import HttpError
 
-load_dotenv()
+from .models import GroupPayload
+from .sheets import append_group, delete_group, get_group, list_groups, reload_data, update_group
 
-app = FastAPI(title="Crediclass Dashboard Grupos")
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+
+app = FastAPI(title="Crediclass Dashboard Grupos V2")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,618 +22,103 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ═════════════════════════════════════════════════════════════
-# BACKGROUND JOB: Sincronização com Google Sheets (Opção 4)
-# ═════════════════════════════════════════════════════════════
-
-async def background_sync_worker():
-    """Background job que processa fila de sincronização a cada 15 segundos"""
-    while True:
-        try:
-            await asyncio.sleep(15)  # Processa a cada 15 segundos
-            resultado = await processar_fila_sincronizacao()
-            if resultado.get("processados", 0) > 0 or resultado.get("erros", 0) > 0:
-                print(f"[SYNC] Processados: {resultado.get('processados', 0)}, Erros: {resultado.get('erros', 0)}")
-        except Exception as e:
-            print(f"[SYNC] Erro no background job: {e}")
-            await asyncio.sleep(15)
-
-@app.on_event("startup")
-async def startup_event():
-    """Inicia background job ao ligar a aplicação"""
-    print("[STARTUP] Iniciando background sync worker...")
-    print("[STARTUP] Criando aba Auditoria se nao existe...")
-    from .sheets import criar_aba_auditoria_se_nao_existe
-    criar_aba_auditoria_se_nao_existe()
-    asyncio.create_task(background_sync_worker())
-
-class HistoricoData(BaseModel):
-    mes: str
-    maior_lance: Optional[float] = None
-    menor_lance: Optional[float] = None
-    qtd: Optional[int] = None
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
-class GrupoUpdate(BaseModel):
-    adm: Optional[str] = None
-    grupo: Optional[str] = None
-    tipo_bem: Optional[str] = None
-    maior_credito: Optional[float] = None
-    menor_credito: Optional[float] = None
-    taxa_adm: Optional[float] = None
-    fundo_rsv: Optional[float] = None
-    investidor: Optional[float] = None
-    conservador_24m: Optional[float] = None
-    moderado_12m: Optional[float] = None
-    status: Optional[str] = None
-    dados_adicionais: Optional[Dict[str, Any]] = None
-    historico: Optional[list[HistoricoData]] = None
+def api_error(error: Exception) -> HTTPException:
+    if isinstance(error, KeyError):
+        return HTTPException(status_code=404, detail=str(error))
+    if isinstance(error, HttpError):
+        return HTTPException(status_code=502, detail=error.reason)
+    return HTTPException(status_code=400, detail=str(error))
 
 
-class GrupoCreate(BaseModel):
-    adm: str
-    grupo: Optional[str] = None
-    tipo_bem: str
-    maior_credito: float
-    menor_credito: float
-    taxa_adm: float
-    fundo_rsv: float
-    investidor: float
-    conservador_24m: float
-    moderado_12m: float
-    dados_adicionais: Optional[dict] = None
-
-
-@app.get("/api")
-def api_root():
-    """Endpoint raiz da API com informações básicas"""
-    return {
-        "app": "Crediclass Dashboard Grupos",
-        "version": "2.0.0",
-        "status": "online",
-        "endpoints": {
-            "grupos": "/api/grupos",
-            "grupos_gerenciador": "/api/grupos-gerenciador",
-            "stats": "/api/stats",
-            "administradoras": "/api/administradoras"
-        }
-    }
-
-
-@app.get("/api/auth/check")
-def check_auth():
-    """Endpoint para frontend verificar autenticação (sempre retorna OK)
-    O frontend valida auth via localStorage"""
-    return {"authenticated": True, "message": "Use localStorage para validar sessão"}
+@app.get("/")
+def index():
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/api/grupos")
 def listar_grupos(
-    adm: Optional[str] = Query(None),
-    tipo_bem: Optional[str] = Query(None),
-    categoria: Optional[str] = Query(None),
-    prazo_restante_min: Optional[int] = Query(None),
-    prazo_restante_max: Optional[int] = Query(None),
-    vida_min: Optional[float] = Query(None),
-    vida_max: Optional[float] = Query(None),
-    credito_min: Optional[float] = Query(None),
-    busca: Optional[str] = Query(None),
-) -> Dict[str, Any]:
+    administradora: str | None = Query(None),
+    busca: str | None = Query(None),
+    include_deleted: bool = Query(False),
+) -> dict[str, Any]:
     try:
-        result = fetch_grupos()
-        grupos = result['grupos']
-        metadata = result['metadata']
-        if metadata['source'] == 'cache_fallback' and metadata['error']:
-            print(f"[AVISO] Dados do cache (API indisponível): {metadata['error']}")
-    except Exception:
-        return {"total": 0, "grupos": [], "aviso": "Dados não carregados. Configure as credenciais Google."}
+        grupos = list_groups(include_deleted=include_deleted)
+    except Exception as error:
+        raise api_error(error)
 
-    if adm:
-        grupos = [g for g in grupos if g["adm"].upper() == adm.upper()]
-    if tipo_bem:
-        grupos = [g for g in grupos if g["tipo_bem"].lower() == tipo_bem.lower()]
-    if categoria:
-        grupos = [g for g in grupos if g["categoria"].lower() == categoria.lower()]
-    if prazo_restante_min is not None:
-        grupos = [g for g in grupos if g["prazo_restante"] and g["prazo_restante"] >= prazo_restante_min]
-    if prazo_restante_max is not None:
-        grupos = [g for g in grupos if g["prazo_restante"] and g["prazo_restante"] <= prazo_restante_max]
-    if vida_min is not None:
-        grupos = [g for g in grupos if g["vida_grupo_pct"] and g["vida_grupo_pct"] >= vida_min]
-    if vida_max is not None:
-        grupos = [g for g in grupos if g["vida_grupo_pct"] and g["vida_grupo_pct"] <= vida_max]
-    if credito_min is not None:
-        grupos = [g for g in grupos if g["maior_credito"] and g["maior_credito"] >= credito_min]
+    if administradora:
+        grupos = [g for g in grupos if str(g.get("administradora", "")).lower() == administradora.lower()]
     if busca:
-        b = busca.lower()
+        needle = busca.lower()
         grupos = [
             g for g in grupos
-            if b in str(g["grupo"]).lower() or b in g["adm"].lower() or b in g["tipo_bem"].lower()
+            if needle in str(g.get("grupo_id", "")).lower()
+            or needle in str(g.get("grupo", "")).lower()
+            or needle in str(g.get("administradora", "")).lower()
         ]
 
-    return {"total": len(grupos), "grupos": grupos}
+    resumo = []
+    for group in grupos:
+        resumo.append({
+            "grupo_id": group.get("grupo_id"),
+            "administradora": group.get("administradora", ""),
+            "grupo": group.get("grupo", ""),
+            "tipo_bem": group.get("tipo_bem", ""),
+            "menor_credito": group.get("menor_credito", ""),
+            "maior_credito": group.get("maior_credito", ""),
+            "prazo_grupo": group.get("prazo_grupo", ""),
+            "prazo_restante": group.get("prazo_restante", ""),
+            "prestacao_integral": group.get("prestacao_integral", ""),
+            "taxa_administracao": group.get("taxa_administracao", ""),
+            "status": group.get("status", ""),
+        })
+
+    return {"total": len(resumo), "grupos": resumo}
 
 
 @app.get("/api/grupos/{grupo_id}")
-def detalhe_grupo(grupo_id: str) -> Dict[str, Any]:
+def obter_grupo(grupo_id: str) -> dict[str, Any]:
     try:
-        result = fetch_grupos()
-        grupos = result['grupos']
-    except Exception:
-        raise HTTPException(status_code=503, detail="Dados não disponíveis")
-    for g in grupos:
-        if str(g["grupo"]) == str(grupo_id):
-            return g
-    raise HTTPException(status_code=404, detail="Grupo não encontrado")
+        return get_group(grupo_id)
+    except Exception as error:
+        raise api_error(error)
 
 
-@app.get("/api/stats")
-def estatisticas() -> Dict[str, Any]:
+@app.post("/api/grupos", status_code=201)
+def criar_grupo(payload: GroupPayload) -> dict[str, Any]:
+    data = payload.model_dump()
+    if not data["dados_gerais"].get("administradora") or not data["dados_gerais"].get("grupo"):
+        raise HTTPException(status_code=422, detail="Administradora e Grupo sao obrigatorios")
     try:
-        result = fetch_grupos()
-        grupos = result.get('grupos', [])
-        if not grupos:
-            return {"total_grupos": 0, "por_administradora": {}, "por_tipo_bem": {},
-                    "media_lance_geral": 0, "administradoras": [], "tipos_bem": []}
-
-        adms, tipos = {}, {}
-        for g in grupos:
-            adm = g.get("adm", "Desconhecida")
-            bem = g.get("tipo_bem", "Desconhecido")
-            adms[adm] = adms.get(adm, 0) + 1
-            tipos[bem] = tipos.get(bem, 0) + 1
-
-        medias = [g.get("media_lance") for g in grupos if g.get("media_lance") is not None]
-        media_geral = sum(medias) / len(medias) if medias else 0
-
-        return {
-            "total_grupos": len(grupos),
-            "por_administradora": adms,
-            "por_tipo_bem": tipos,
-            "media_lance_geral": round(media_geral, 2),
-            "administradoras": sorted(adms.keys()),
-            "tipos_bem": sorted(tipos.keys()),
-        }
-    except Exception as e:
-        import traceback
-        print(f"[ERRO] /api/stats: {str(e)}")
-        traceback.print_exc()
-        return {"total_grupos": 0, "por_administradora": {}, "por_tipo_bem": {},
-                "media_lance_geral": 0, "administradoras": [], "tipos_bem": []}
-
-
-@app.get("/api/piperun/{deal_id}")
-async def buscar_oportunidade(deal_id: str):
-    try:
-        data = await fetch_oportunidade(deal_id)
-        return data
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao buscar oportunidade: {str(e)}")
-
-
-@app.get("/api/teste-calculadora/{deal_id}")
-async def testar_calculadora_com_piperun(deal_id: str):
-    """Teste completo: busca Piperun + executa calculadora com dados reais"""
-    try:
-        # 1. Buscar oportunidade
-        oportunidade = await fetch_oportunidade(deal_id)
-        form = oportunidade.get("formulario", {})
-
-        # 2. Mapear dados do Piperun para a calculadora
-        crédito_desejado = form.get("valor_imovel_num") or 450000
-        lance_máximo = form.get("lance_maximo_num") or 150000
-        parcela_máxima = form.get("mensalidade_maxima_num") or 6000
-        renda = form.get("renda_mensal_num") or 3500
-
-        # 3. Simular cálculo para as 6 ADMs
-        administradoras = [
-            {"nome": "CNP", "taxaAdm": 0.15, "fundoRsv": 0.05, "pctLanceEmbutido": 0.5},
-            {"nome": "ITAÚ", "taxaAdm": 0.2, "fundoRsv": 0.03, "pctLanceEmbutido": 0.3},
-            {"nome": "CAOA", "taxaAdm": 0.2, "fundoRsv": 0.01, "pctLanceEmbutido": 0.3},
-            {"nome": "PORTO", "taxaAdm": 0.15, "fundoRsv": 0.005, "pctLanceEmbutido": 0.3},
-            {"nome": "EMBRACON", "taxaAdm": 0.15, "fundoRsv": 0.02, "pctLanceEmbutido": 0.25},
-            {"nome": "RODOBENS", "taxaAdm": 0.18, "fundoRsv": 0.05, "pctLanceEmbutido": 0.3},
-        ]
-
-        resultados = []
-        for adm in administradoras:
-            creditoContratar = crédito_desejado / (1 - adm["pctLanceEmbutido"])
-            numerador = (creditoContratar * adm["pctLanceEmbutido"]) + lance_máximo
-            denominador = creditoContratar * (1 + adm["taxaAdm"] + adm["fundoRsv"])
-            lanceMaximo = numerador / denominador if denominador > 0 else 0
-
-            creditoComTaxas = creditoContratar * (1 + adm["taxaAdm"] + adm["fundoRsv"])
-            lanceComFGTS = (creditoContratar * adm["pctLanceEmbutido"]) + lance_máximo
-            prazoMinimo = (creditoComTaxas - lanceComFGTS) / parcela_máxima if parcela_máxima > 0 else 0
-
-            resultados.append({
-                "nome": adm["nome"],
-                "taxaAdm": f"{adm['taxaAdm']*100:.1f}%",
-                "fundoRsv": f"{adm['fundoRsv']*100:.1f}%",
-                "creditoContratar": f"R$ {creditoContratar:,.0f}",
-                "lanceMaximo": f"{min(max(lanceMaximo, 0), 1)*100:.1f}%",
-                "prazoMinimo": f"{max(0, prazoMinimo):.1f} meses",
-            })
-
-        return {
-            "status": "sucesso",
-            "deal_id": deal_id,
-            "dados_piperun": {
-                "credito_desejado": f"R$ {crédito_desejado:,.0f}",
-                "lance_maximo": f"R$ {lance_máximo:,.0f}",
-                "parcela_desejada": f"R$ {parcela_máxima:,.0f}",
-                "renda_mensal": f"R$ {renda:,.0f}",
-                "cliente": form.get("nome", "Sem nome"),
-                "email": form.get("email", "Sem email"),
-            },
-            "resultados_calculadora": resultados,
-            "timestamp": datetime.now().isoformat(),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao testar calculadora: {str(e)}")
-
-
-# ===== GERENCIADOR DE GRUPOS =====
-
-@app.get("/api/grupos-gerenciador")
-def listar_grupos_gerenciador(
-    adm: str = Query(None),
-    status: str = Query(None),
-    credito_min: float = Query(None),
-    credito_max: float = Query(None),
-    busca: str = Query(None),
-    ordenar_por: str = Query("adm"),
-    ordem: str = Query("asc"),
-    pagina: int = Query(1, ge=1),
-    por_pagina: int = Query(20, ge=1)
-):
-    try:
-        result = fetch_grupos()
-        grupos = result['grupos']
-    except Exception:
-        return {"total": 0, "grupos": [], "pagina": 1, "total_paginas": 0, "aviso": "Dados não carregados"}
-
-    # Filtros
-    if adm:
-        grupos = [g for g in grupos if g["adm"].upper() == adm.upper()]
-    if status:
-        grupos = [g for g in grupos if g.get("status", "ativo").lower() == status.lower()]
-    else:
-        grupos = [g for g in grupos if g.get("status", "ativo") != "deletado"]
-
-    if credito_min is not None:
-        grupos = [g for g in grupos if g["maior_credito"] and g["maior_credito"] >= credito_min]
-    if credito_max is not None:
-        grupos = [g for g in grupos if g["maior_credito"] and g["maior_credito"] <= credito_max]
-
-    if busca:
-        b = busca.lower()
-        grupos = [
-            g for g in grupos
-            if b in str(g.get("grupo", "")).lower() or
-               b in g["adm"].lower() or
-               b in g["tipo_bem"].lower()
-        ]
-
-    # Ordenação
-    reverse = ordem.lower() == "desc"
-    if ordenar_por == "grupo":
-        grupos.sort(key=lambda g: g.get("grupo", ""), reverse=reverse)
-    elif ordenar_por == "credito":
-        grupos.sort(key=lambda g: g["maior_credito"] or 0, reverse=reverse)
-    else:
-        grupos.sort(key=lambda g: g["adm"], reverse=reverse)
-
-    # Paginação
-    total = len(grupos)
-    total_paginas = (total + por_pagina - 1) // por_pagina
-    inicio = (pagina - 1) * por_pagina
-    fim = inicio + por_pagina
-    grupos_pag = grupos[inicio:fim]
-
-    return {
-        "total": total,
-        "grupos": grupos_pag,
-        "pagina": pagina,
-        "total_paginas": total_paginas,
-        "por_pagina": por_pagina
-    }
-
-
-@app.get("/api/sync-queue/status")
-def status_fila_sincronizacao():
-    """Retorna status da fila de sincronização com Google Sheets"""
-    try:
-        pendentes = SyncQueue.obter_pendentes()
-        return {
-            "pendentes": len(pendentes),
-            "items": pendentes,
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        return {"pendentes": 0, "items": [], "erro": str(e)}
-
-
-@app.get("/api/administradoras")
-def listar_todas_administradoras():
-    try:
-        result = fetch_grupos()
-        grupos = result['grupos']
-    except Exception:
-        return {"administradoras": [], "total": 0}
-
-    # Extrai todas as administradoras únicas do dataset completo
-    adms_set = set()
-    for g in grupos:
-        adm = g.get("adm", "").strip()
-        if adm and g.get("status", "ativo") != "deletado":
-            adms_set.add(adm)
-
-    adms_list = sorted(list(adms_set))
-
-    return {
-        "administradoras": adms_list,
-        "total": len(adms_list)
-    }
-
-
-@app.post("/api/grupos")
-def criar_novo_grupo(grupo: GrupoCreate, usuario: str = Query("operador")):
-    try:
-        dados = grupo.dict(exclude_none=True)
-        novo_id = criar_grupo(dados, usuario)
-
-        if novo_id:
-            return {"message": "Grupo criado com sucesso", "grupo_id": novo_id, "status": "sucesso"}
-        else:
-            raise HTTPException(status_code=500, detail="Erro ao criar grupo")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao criar grupo: {str(e)}")
+        return append_group(data)
+    except Exception as error:
+        raise api_error(error)
 
 
 @app.put("/api/grupos/{grupo_id}")
-def editar_grupo(grupo_id: str, grupo: GrupoUpdate, usuario: str = Query("operador")) -> Dict[str, Any]:
-    """Edita grupo e dispara sincronização assíncrona com Google Sheets"""
+def atualizar_grupo(grupo_id: str, payload: GroupPayload) -> dict[str, Any]:
     try:
-        # CRÍTICO: Forçar refresh do cache para evitar dados desatualizados em Render
-        result = fetch_grupos(force_refresh=True)
-        grupos = result['grupos']
-        metadata = result['metadata']
-        if metadata['source'] == 'cache_fallback' and metadata['error']:
-            print(f"[AVISO] Dados do cache em editar_grupo: {metadata['error']}")
-
-        # Verifica se grupo existe
-        existe = any(str(g.get("grupo")) == str(grupo_id) for g in grupos)
-        if not existe:
-            raise HTTPException(status_code=404, detail="Grupo não encontrado")
-
-        # REFATORADO: Usar model_dump() do Pydantic para extrair TODOS os campos não-None
-        # Isso garante que dados que vêm do request são enviados corretamente
-        dados: Dict[str, Any] = grupo.model_dump(exclude_none=True)
-
-        # Processamento especial de historico (converter modelos para dicts)
-        if grupo.historico is not None:
-            dados["historico"] = [
-                h.model_dump() if hasattr(h, 'model_dump') else h
-                for h in grupo.historico
-            ]
-
-        # Adiciona timestamp de edição
-        dados["editado_em"] = datetime.now().isoformat()
-
-        print(f"[EDITAR_GRUPO] Dados extraídos de GrupoUpdate para grupo {grupo_id}: {list(dados.keys())}")
-        print(f"[EDITAR_GRUPO] Valores: maior_credito={dados.get('maior_credito')}, menor_credito={dados.get('menor_credito')}")
-
-        # OPÇÃO 4: Primeiro salva no cache, depois dispara sincronização assíncrona
-        if atualizar_grupo_sheets(grupo_id, dados, usuario):
-            # Adiciona à fila para sincronização em background (webhook-driven)
-            SyncQueue.adicionar(grupo_id, dados, usuario)
-
-            return {
-                "message": "Grupo atualizado com sucesso. Sincronização em andamento...",
-                "status": "sucesso",
-                "sincronizacao": "pendente"
-            }
-        else:
-            raise HTTPException(status_code=500, detail="Erro ao atualizar grupo")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao editar grupo: {str(e)}")
+        return update_group(grupo_id, payload.model_dump(exclude_unset=True))
+    except Exception as error:
+        raise api_error(error)
 
 
 @app.delete("/api/grupos/{grupo_id}")
-def apagar_grupo(grupo_id: str, usuario: str = Query("operador"), soft: bool = Query(True)):
+def excluir_grupo(grupo_id: str, soft: bool = Query(False)) -> dict[str, str]:
     try:
-        result = fetch_grupos()
-        grupos = result['grupos']
-
-        existe = any(str(g.get("grupo")) == str(grupo_id) for g in grupos)
-        if not existe:
-            raise HTTPException(status_code=404, detail="Grupo não encontrado")
-
-        if deletar_grupo(grupo_id, usuario, soft):
-            acao = "desativado" if soft else "deletado"
-            return {"message": f"Grupo {acao} com sucesso", "status": "sucesso"}
-        else:
-            raise HTTPException(status_code=500, detail="Erro ao deletar grupo")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao deletar grupo: {str(e)}")
+        delete_group(grupo_id, soft=soft)
+        return {"status": "success", "message": "Grupo excluido com sucesso"}
+    except Exception as error:
+        raise api_error(error)
 
 
-@app.patch("/api/grupos/{grupo_id}/status")
-def mudar_status_grupo(grupo_id: str, novo_status: str = Body(...), usuario: str = Query("operador")):
+@app.post("/api/reload")
+def recarregar_dados() -> dict[str, Any]:
     try:
-        # P2.4 — Status Avançado com validação de transições
-        status_validos = ["ativo", "inativo", "encerrado", "arquivado", "em_revisao", "deletado"]
-        if novo_status not in status_validos:
-            raise HTTPException(status_code=400, detail=f"Status inválido. Valores aceitos: {', '.join(status_validos)}")
-
-        result = fetch_grupos()
-        grupos = result['grupos']
-        grupo_atual = None
-        for g in grupos:
-            if str(g.get("grupo")) == str(grupo_id):
-                grupo_atual = g
-                break
-
-        if not grupo_atual:
-            raise HTTPException(status_code=404, detail="Grupo não encontrado")
-
-        status_atual = grupo_atual.get("status", "ativo")
-
-        # P2.4 — Validação de transições de status
-        transicoes_bloqueadas = {
-            "encerrado": ["ativo", "inativo", "em_revisao", "arquivado"],  # encerrado é final
-            "deletado": ["ativo", "inativo", "em_revisao", "arquivado", "encerrado"]  # deletado é final
-        }
-
-        if status_atual in transicoes_bloqueadas and novo_status in transicoes_bloqueadas[status_atual]:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Transição inválida: Grupo em status '{status_atual}' não pode ir para '{novo_status}'"
-            )
-
-        # Registrar alteração de status com auditoria (OPÇÃO 4)
-        dados_alteracao = {"status": novo_status}
-        if atualizar_grupo_sheets(grupo_id, dados_alteracao, usuario):
-            # Disparar sincronização assíncrona
-            SyncQueue.adicionar(grupo_id, dados_alteracao, usuario)
-
-            return {
-                "message": f"Status alterado de '{status_atual}' para '{novo_status}'. Sincronização em andamento...",
-                "status": "sucesso",
-                "status_anterior": status_atual,
-                "novo_status": novo_status,
-                "sincronizacao": "pendente"
-            }
-        else:
-            raise HTTPException(status_code=500, detail="Erro ao mudar status")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao mudar status: {str(e)}")
-
-
-@app.post("/api/grupos/{grupo_id}/duplicar")
-def duplicar_novo_grupo(grupo_id: str, usuario: str = Query("operador")):
-    try:
-        result = fetch_grupos()
-        grupos = result['grupos']
-        existe = any(str(g.get("grupo")) == str(grupo_id) for g in grupos)
-        if not existe:
-            raise HTTPException(status_code=404, detail="Grupo não encontrado")
-
-        novo_id = duplicar_grupo(grupo_id, usuario)
-        if novo_id:
-            return {"message": "Grupo duplicado com sucesso", "novo_grupo_id": novo_id, "status": "sucesso"}
-        else:
-            raise HTTPException(status_code=500, detail="Erro ao duplicar grupo")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao duplicar grupo: {str(e)}")
-
-
-@app.post("/api/sync-sheets")
-def sincronizar_com_sheets(usuario: str = Query("operador")):
-    try:
-        # Força recarregamento do cache que sincroniza com sheets
-        result = fetch_grupos(force_refresh=True)
-        grupos = result['grupos']
-        metadata = result['metadata']
-        timestamp_sincronizacao = datetime.now().isoformat()
-        data_formatada = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-
-        return {
-            "message": "Sincronização concluída com sucesso",
-            "total_grupos": len(grupos),
-            "timestamp": timestamp_sincronizacao,
-            "data_formatada": data_formatada,
-            "status": "sucesso"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao sincronizar: {str(e)}")
-
-
-@app.post("/api/reload-sheets")
-def recarregar_de_sheets(usuario: str = Query("operador")):
-    try:
-        # Força refresh e sincroniza dados
-        result = fetch_grupos(force_refresh=True)
-        grupos = result['grupos']
-        timestamp_sincronizacao = datetime.now().isoformat()
-        data_formatada = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-
-        return {
-            "message": "Dados recarregados com sucesso",
-            "total_grupos": len(grupos),
-            "timestamp": timestamp_sincronizacao,
-            "data_formatada": data_formatada,
-            "status": "sucesso"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao recarregar: {str(e)}")
-
-
-@app.get("/api/grupos/{grupo_id}/auditoria")
-def obter_historico_grupo(grupo_id: str):
-    try:
-        auditoria = obter_auditoria_grupo_detalhada(grupo_id)
-        return {
-            "grupo_id": grupo_id,
-            "total_alteracoes": len(auditoria),
-            "historico": auditoria
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao obter auditoria: {str(e)}")
-
-
-@app.post("/api/refresh")
-def refresh_dados():
-    try:
-        result = fetch_grupos(force_refresh=True)
-        grupos = result['grupos']
-        return {"message": "Dados atualizados", "total": len(grupos)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/debug/cache-status")
-def debug_cache_status():
-    """Debug: Verifica status do cache e arquivo grupos.json"""
-    import os
-    from pathlib import Path
-
-    cache_file = os.path.join(os.path.dirname(__file__), "..", "data", "grupos.json")
-    exists = os.path.exists(cache_file)
-    size = os.path.getsize(cache_file) if exists else 0
-
-    try:
-        if exists:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                count = len(data) if isinstance(data, list) else 0
-        else:
-            count = 0
-            data = None
-    except Exception as e:
-        count = 0
-        data = str(e)
-
-    return {
-        "cache_file": cache_file,
-        "exists": exists,
-        "size_bytes": size,
-        "grupos_count": count,
-        "error": data if isinstance(data, str) else None,
-        "timestamp": datetime.now().isoformat()
-    }
-
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+        result = reload_data()
+        return {"status": "success", "message": "Dados recarregados da planilha", **result}
+    except Exception as error:
+        raise api_error(error)

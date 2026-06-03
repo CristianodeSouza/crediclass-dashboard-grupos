@@ -1,9 +1,0 @@
-*.md
-*.txt
-frontend/
-docs/
-.github/
-.claude/
-*.log
-.git/
-node_modules/

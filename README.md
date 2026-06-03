@@ -1,190 +1,48 @@
-# 🏢 Crediclass Dashboard Grupos
+# Crediclass Dashboard Grupos V2
 
-Dashboard de análise financeira de grupos de consórcio imobiliário com simulador de modalidades e comparativo entre 6 administradoras.
+Dashboard operacional simples para gerenciar grupos de consorcio diretamente na Google Sheets.
 
-**Status:** ✅ Produção  
-**Data de atualização:** 2026-05-29  
-**Stack:** Frontend (Next.js/Vercel) + Backend (FastAPI/Render)
+## Stack
 
----
+- Python 3.12
+- FastAPI
+- Uvicorn
+- Google Sheets API
+- HTML, Bootstrap 5 e JavaScript vanilla
 
-## 🚀 Quick Start
+## Configuracao
 
-### Terminal 1 — Backend (Render)
-```bash
-cd backend
-pip install -r requirements.txt
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-# → http://localhost:8000
-```
-
-### Terminal 2 — Frontend (Vercel)
-```bash
-cd frontend
-npm install
-npm run dev
-# → http://localhost:3000
-```
-
----
-
-## 🌐 URLs Principais
-
-| Ambiente | URL |
-|----------|-----|
-| **Produção** | https://crediclass.csrtecnologia.com.br |
-| **GitHub** | https://github.com/CristianodeSouza/crediclass-dashboard-grupos |
-| **Render Dashboard** | https://dashboard.render.com |
-| **Vercel Dashboard** | https://vercel.com/dashboard |
-| **Google Sheets** | [Tabela de Grupos 3.0](https://docs.google.com/spreadsheets/d/1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM/) |
-
----
-
-## 📁 Estrutura do Projeto
-
-```
-crediclass-dashboard-grupos/
-│
-├── frontend/                    # Next.js + TypeScript
-│   ├── app/                     # Rotas e páginas
-│   ├── components/              # Componentes React
-│   ├── lib/                      # API client, tipos, validadores
-│   ├── css/                      # Estilos Tailwind
-│   ├── public/                   # Assets estáticos
-│   └── package.json
-│
-├── backend/                      # FastAPI + Python
-│   ├── main.py                  # Aplicação FastAPI
-│   ├── sheets.py                # Integração Google Sheets
-│   ├── piperun.py               # Integração PipeRun CRM
-│   ├── sync_queue.py            # Fila de sincronização
-│   ├── requirements.txt
-│   └── __init__.py
-│
-├── data/                         # Cache local
-│   └── grupos.json              # ~1.809 grupos
-│
-├── docs/                         # Documentação
-│   ├── ARQUITETURA_TECNICA.md
-│   └── FEATURES.md
-│
-├── CLAUDE.md                     # Guia para Claude Code
-├── .env.example                  # Variáveis de ambiente
-├── Dockerfile                    # Build do backend (Render)
-├── render.yaml                   # Configuração Render
-├── vercel.json                   # Configuração Vercel
-├── package.json                  # Dependencies globais (opcional)
-└── .gitignore
-```
-
----
-
-## 🛠️ Stack Técnico
-
-| Componente | Tecnologia |
-|-----------|-----------|
-| **Frontend** | Next.js 15 + TypeScript + Tailwind CSS |
-| **Backend** | FastAPI + Python 3.11 |
-| **Hospedagem Frontend** | Vercel |
-| **Hospedagem Backend** | Render (Native Python) |
-| **Banco de Dados** | Google Sheets API v4 |
-| **CRM** | PipeRun |
-| **DNS/CDN** | Cloudflare |
-| **Versionamento** | GitHub |
-
----
-
-## 📊 Dados Principais
-
-- **~1.809 grupos ativos** gerenciados
-- **156 colunas** na planilha Google Sheets
-- **6 administradoras:** CNP, ITAÚ, CAOA, PORTO, EMBRACON, RODOBENS
-- **Histórico mensal:** 18 meses (MAY-24 até DEC-25)
-
----
-
-## 🔌 APIs Principais
-
-### Backend (Render)
-
-**Base URL:** `https://crediclass.csrtecnologia.com.br/api`
-
-```
-GET    /grupos-gerenciador    # Lista grupos com filtros
-GET    /grupos/{id}           # Detalhes + histórico
-PUT    /grupos/{id}           # Atualizar grupo
-GET    /stats                 # Estatísticas gerais
-POST   /refresh               # Forçar atualização cache
-```
-
----
-
-## ⚙️ Variáveis de Ambiente
-
-### Backend (`.env`)
+Crie um `.env` local ou configure as variaveis no Render:
 
 ```env
-GOOGLE_SHEETS_ID=1DlaihGVraM8tmE3_y35Wldr6K2hhFlHTGq6-yYs9SGM
-GOOGLE_API_KEY=AIzaSyBTQeZkVls2uwJT0XeNJS0ZrTLZUPWCESM
-PIPERUN_API_KEY=db120d1ef2e5c7dec30e8bacbfd307ae
+GOOGLE_SHEETS_ID=
+GOOGLE_API_KEY=
+GOOGLE_SERVICE_ACCOUNT_JSON=
+GOOGLE_SHEET_NAME=Tabela de Grupos 3.0
 ENVIRONMENT=production
 DEBUG=false
-PORT=8000
 ```
 
-### Frontend (Vercel)
+`GOOGLE_SERVICE_ACCOUNT_JSON` deve receber o JSON completo da service account ou o caminho local para um arquivo JSON fora do Git.
 
-```env
-NEXT_PUBLIC_API_URL=https://crediclass.csrtecnologia.com.br
-NEXT_PUBLIC_APP_NAME=Crediclass Dashboard Grupos
+## Executar localmente
+
+```bash
+pip install -r backend/requirements.txt
+python -m uvicorn backend.main:app --reload
 ```
 
----
+Acesse `http://127.0.0.1:8000`.
 
-## 🚀 Deploy
+## Endpoints
 
-### Render (Backend)
+- `GET /api/grupos`
+- `GET /api/grupos/{grupo_id}`
+- `POST /api/grupos`
+- `PUT /api/grupos/{grupo_id}`
+- `DELETE /api/grupos/{grupo_id}`
+- `POST /api/reload`
 
-1. Conectar repositório GitHub
-2. Build Method: **Python 3.11 (Native)**
-3. Start Command: `sh -c 'PYTHONPATH=/app python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT'`
-4. Adicionar variáveis de ambiente
-5. Deploy automático em cada push para `main`
+## Seguranca
 
-### Vercel (Frontend)
-
-1. Conectar repositório GitHub
-2. Framework: **Next.js**
-3. Adicionar `NEXT_PUBLIC_API_URL` nas variáveis
-4. Deploy automático em cada push para `main`
-
----
-
-## 📝 Documentação
-
-- **[CLAUDE.md](CLAUDE.md)** — Guia completo para desenvolvimento com Claude Code
-- **[docs/ARQUITETURA_TECNICA.md](docs/ARQUITETURA_TECNICA.md)** — Arquitetura técnica
-- **[docs/FEATURES.md](docs/FEATURES.md)** — Status das features
-
----
-
-## 🤝 Contribuindo
-
-1. Crie uma branch: `git checkout -b feature/sua-feature`
-2. Commit: `git commit -m "feat: descrição"`
-3. Push: `git push origin feature/sua-feature`
-4. Abra um Pull Request
-
----
-
-## 👤 Autor
-
-**Cristiano de Souza**  
-Email: csrdesouza@gmail.com  
-GitHub: [@CristianodeSouza](https://github.com/CristianodeSouza)
-
----
-
-## 📄 Licença
-
-MIT License
+Credenciais reais nao devem ser versionadas. Use apenas variaveis de ambiente, `.env` local ignorado pelo Git ou secrets do ambiente.
