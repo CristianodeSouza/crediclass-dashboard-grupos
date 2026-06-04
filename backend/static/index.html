@@ -18,23 +18,23 @@
 
         <nav class="nav-menu" aria-label="Navegacao principal">
           <button class="nav-item active" type="button" data-screen="mapa">
-            <span class="nav-icon">▣</span>
+            <span class="nav-icon">MG</span>
             <span>Mapa de Grupos</span>
           </button>
           <button class="nav-item" type="button" data-screen="viabilidade">
-            <span class="nav-icon">◇</span>
+            <span class="nav-icon">VI</span>
             <span>Viabilidade</span>
           </button>
           <button class="nav-item" type="button" data-screen="estudo">
-            <span class="nav-icon">□</span>
+            <span class="nav-icon">EF</span>
             <span>Estudo Financeiro</span>
           </button>
           <button class="nav-item" type="button" data-screen="historico">
-            <span class="nav-icon">↺</span>
+            <span class="nav-icon">HE</span>
             <span>Historico de Estudos</span>
           </button>
           <button class="nav-item" type="button" data-screen="configuracoes">
-            <span class="nav-icon">⚙</span>
+            <span class="nav-icon">CO</span>
             <span>Configuracoes</span>
           </button>
         </nav>
@@ -45,7 +45,7 @@
             <div class="user-name">Larissa</div>
             <div class="user-role">Administradora</div>
           </div>
-          <span class="user-arrow">⌄</span>
+          <span class="user-arrow">v</span>
         </div>
       </aside>
 
@@ -64,10 +64,127 @@
         <section id="toastRegion" class="toast-region" aria-live="polite"></section>
 
         <section id="screen-mapa" class="screen-panel active">
-          <div class="placeholder-card">
-            <div class="state-badge">Etapa 0</div>
-            <h2>Base global pronta</h2>
-            <p>Sidebar, header, area de conteudo e navegacao sem reload foram criados. A Tela Mapa de Grupos sera implementada na proxima etapa.</p>
+          <div class="summary-grid" aria-label="Resumo dos grupos">
+            <article class="summary-card">
+              <span class="summary-label">Total de Grupos</span>
+              <strong id="summaryTotal">0</strong>
+              <small>Ativos e filtrados</small>
+            </article>
+            <article class="summary-card">
+              <span class="summary-label">Total de Administradoras</span>
+              <strong id="summaryAdministradoras">0</strong>
+              <small>Na listagem atual</small>
+            </article>
+            <article class="summary-card">
+              <span class="summary-label">Credito Total Disponivel</span>
+              <strong id="summaryCredito">R$ 0,00</strong>
+              <small>Soma do credito maximo</small>
+            </article>
+            <article class="summary-card">
+              <span class="summary-label">Taxa ADM Media</span>
+              <strong id="summaryTaxa">0%</strong>
+              <small>Media dos grupos</small>
+            </article>
+            <article class="summary-card">
+              <span class="summary-label">Ultima Atualizacao</span>
+              <strong id="summaryUpdated">--</strong>
+              <small>Dados carregados</small>
+            </article>
+          </div>
+
+          <div class="content-card">
+            <form id="groupFilters" class="filter-grid">
+              <label>
+                <span>Administradora</span>
+                <select id="filterAdministradora" class="form-select">
+                  <option value="">Todas</option>
+                </select>
+              </label>
+              <label>
+                <span>Tipo de Bem</span>
+                <select id="filterTipoBem" class="form-select">
+                  <option value="">Todos</option>
+                </select>
+              </label>
+              <label>
+                <span>Credito minimo</span>
+                <input id="filterCreditoMinimo" class="form-control" inputmode="decimal" placeholder="Minimo">
+              </label>
+              <label>
+                <span>Credito maximo</span>
+                <input id="filterCreditoMaximo" class="form-control" inputmode="decimal" placeholder="Maximo">
+              </label>
+              <label>
+                <span>Prazo minimo</span>
+                <input id="filterPrazoMinimo" class="form-control" inputmode="numeric" placeholder="Min">
+              </label>
+              <label>
+                <span>Prazo maximo</span>
+                <input id="filterPrazoMaximo" class="form-control" inputmode="numeric" placeholder="Max">
+              </label>
+              <label>
+                <span>Status</span>
+                <select id="filterStatus" class="form-select">
+                  <option value="">Todos</option>
+                  <option value="Ativo">Ativo</option>
+                  <option value="Excluido">Excluido</option>
+                </select>
+              </label>
+              <label class="filter-search">
+                <span>Busca por grupo ou ID</span>
+                <input id="filterBusca" class="form-control" type="search" placeholder="Buscar grupo, ID...">
+              </label>
+              <div class="filter-actions">
+                <button id="clearFiltersBtn" class="btn btn-outline-secondary" type="button">Limpar filtros</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="content-card">
+            <div class="table-toolbar">
+              <div>
+                <h2>Lista de Grupos</h2>
+                <p id="tableSubtitle">Carregando grupos...</p>
+              </div>
+              <select id="pageSizeSelect" class="form-select page-size-select" aria-label="Itens por pagina">
+                <option value="10">10 por pagina</option>
+                <option value="25" selected>25 por pagina</option>
+                <option value="50">50 por pagina</option>
+              </select>
+            </div>
+
+            <div id="groupsLoading" class="table-state">Carregando grupos...</div>
+            <div id="groupsError" class="table-state table-state-error d-none">Nao foi possivel carregar os grupos.</div>
+            <div id="groupsEmpty" class="table-state d-none">Nenhum grupo encontrado com os filtros atuais.</div>
+
+            <div id="groupsTableWrap" class="table-responsive d-none">
+              <table class="table table-hover align-middle group-table">
+                <thead>
+                  <tr>
+                    <th>ID Grupo</th>
+                    <th>Administradora</th>
+                    <th>Tipo de Bem</th>
+                    <th>Credito minimo</th>
+                    <th>Credito maximo</th>
+                    <th>Taxa ADM</th>
+                    <th>Prazo</th>
+                    <th>1a Assembleia</th>
+                    <th>Ultima Assembleia</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody id="groupsTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="pagination-row">
+              <span id="paginationInfo">Pagina 1</span>
+              <div class="pagination-actions">
+                <button id="prevPageBtn" class="btn btn-outline-secondary btn-sm" type="button">Anterior</button>
+                <button id="nextPageBtn" class="btn btn-outline-secondary btn-sm" type="button">Proxima</button>
+              </div>
+            </div>
           </div>
         </section>
 
