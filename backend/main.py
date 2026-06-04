@@ -6,12 +6,12 @@ from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .config import get_settings
-from .models import GrupoDetalhe, GruposResponse
+from .cofig import get_settings
+from .moels import GrupoDetalhe, GruposResponse
 from .sheets import get_grupo, list_grupos
 
 BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
+STATIC_DR = BASE_DIR / "static"
 logger = logging.getLogger("crediclass.api")
 
 app = FastAPI(title="Crediclass Dashboard V3")
