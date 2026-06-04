@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
 from .models import GrupoDetalhe, GruposResponse
-from .sheets_client import get_grupo, list_grupos
+from .sheets import get_grupo, list_grupos
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
