@@ -1,57 +1,35 @@
-# Crediclass Dashboard Grupos V2
+# Crediclass Dashboard V3
 
-Sistema de gerenciamento de grupos de consórcio imobiliário desenvolvido com FastAPI e JavaScript Vanilla.
+Aplicacao interna para Larissa manter a base de grupos e Joyce gerar estudos financeiros.
 
 ## Stack
 
-- **Backend:** Python 3.12, FastAPI, Uvicorn
-- **Frontend:** HTML5, Bootstrap 5, JavaScript Vanilla
-- **Dados:** Google Sheets API
-- **Hospedagem:** Render
+- Python 3.12
+- FastAPI
+- Uvicorn
+- Pydantic
+- Google Sheets API
+- HTML5
+- Bootstrap 5
+- JavaScript Vanilla
+- Chart.js
+- Render
 
-## Instalação
-
-### Pré-requisitos
-- Python 3.12+
-- pip
-
-### Setup Local
+## Executar localmente
 
 ```bash
-# 1. Criar ambiente virtual
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-
-# 2. Instalar dependências
-cd backend
 pip install -r requirements.txt
-
-# 3. Configurar variáveis de ambiente
-cp .env.example .env
-# Editar .env com suas credenciais Google Sheets
-
-# 4. Executar servidor
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn backend.main:app --reload
 ```
 
-## Acessar
+Acesse `http://127.0.0.1:8000`.
 
-Abra no navegador: `http://localhost:8000`
+## Etapa atual
 
-## Status do Desenvolvimento
+Etapa 0 - Base:
 
-- [x] Etapa 1: Projeto limpo com FastAPI
-- [x] Etapa 2: Conexão Google Sheets
-- [x] Etapa 3: GET /api/grupos
-- [x] Etapa 4: GET /api/grupos/{grupo_id}
-- [x] Etapa 5: PUT /api/grupos/{grupo_id}
-- [x] Etapa 6: POST /api/grupos
-- [x] Etapa 7: DELETE /api/grupos/{grupo_id}
-- [x] Etapa 8: Frontend mínimo (tabela com carregamento de API)
-- [x] Etapa 9: Modal com abas (Dados Gerais + Histórico 2024/2025/2026)
-- [ ] Etapa 10: Teste de ponta a ponta + Deploy Render
-
-## Documentação
-
-Veja `PLANO_EXECUCAO_CREDICLASS_V2_CODEX.md` para detalhes completos.
+- FastAPI servindo frontend estatico.
+- Sidebar global.
+- Navegacao entre telas sem reload.
+- Cliente API em `api.js`.
+- Health check em `/api/health`.
