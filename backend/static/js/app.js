@@ -39,6 +39,9 @@ const mapState = {
   lastLoadAt: null,
 };
 
+let detailsModal = null;
+let detailsChart = null;
+
 function showToast(message, type = "success") {
   const region = document.getElementById("toastRegion");
   const toast = document.createElement("div");
@@ -74,6 +77,12 @@ function formatMoney(value) {
 function formatPercent(value) {
   if (value === null || value === undefined) return "-";
   return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 }).format(value * 100)}%`;
+}
+
+function formatBool(value) {
+  if (value === true) return "Sim";
+  if (value === false) return "Nao";
+  return "-";
 }
 
 function escapeHtml(value) {
@@ -167,7 +176,7 @@ function renderGroupsTable(items) {
         <td><span class="status-badge ${inactive ? "inactive" : ""}">${escapeHtml(item.status)}</span></td>
         <td>
           <div class="row-actions">
-            <button class="btn btn-sm btn-outline-primary" type="button" data-map-action="visualizar">Ver</button>
+            <button class="btn btn-sm btn-outline-primary" type="button" data-map-action="visualizar" data-group-id="${escapeHtml(item.grupo_id)}">Ver</button>
             <button class="btn btn-sm btn-outline-secondary" type="button" data-map-action="editar">Editar</button>
             <button class="btn btn-sm btn-outline-secondary" type="button" data-map-action="duplicar">Duplicar</button>
             <button class="btn btn-sm btn-outline-danger" type="button" data-map-action="excluir">Excluir</button>
@@ -176,6 +185,117 @@ function renderGroupsTable(items) {
       </tr>
     `;
   }).join("");
+}
+
+function setDetailsState(state) {
+  document.getElementById("detailsLoading").classList.toggle("d-none", state !== "loading");
+  document.getElementById("detailsError").classList.toggle("d-none", state !== "error");
+  document.getElementById("detailsContent").classList.toggle("d-none", state !== "ready");
+}
+
+function detailField(label, value) {
+  return `
+    <div class="detail-field">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value ?? "-")}</strong>
+    </div>
+  `;
+}
+
+function renderDetailsGeneral(group) {
+  const fields = [
+    ["ID Grupo", group.grupo_id],
+    ["Administradora", group.administradora],
+    ["Grupo", group.grupo],
+    ["Tipo de Bem", group.tipo_bem],
+    ["Credito minimo", formatMoney(group.credito_minimo)],
+    ["Credito maximo", formatMoney(group.credito_maximo)],
+    ["Taxa de Administracao", formatPercent(group.taxa_adm)],
+    ["Fundo Reserva", formatPercent(group.fundo_reserva)],
+    ["Prazo total", group.prazo_total ? `${group.prazo_total} meses` : "-"],
+    ["Prazo restante", group.prazo_restante ? `${group.prazo_restante} meses` : "-"],
+    ["Primeira Assembleia", group.primeira_assembleia || "-"],
+    ["Ultima Assembleia", group.ultima_assembleia || "-"],
+    ["Data de termino", group.data_termino || "-"],
+    ["Seguro garantia", formatBool(group.seguro_garantia)],
+    ["Meia parcela", formatBool(group.meia_parcela)],
+    ["Lance embutido", formatBool(group.lance_embutido)],
+    ["FGTS permitido", formatBool(group.fgts)],
+    ["Status", group.status || "-"],
+    ["Cadastrado por", group.cadastrado_por || "-"],
+    ["Ultima atualizacao", group.ultima_atualizacao || "-"],
+  ];
+  document.getElementById("detailsGeneralGrid").innerHTML = fields.map(([label, value]) => detailField(label, value)).join("");
+}
+
+function renderDetailsParams(group) {
+  const fields = [
+    ["Categoria do grupo", group.categoria || "-"],
+    ["Percentual maximo de lance embutido", formatPercent(group.percentual_lance_embutido)],
+    ["Percentual de lance fixo", formatPercent(group.percentual_lance_fixo)],
+    ["Parcela reduzida", group.parcela_reduzida || "-"],
+    ["Indice de correcao", group.indice_correcao || "-"],
+    ["Vencimento da parcela", group.vencimento_parcela || "-"],
+    ["Vencimento do lance", group.vencimento_lance || "-"],
+    ["Regras especiais", group.regras_especiais || "-"],
+  ];
+  document.getElementById("detailsParamsGrid").innerHTML = fields.map(([label, value]) => detailField(label, value)).join("");
+}
+
+function renderDetailsHistory(group) {
+  const entries = Object.entries(group.historico || {});
+  document.getElementById("detailsHistoryBody").innerHTML = entries.map(([month, item]) => `
+    <tr>
+      <td>${escapeHtml(month)}</td>
+      <td>${formatPercent(item.maior_lance)}</td>
+      <td>${formatPercent(item.menor_lance)}</td>
+      <td>${item.qtd_contemplacoes ?? "-"}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="4" class="text-center text-secondary">Historico nao encontrado.</td></tr>`;
+
+  const labels = entries.map(([month]) => month);
+  const maiores = entries.map(([, item]) => item.maior_lance ? item.maior_lance * 100 : null);
+  const menores = entries.map(([, item]) => item.menor_lance ? item.menor_lance * 100 : null);
+
+  if (detailsChart) detailsChart.destroy();
+  const canvas = document.getElementById("detailsHistoryChart");
+  detailsChart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Maior Lance (%)", data: maiores, borderColor: "#0d6efd", tension: 0.25 },
+        { label: "Menor Lance (%)", data: menores, borderColor: "#16a34a", tension: 0.25 },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+    },
+  });
+}
+
+async function openGroupDetails(groupId) {
+  if (!detailsModal) {
+    detailsModal = new bootstrap.Modal(document.getElementById("groupDetailsModal"));
+  }
+  detailsModal.show();
+  setDetailsState("loading");
+  document.getElementById("detailsTitle").textContent = "Detalhes do Grupo";
+  document.getElementById("detailsSubtitle").textContent = groupId;
+
+  try {
+    const group = await apiGet(`/grupos/${encodeURIComponent(groupId)}`);
+    document.getElementById("detailsTitle").textContent = `Detalhes do Grupo ${group.grupo}`;
+    document.getElementById("detailsSubtitle").textContent = `${group.administradora} - ${group.tipo_bem}`;
+    renderDetailsGeneral(group);
+    renderDetailsParams(group);
+    renderDetailsHistory(group);
+    setDetailsState("ready");
+  } catch (error) {
+    setDetailsState("error");
+  }
 }
 
 function renderPagination() {
@@ -267,7 +387,15 @@ document.getElementById("nextPageBtn").addEventListener("click", () => {
 document.getElementById("groupsTableBody").addEventListener("click", (event) => {
   const button = event.target.closest("[data-map-action]");
   if (!button) return;
+  if (button.dataset.mapAction === "visualizar") {
+    openGroupDetails(button.dataset.groupId);
+    return;
+  }
   showToast("Acao sera implementada nas proximas etapas.", "info");
+});
+
+document.getElementById("detailsEditBtn").addEventListener("click", () => {
+  showToast("Edicao sera implementada na etapa CRUD Google Sheets.", "info");
 });
 
 loadHealth().catch(() => {

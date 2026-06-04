@@ -7,8 +7,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
-from .models import GruposResponse
-from .sheets_client import list_grupos
+from .models import GrupoDetalhe, GruposResponse
+from .sheets_client import get_grupo, list_grupos
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -82,3 +82,17 @@ def grupos(
     end = start + page_size
     logger.info("GET /api/grupos retornou total=%s page=%s", total, page)
     return {"total": total, "page": page, "page_size": page_size, "items": items[start:end]}
+
+
+@app.get("/api/grupos/{grupo_id}", response_model=GrupoDetalhe)
+def grupo_detalhe(grupo_id: str):
+    logger.info("GET /api/grupos/%s", grupo_id)
+    try:
+        item = get_grupo(grupo_id)
+    except Exception as error:
+        logger.exception("Erro ao obter grupo")
+        return JSONResponse(status_code=503, content={"success": False, "error": str(error)})
+
+    if not item:
+        return JSONResponse(status_code=404, content={"success": False, "error": "Grupo nao encontrado"})
+    return item

@@ -227,6 +227,76 @@
       </main>
     </div>
 
+    <div class="modal fade" id="groupDetailsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div>
+              <h2 id="detailsTitle" class="modal-title h5">Detalhes do Grupo</h2>
+              <p id="detailsSubtitle" class="modal-subtitle">Carregando dados completos</p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <div id="detailsLoading" class="table-state">Carregando detalhes do grupo...</div>
+            <div id="detailsError" class="table-state table-state-error d-none">Nao foi possivel carregar os detalhes.</div>
+            <div id="detailsContent" class="d-none">
+              <ul class="nav nav-tabs details-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#detailsGeneral" type="button" role="tab">Informacoes Gerais</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#detailsHistory" type="button" role="tab">Historico de Lances</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#detailsParams" type="button" role="tab">Parametros</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#detailsAudit" type="button" role="tab">Auditoria</button>
+                </li>
+              </ul>
+
+              <div class="tab-content details-tab-content">
+                <section id="detailsGeneral" class="tab-pane fade show active" role="tabpanel">
+                  <div id="detailsGeneralGrid" class="details-grid"></div>
+                </section>
+                <section id="detailsHistory" class="tab-pane fade" role="tabpanel">
+                  <div class="history-layout">
+                    <div class="table-responsive">
+                      <table class="table table-sm history-table">
+                        <thead>
+                          <tr>
+                            <th>Mes</th>
+                            <th>Maior Lance</th>
+                            <th>Menor Lance</th>
+                            <th>Qtd Contemplacoes</th>
+                          </tr>
+                        </thead>
+                        <tbody id="detailsHistoryBody"></tbody>
+                      </table>
+                    </div>
+                    <div class="chart-card">
+                      <canvas id="detailsHistoryChart" height="220"></canvas>
+                    </div>
+                  </div>
+                </section>
+                <section id="detailsParams" class="tab-pane fade" role="tabpanel">
+                  <div id="detailsParamsGrid" class="details-grid"></div>
+                </section>
+                <section id="detailsAudit" class="tab-pane fade" role="tabpanel">
+                  <div id="detailsAuditState" class="table-state">Nenhum registro de auditoria disponivel nesta etapa.</div>
+                </section>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="detailsEditBtn" class="btn btn-outline-primary" type="button">Editar Grupo</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/app.js"></script>

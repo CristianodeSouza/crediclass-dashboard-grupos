@@ -28,10 +28,49 @@ FIELD_ALIASES = {
     "credito_minimo": ["credito minimo", "menor credito", "credito min"],
     "credito_maximo": ["credito maximo", "maior credito", "credito max"],
     "taxa_adm": ["taxa administracao", "taxa adm", "taxa de administracao"],
+    "fundo_reserva": ["fundo reserva", "fundo de reserva"],
     "prazo_total": ["prazo total", "prazo do grupo", "prazo grupo"],
+    "prazo_restante": ["prazo restante"],
     "primeira_assembleia": ["primeira assembleia", "1 assembleia", "1a assembleia"],
     "ultima_assembleia": ["ultima assembleia"],
+    "data_termino": ["data termino", "data de termino", "termino"],
+    "seguro_garantia": ["seguro garantia"],
+    "meia_parcela": ["meia parcela"],
+    "lance_embutido": ["lance embutido"],
+    "fgts": ["fgts", "fgts permitido"],
+    "categoria": ["categoria"],
+    "percentual_lance_embutido": ["percentual lance embutido", "lance embutido percentual", "lance embutido maximo"],
+    "percentual_lance_fixo": ["percentual lance fixo", "lance fixo"],
+    "parcela_reduzida": ["parcela reduzida"],
+    "indice_correcao": ["indice correcao", "indice de correcao"],
+    "vencimento_parcela": ["vencimento parcela", "vencimento da parcela"],
+    "vencimento_lance": ["vencimento lance", "vencimento do lance"],
+    "regras_especiais": ["regras especiais"],
+    "cadastrado_por": ["cadastrado por"],
+    "ultima_atualizacao": ["ultima atualizacao", "ultima atualizacao em"],
     "status": ["status"],
+}
+
+MONTH_MAP = {
+    "JAN": "01",
+    "FEV": "02",
+    "FEB": "02",
+    "MAR": "03",
+    "ABR": "04",
+    "APR": "04",
+    "MAI": "05",
+    "MAY": "05",
+    "JUN": "06",
+    "JUL": "07",
+    "AGO": "08",
+    "AUG": "08",
+    "SET": "09",
+    "SEP": "09",
+    "OUT": "10",
+    "OCT": "10",
+    "NOV": "11",
+    "DEZ": "12",
+    "DEC": "12",
 }
 
 
@@ -79,6 +118,12 @@ def get_field(row: dict[str, Any], field: str) -> Any:
     return ""
 
 
+def get_optional_field(row: dict[str, Any], field: str) -> Any:
+    if field not in FIELD_ALIASES:
+        return ""
+    return get_field(row, field)
+
+
 def parse_number(value: Any) -> float | None:
     text = str(value or "").strip()
     if not text:
@@ -106,6 +151,54 @@ def parse_percent(value: Any) -> float | None:
     return number / 100 if number > 1 else number
 
 
+def parse_bool(value: Any) -> bool | None:
+    text = normalize_header(str(value or ""))
+    if not text:
+        return None
+    if text in {"sim", "s", "true", "1", "ativo", "permitido"}:
+        return True
+    if text in {"nao", "n", "false", "0"}:
+        return False
+    return None
+
+
+def history_key_from_header(header: str) -> tuple[str, str] | None:
+    normalized = normalize_header(header).upper()
+    match = re.search(r"\b([A-Z]{3})\s*(?:-|/|\s)?\s*(24|25|26)\b", normalized)
+    if not match:
+        return None
+
+    month = MONTH_MAP.get(match.group(1))
+    if not month:
+        return None
+
+    year = f"20{match.group(2)}"
+    key = f"{year}-{month}"
+    metric_header = normalize_header(header)
+    if "maior lance" in metric_header:
+        return key, "maior_lance"
+    if "menor lance" in metric_header:
+        return key, "menor_lance"
+    if "qtd" in metric_header or "contemplac" in metric_header:
+        return key, "qtd_contemplacoes"
+    return None
+
+
+def build_historico(row: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    historico: dict[str, dict[str, Any]] = {}
+    for header, value in row.items():
+        parsed = history_key_from_header(header)
+        if not parsed:
+            continue
+        month_key, metric = parsed
+        historico.setdefault(month_key, {"maior_lance": None, "menor_lance": None, "qtd_contemplacoes": None})
+        if metric == "qtd_contemplacoes":
+            historico[month_key][metric] = parse_int(value)
+        else:
+            historico[month_key][metric] = parse_percent(value)
+    return dict(sorted(historico.items()))
+
+
 def build_grupo_id(row: dict[str, Any]) -> str:
     administradora = str(get_field(row, "administradora")).strip().upper().replace(" ", "-")
     grupo = str(get_field(row, "grupo")).strip().upper().replace(" ", "-")
@@ -129,5 +222,40 @@ def row_to_grupo(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def row_to_grupo_detalhe(row: dict[str, Any]) -> dict[str, Any]:
+    detalhe = row_to_grupo(row)
+    detalhe.update({
+        "fundo_reserva": parse_percent(get_optional_field(row, "fundo_reserva")),
+        "prazo_restante": parse_int(get_optional_field(row, "prazo_restante")),
+        "data_termino": str(get_optional_field(row, "data_termino")),
+        "seguro_garantia": parse_bool(get_optional_field(row, "seguro_garantia")),
+        "meia_parcela": parse_bool(get_optional_field(row, "meia_parcela")),
+        "lance_embutido": parse_bool(get_optional_field(row, "lance_embutido")),
+        "fgts": parse_bool(get_optional_field(row, "fgts")),
+        "categoria": str(get_optional_field(row, "categoria")),
+        "percentual_lance_embutido": parse_percent(get_optional_field(row, "percentual_lance_embutido")),
+        "percentual_lance_fixo": parse_percent(get_optional_field(row, "percentual_lance_fixo")),
+        "parcela_reduzida": str(get_optional_field(row, "parcela_reduzida")),
+        "indice_correcao": str(get_optional_field(row, "indice_correcao")),
+        "vencimento_parcela": str(get_optional_field(row, "vencimento_parcela")),
+        "vencimento_lance": str(get_optional_field(row, "vencimento_lance")),
+        "regras_especiais": str(get_optional_field(row, "regras_especiais")),
+        "cadastrado_por": str(get_optional_field(row, "cadastrado_por")),
+        "ultima_atualizacao": str(get_optional_field(row, "ultima_atualizacao")),
+        "historico": build_historico(row),
+        "auditoria": [],
+    })
+    return detalhe
+
+
 def list_grupos() -> list[dict[str, Any]]:
     return [row_to_grupo(row) for row in read_sheet_rows()]
+
+
+def get_grupo(grupo_id: str) -> dict[str, Any] | None:
+    wanted = grupo_id.strip().upper()
+    for row in read_sheet_rows():
+        detalhe = row_to_grupo_detalhe(row)
+        if detalhe["grupo_id"].upper() == wanted:
+            return detalhe
+    return None
